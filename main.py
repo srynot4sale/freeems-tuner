@@ -19,7 +19,7 @@
 
 
 # FreeEMS-Tuner
-__revision__ = '0.0.1'
+__revision__ = '0.0.1-2008110600'
 __name__ = 'FreeEMS-Tuner'
 __title__ = '%s %s' % (__name__, __revision__)
 
