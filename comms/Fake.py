@@ -21,6 +21,7 @@
 import config
 import logging
 import comms
+import protocols
 
 logger = logging.getLogger('comms.Fake')
 
@@ -30,15 +31,18 @@ class connection(comms.interface):
     '''
 
     # Connected flag
-    __connected = False
+    _connected = False
 
     # Watching objects
-    __send_watchers = []
-    __recieve_watchers = []
+    _send_watchers = []
+    _recieve_watchers = []
+
+    # Fake buffer
+    _buffer = []
 
     def isConnected(self):
 
-        return self.__connected
+        return self._connected
 
     
     def connect(self):
@@ -46,7 +50,7 @@ class connection(comms.interface):
         if self.isConnected():
             return
 
-        self.__connected = True
+        self._connected = True
         
         logger.info('Fake development comms connection connected')
 
@@ -56,27 +60,51 @@ class connection(comms.interface):
         if not self.isConnected():
             return
 
-        self.__connected = False
+        self._connected = False
 
         logger.info('Fake development comms connection disconnected')
 
 
     def bindSendWatcher(self, watcher):
-        self.__send_watchers.append(watcher)
+        self._send_watchers.append(watcher)
 
 
     def bindRecieveWatcher(self, watcher):
-        self.__recieve_watchers.append(watcher)
+        self._recieve_watchers.append(watcher)
 
 
     def send(self, packet):
 
         # Get packet contents
-        contents = packet.getEscaped()
         hex_contents = packet.getPacketHex()
+
+        # Append to input buffer
+        # In this fake comms plugin, all sent packets
+        # are reflected back at the moment
+        self._buffer.extend(packet.getEscaped())
 
         # Log packet hex
         logger.debug('Packet sent to fake comms connection: %s' % hex_contents)
         
-        for watcher in self.__send_watchers:
+        for watcher in self._send_watchers:
+            watcher(packet)
+
+
+    def recieve(self):
+        '''Check for and recieve packets waiting in the connection'''
+        
+        # If nothing in buffer
+        if not len(self._buffer):
+            return
+
+        # Get protocol
+        protocol = protocols.getProtocol()
+
+        # Check for any complete packets
+        packet = protocol.processRecieveBuffer(self._buffer)
+        
+        if not packet:
+            return
+
+        for watcher in self._recieve_watchers:
             watcher(packet)

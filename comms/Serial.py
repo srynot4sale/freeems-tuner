@@ -23,6 +23,7 @@ import libs.serial.serialutil as serialutil
 import config
 import logging
 import comms
+import protocols
 
 logger = logging.getLogger('comms.Serial')
 
@@ -44,6 +45,10 @@ class connection(comms.interface):
     # Watching objects
     _send_watchers = []
     _recieve_watchers = []
+
+
+    # Unprocessed buffer contents
+    _buffer = []
 
     def __init__(self):
 
@@ -125,9 +130,40 @@ class connection(comms.interface):
 
 
     def send(self, packet):
-
+        '''Send a packet over the connection'''
         self.getConnection().write(packet.__str__())
         self.getConnection().flushOutput()
         
         for watcher in self._send_watchers:
+            watcher(packet)
+
+
+    def recieve(self):
+        '''Check for and recieve packets waiting in the connection'''
+        conn = self.getConnection()
+        buffer_size = conn.inWaiting()
+
+        # If nothing in serial buffer, and nothing unprocessed
+        # don't hold up the UI any longer than we have to
+        if not buffer_size and not len(self._buffer):
+            return
+
+        # If anything new in the buffer, convert to bytes and
+        # append to what we have left unprocessed
+        if buffer_size:
+            buffer = conn.read(buffer_size)
+
+            for char in buffer:
+                self._buffer.append(ord(char))
+
+        # Get protocol
+        protocol = protocols.getProtocol()
+
+        # Check for any complete packets
+        packet = protocol.processRecieveBuffer(self._buffer)
+
+        if not packet:
+            return
+
+        for watcher in self._recieve_watchers:
             watcher(packet)

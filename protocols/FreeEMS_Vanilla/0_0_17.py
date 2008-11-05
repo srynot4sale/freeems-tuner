@@ -18,11 +18,12 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-# FreeEMS 0.17 serial protocol
+# FreeEMS 0.0.17 serial protocol
 import types
 import protocols
 import comms
 import logging
+import copy
 
 
 HEADER_IS_PROTO     = protocols.BIT0
@@ -40,6 +41,10 @@ REQUEST_SYSTEM_RESET        = 8
 START_BYTE = 0xAA
 END_BYTE = 0xCC
 ESCAPE_BYTE = 0xBB
+
+STATE_NOT_PACKET            = 0
+STATE_ESCAPE_BYTE           = 1
+STATE_IN_PACKET             = 2
 
 
 # Load logging interface
@@ -67,6 +72,7 @@ class protocol:
             'requestEchoPacketReturn',
             'requestSystemReset'
     ]
+
 
     def getUtilityRequestList(self):
         '''Return a list of this protocols utility requests'''
@@ -103,15 +109,63 @@ class protocol:
         self._getComms().send(packet)
 
 
-    def _receiveRawBuffer(self):
+    def processRecieveBuffer(self, buffer):
+        '''Check for any incoming packets and return if found'''
+
+        # Check buffer is long enough to contain an entire packet
+        if len(buffer) < 4:
+            return
         
-        conn = self._getComms()
+        # Check to make sure a start byte and an end byte exists in the buffer
+        if START_BYTE not in buffer or END_BYTE not in buffer:
+            return
+        
+        # Begin state control machine :-)
+        state = STATE_NOT_PACKET
+        index = -1
+        packet = []
 
-        if not conn.getBufferLength():
-            return None
+        # Loop through buffer_copy, delete from buffer
+        buffer_copy = copy.copy(buffer)
 
-        buffer = conn.getBuffer()
-        pass
+        for byte in buffer_copy:
+            index += 1
+
+            # If have not started a packet yet check for start_byte
+            if state == STATE_NOT_PACKET:
+                # If not a start byte, its bad/incomplete data to trash it
+                if byte != START_BYTE:
+                    logger.error('Bad/incomplete data found in buffer before start byte: %X' % byte)
+                # Otherwise, start packet
+                else:
+                    state = STATE_IN_PACKET
+                    packet.append(START_BYTE)
+
+            # We are in a packet, save byte unless we find an end byte
+            elif state == STATE_IN_PACKET:
+                if byte == END_BYTE:
+                    state = STATE_NOT_PACKET
+                    packet.append(END_BYTE)
+                elif byte == ESCAPE_BYTE:
+                    state = STATE_ESCAPE_BYTE
+                else:
+                    packet.append(byte)
+
+            # If we are in escape mode (previous byte was an escape), escape byte
+            elif state == STATE_ESCAPE_BYTE:
+                esc_byte = byte & 0xFF
+                
+                # Check it is a legitimately escaped byte
+                if esc_byte in (START_BYTE, ESCAPE_BYTE, END_BYTE):
+                    packet.append(esc_byte)
+                else:
+                    logger.error('Wrongly escaped byte found in buffer: %X' % byte)
+
+            del buffer[0]
+
+            # Check if we have a complete packet
+            if len(packet) and state == STATE_NOT_PACKET:
+                return packet
 
 
     class packet:

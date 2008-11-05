@@ -68,6 +68,9 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_ICONIZE, self.OnIconize)
 
+        # Handle incoming comms when the UI is idle
+        self.Bind(wx.EVT_IDLE, self.CommsRecieve)
+
         self.BuildWindow()
 
 
@@ -197,7 +200,7 @@ class Frame(wx.Frame):
 
 
     def CommsConnect(self, event):
-
+        '''Connect comms'''
         if self.CommsIsConnected():
             return
 
@@ -209,15 +212,23 @@ class Frame(wx.Frame):
 
 
     def CommsDisconnect(self, event):
-        
+        '''Disconnect comms'''
         if not self.CommsIsConnected():
             return
 
         comms.getConnection().disconnect()
 
 
-    def CommsIsConnected(self):
+    def CommsRecieve(self, event):
+        '''Check for any packets in the buffer'''
+        if not self.CommsIsConnected():
+            return
 
+        comms.getConnection().recieve()
+
+
+    def CommsIsConnected(self):
+        '''Check if comms is connected'''
         return comms.getConnection().isConnected()
 
 
@@ -403,22 +414,43 @@ class commsDiagnostics(grid.Grid):
         payload = request.getPayload()
         raw_hex = request.getPacketHex()
 
-        if self.row > 0:
-            self.AppendRows()
-
+        self.AppendRows()
         self.SetCellValue(self.row, 0, str(time))
         self.SetCellValue(self.row, 1, str(header))
         self.SetCellValue(self.row, 2, str(payload_id))
         self.SetCellValue(self.row, 3, str(payload))
         self.SetCellValue(self.row, 4, str(raw_hex))
-        self.MakeCellVisible(self.row, 1)
+
+        self.MakeCellVisible(self.row + 1, 1)
         self.ForceRefresh()
 
         self.row += 1
 
     
     def printRecievedPacket(self, request):
-        pass
+
+        time = datetime.datetime.time(datetime.datetime.now())
+        header = 'rec'
+        raw_hex = []
+
+        for byte in request:
+            hex_byte = hex(byte).upper().replace('X','x')
+
+            if len(hex_byte) < 4:
+                hex_byte = '0x0'+hex_byte[-1]
+
+            raw_hex.append(hex_byte)
+
+        self.AppendRows()
+
+        self.SetCellValue(self.row, 0, str(time))
+        self.SetCellValue(self.row, 1, str(header))
+        self.SetCellValue(self.row, 4, str(raw_hex))
+        
+        self.MakeCellVisible(self.row + 1, 1)
+        self.ForceRefresh()
+
+        self.row += 1
 
 
 #########################################################

@@ -77,6 +77,10 @@ class interface:
         pass
 
 
+    def recieve(self):
+        pass
+
+
 class CommsException(Exception):
     pass
 
