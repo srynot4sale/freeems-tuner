@@ -364,7 +364,9 @@ class commsUtilityFirmwareResetButton(wx.BoxSizer):
 
         wx.BoxSizer.__init__(self, wx.VERTICAL)
 
-        self.button = wx.Button(parent, self.ID_SEND_FIRMWARE_RESET, 'The Big Red Button')
+        button_text  = 'The Big Red Button\n'
+        button_text += '      (ECU Reset)'
+        self.button = wx.Button(parent, self.ID_SEND_FIRMWARE_RESET, button_text)
         self.button.SetBackgroundColour(wx.RED)
         self.button.SetForegroundColour(wx.WHITE)
 
