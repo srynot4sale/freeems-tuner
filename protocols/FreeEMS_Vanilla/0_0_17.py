@@ -153,7 +153,7 @@ class protocol:
 
             # If we are in escape mode (previous byte was an escape), escape byte
             elif state == STATE_ESCAPE_BYTE:
-                esc_byte = byte & 0xFF
+                esc_byte = byte ^ 0xFF
                 
                 # Check it is a legitimately escaped byte
                 if esc_byte in (START_BYTE, ESCAPE_BYTE, END_BYTE):
