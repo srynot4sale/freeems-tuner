@@ -38,7 +38,6 @@ comms.loadDefault()
 
 # Load default hardware interface protocol
 protocols.loadDefault()
-#protocols.protocol.setComms(comms.connection)
 
 # Setup GUI
 gui.load()
