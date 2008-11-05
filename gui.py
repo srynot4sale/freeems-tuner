@@ -419,6 +419,7 @@ class commsDiagnostics(grid.Grid):
         payload_id = request.getPayloadId()
         payload = request.getPayload()
         raw_hex = request.getPacketHex()
+        raw_hex = ','.join(raw_hex)
 
         self.AppendRows()
         self.SetCellValue(self.row, 0, str(time))
@@ -446,6 +447,9 @@ class commsDiagnostics(grid.Grid):
                 hex_byte = '0x0'+hex_byte[-1]
 
             raw_hex.append(hex_byte)
+
+
+        raw_hex = ','.join(raw_hex)
 
         self.AppendRows()
 
