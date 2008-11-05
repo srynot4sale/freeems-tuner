@@ -1,0 +1,10 @@
+To install FreeEms-Tuner:
+
+-   Install python if you have not already. Installers for most platforms and
+    instructions/support can be found at http://www.python.org
+
+-   Install wxpython if you have not already. Once again, installers for most
+    platforms and instructions/support can be found at http://www.wxpython.org
+
+
+That's it!!!
