@@ -270,7 +270,15 @@ class protocol:
 
         def getPayloadLength(self):
             '''Return length of payload'''
-            return len(self.getPayload())
+            length = len(self.getPayload())
+
+            if length > 256:
+                byte1 = length - 256
+            else:
+                byte1 = 0
+
+            byte2 = length % 256
+            return [byte1, byte2]
 
 
         def getChecksum(self, bytes):
@@ -313,7 +321,7 @@ class protocol:
             packet.extend   ( self.getPayloadId() )
 
             if self.getPayloadLength():
-                packet.append   ( self.getPayloadLength() )
+                packet.extend   ( self.getPayloadLength() )
                 packet.extend   ( self.getPayloadBytes() )
 
             packet.append   ( self.getChecksum(packet) )
