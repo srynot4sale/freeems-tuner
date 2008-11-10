@@ -19,13 +19,16 @@
 
 
 import wx
-import wx.grid as grid
 import os
 import __main__ as main
 import comms
 import protocols
 import logging
-import datetime
+
+import commsTestFrame
+import commsUtilityRequests
+import commsDiagnostics
+import commsUtilityFirmwareResetButton
 
 logger = logging.getLogger('gui')
 
@@ -41,6 +44,7 @@ ID_HELP = wx.NewId()
 ID_TOGGLE_MAXIMIZE = wx.NewId()
 ID_COMMS_CONNECT = wx.NewId()
 ID_COMMS_DISCONNECT = wx.NewId()
+ID_COMMS_TESTS = wx.NewId()
 
 
 # Instance of the parent frame
@@ -82,8 +86,8 @@ class Frame(wx.Frame):
        
         ctrl_h = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.requests = commsUtilityRequests(window)
-        self.button = commsUtilityFirmwareResetButton(window)
+        self.requests = commsUtilityRequests.commsUtilityRequests(window)
+        self.button = commsUtilityFirmwareResetButton.commsUtilityFirmwareResetButton(window)
 
         ctrl_h.Add((0,0), 1)
         ctrl_h.Add(self.requests, 10, wx.EXPAND)
@@ -91,7 +95,7 @@ class Frame(wx.Frame):
         ctrl_h.Add(self.button, 10, wx.EXPAND)
         ctrl_h.Add((0,0), 1)
 
-        self.comms = commsDiagnostics(window)
+        self.comms = commsDiagnostics.commsDiagnostics(window)
 
         sizer.Add(self.comms, 20, wx.EXPAND)
         sizer.Add((0,0), 1)
@@ -131,6 +135,8 @@ class Frame(wx.Frame):
         m = self.menus['comms'] = wx.Menu()
         m.Append(ID_COMMS_CONNECT, '&Connect', 'Connect To Comms Port')
         m.Append(ID_COMMS_DISCONNECT, '&Disconnect', 'Disconnect From Comms Port')
+        m.AppendSeparator()
+        m.Append(ID_COMMS_TESTS, 'Interface Protocol &Test', 'Run interface tests on firmware')
 
         # Help
         m = self.menus['help'] = wx.Menu()
@@ -154,11 +160,13 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnToggleMaximize, id=ID_TOGGLE_MAXIMIZE)
         self.Bind(wx.EVT_MENU, self.CommsConnect, id=ID_COMMS_CONNECT)
         self.Bind(wx.EVT_MENU, self.CommsDisconnect, id=ID_COMMS_DISCONNECT)
+        self.Bind(wx.EVT_MENU, self.CommsTests, id=ID_COMMS_TESTS)
 
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_UNDO)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_REDO)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_CONNECT)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_DISCONNECT)
+        self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_TESTS)
         
 
     def OnToggleMaximize(self, event):
@@ -214,7 +222,13 @@ class Frame(wx.Frame):
         except comms.CannotconnectException, msg:
             logger.error(msg)
 
-        frame = CommsTestFrame(self)
+    
+    def CommsTests(self, event):
+        '''Run comms unit tests'''
+        if not self.CommsIsConnected():
+            return
+
+        test_frame = commsTestFrame.commsTestFrame(self)
 
 
     def CommsDisconnect(self, event):
@@ -251,6 +265,8 @@ class Frame(wx.Frame):
             elif id == ID_COMMS_CONNECT:
                 event.Enable(not self.CommsIsConnected())
             elif id == ID_COMMS_DISCONNECT:
+                event.Enable(self.CommsIsConnected())
+            elif id == ID_COMMS_TESTS:
                 event.Enable(self.CommsIsConnected())
             else:
                 event.Enable(False)
@@ -311,202 +327,6 @@ def load():
 
     return app
 
-
-class commsUtilityRequests(wx.BoxSizer):
-
-    options = {}
-    text = None
-    input = None
-    send = None
-
-    ID_SEND_REQUEST = wx.NewId()
-
-
-    def __init__(self, parent):
-
-        wx.BoxSizer.__init__(self, wx.VERTICAL)
-
-        self.text = wx.StaticText(parent, -1, 'Data to request', style=wx.ALIGN_CENTER)
-
-        self.options = protocols.getProtocol().getUtilityRequestList()
-
-        self.input = wx.Choice(parent, -1, choices=self.options)
-        self.send = wx.Button(parent, self.ID_SEND_REQUEST, 'Send Request')
-
-        self.Add((0,0), 1)
-        self.Add(self.text, 3, wx.EXPAND)
-        self.Add((0,0), 1)
-        self.Add(self.input, 5, wx.EXPAND)
-        self.Add((0,0), 1)
-        self.Add(self.send, 5, wx.EXPAND)
-        self.Add((0,0), 1)
-
-        self.send.Bind(wx.EVT_BUTTON, self.sendRequest, id=self.ID_SEND_REQUEST)
-
-
-    def sendRequest(self, event):
-        
-        selection = self.input.GetSelection()
-
-        if selection < 0:
-            selection = 0
-
-        protocols.getProtocol().sendUtilityRequest(selection)
-
-
-class commsUtilityFirmwareResetButton(wx.BoxSizer):
-
-    options = {}
-    button = None
-
-    ID_SEND_FIRMWARE_RESET = wx.NewId()
-
-
-    def __init__(self, parent):
-
-        wx.BoxSizer.__init__(self, wx.VERTICAL)
-
-        button_text  = 'The Big Red Button\n'
-        button_text += '      (ECU Reset)'
-        self.button = wx.Button(parent, self.ID_SEND_FIRMWARE_RESET, button_text)
-        self.button.SetBackgroundColour(wx.RED)
-        self.button.SetForegroundColour(wx.WHITE)
-
-        font = wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
-
-        self.button.SetFont(font)
-
-        self.Add((0,0), 1)
-        self.Add(self.button, 15, wx.EXPAND)
-        self.Add((0,0), 1)
-
-        self.button.Bind(wx.EVT_BUTTON, self.sendRequest, id=self.ID_SEND_FIRMWARE_RESET)
-
-
-    def sendRequest(self, event):
-
-        protocols.getProtocol().sendUtilityHardwareResetRequest()
-
-
-class commsDiagnostics(grid.Grid):
-    
-    conn = None
-    row = 0
-
-    def __init__(self, parent):
-        grid.Grid.__init__(self, parent)
-
-        self.CreateGrid(1, 5)
-        self.SetRowLabelSize(50)
-        self.SetColLabelValue(0, 'Time')
-        self.SetColSize(0, 120)
-        self.SetColLabelValue(1, 'Flags')
-        self.SetColSize(1, 60)
-        self.SetColLabelValue(2, 'Pld Id')
-        self.SetColSize(2, 70)
-        self.SetColLabelValue(3, 'Payload')
-        self.SetColSize(3, 150)
-        self.SetColLabelValue(4, 'Raw Bytes')
-        self.SetColSize(4, 300)
-
-        self.conn = comms.getConnection()
-        self.conn.bindSendWatcher(self.printSentPacket)
-        self.conn.bindRecieveWatcher(self.printRecievedPacket)
-
-
-    def printSentPacket(self, request):
-       
-        time = datetime.datetime.time(datetime.datetime.now())
-        header = request.getHeaderFlags()
-        payload_id = request.getPayloadId()
-        payload = request.getPayload()
-        raw_hex = request.getPacketHex()
-        raw_hex = ','.join(raw_hex)
-
-        self.AppendRows()
-        self.SetCellValue(self.row, 0, str(time))
-        self.SetCellValue(self.row, 1, str(header))
-        self.SetCellValue(self.row, 2, str(payload_id))
-        self.SetCellValue(self.row, 3, str(payload))
-        self.SetCellValue(self.row, 4, str(raw_hex))
-
-        self.MakeCellVisible(self.row + 1, 1)
-        self.ForceRefresh()
-
-        self.row += 1
-
-    
-    def printRecievedPacket(self, request):
-
-        time = datetime.datetime.time(datetime.datetime.now())
-        header = 'rec'
-        raw_hex = []
-
-        for byte in request:
-            hex_byte = hex(byte).upper().replace('X','x')
-
-            if len(hex_byte) < 4:
-                hex_byte = '0x0'+hex_byte[-1]
-
-            raw_hex.append(hex_byte)
-
-
-        raw_hex = ','.join(raw_hex)
-
-        self.AppendRows()
-
-        self.SetCellValue(self.row, 0, str(time))
-        self.SetCellValue(self.row, 1, str(header))
-        self.SetCellValue(self.row, 4, str(raw_hex))
-        
-        self.MakeCellVisible(self.row + 1, 1)
-        self.ForceRefresh()
-
-        self.row += 1
-
-
-class CommsTestFrame(wx.Frame):
-    """Comms Testing Frame"""
-
-    def __init__(self, parent):
-        """Create a Frame instance."""
-        wx.Frame.__init__(self, parent, id=-1, title='Comms Test', pos=wx.DefaultPosition, size=(800,600))
-
-        self.BuildWindow()
-        self.Show()
-
-
-    def BuildWindow(self):
-
-        self.window = window = wx.Panel(parent=self, id=-1)
-
-        textbox = wx.StaticText(window, -1, 'Results...')
-        start_button = wx.Button(window, -1, 'Start Tests')
-        stop_button = wx.Button(window, -1, 'Stop Tests')
-        close_button = wx.Button(window, -1, 'Close')
-
-        sizer3 = wx.BoxSizer(wx.VERTICAL)
-        sizer3.Add(start_button, 1)
-        sizer3.Add((0,0), 1)
-        sizer3.Add(stop_button, 1)
-        sizer3.Add((0,0), 14)
-        sizer3.Add(close_button, 1)
-        
-        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer2.Add((0,0), 1)
-        sizer2.Add(textbox, 14, wx.EXPAND)
-        sizer2.Add((0,0), 1)
-        sizer2.Add(sizer3, 3)
-        sizer2.Add((0,0), 1)
-
-        sizer1 = wx.BoxSizer(wx.VERTICAL)
-        sizer1.Add((0,0), 1)
-        sizer1.Add(sizer2, 18)
-        sizer1.Add((0,0), 1)
-
-        window.SetSizer(sizer1)
-        window.Layout()
-       
 
 #########################################################
 # User-defined layout main page
