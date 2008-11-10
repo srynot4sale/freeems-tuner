@@ -214,6 +214,8 @@ class Frame(wx.Frame):
         except comms.CannotconnectException, msg:
             logger.error(msg)
 
+        frame = CommsTestFrame(self)
+
 
     def CommsDisconnect(self, event):
         '''Disconnect comms'''
@@ -462,6 +464,49 @@ class commsDiagnostics(grid.Grid):
 
         self.row += 1
 
+
+class CommsTestFrame(wx.Frame):
+    """Comms Testing Frame"""
+
+    def __init__(self, parent):
+        """Create a Frame instance."""
+        wx.Frame.__init__(self, parent, id=-1, title='Comms Test', pos=wx.DefaultPosition, size=(800,600))
+
+        self.BuildWindow()
+        self.Show()
+
+
+    def BuildWindow(self):
+
+        self.window = window = wx.Panel(parent=self, id=-1)
+
+        textbox = wx.StaticText(window, -1, 'Results...')
+        start_button = wx.Button(window, -1, 'Start Tests')
+        stop_button = wx.Button(window, -1, 'Stop Tests')
+        close_button = wx.Button(window, -1, 'Close')
+
+        sizer3 = wx.BoxSizer(wx.VERTICAL)
+        sizer3.Add(start_button, 1)
+        sizer3.Add((0,0), 1)
+        sizer3.Add(stop_button, 1)
+        sizer3.Add((0,0), 14)
+        sizer3.Add(close_button, 1)
+        
+        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer2.Add((0,0), 1)
+        sizer2.Add(textbox, 14, wx.EXPAND)
+        sizer2.Add((0,0), 1)
+        sizer2.Add(sizer3, 3)
+        sizer2.Add((0,0), 1)
+
+        sizer1 = wx.BoxSizer(wx.VERTICAL)
+        sizer1.Add((0,0), 1)
+        sizer1.Add(sizer2, 18)
+        sizer1.Add((0,0), 1)
+
+        window.SetSizer(sizer1)
+        window.Layout()
+       
 
 #########################################################
 # User-defined layout main page

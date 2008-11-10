@@ -20,7 +20,7 @@
 
 import libs.serial as serial
 import libs.serial.serialutil as serialutil
-import config
+import libs.config as config
 import logging
 import comms
 import protocols

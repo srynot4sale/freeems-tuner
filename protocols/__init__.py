@@ -18,7 +18,7 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import config, logging
+import libs.config, logging
 
 
 # Generic protocol constants
@@ -49,8 +49,8 @@ def loadDefault():
     '''Load default protocol'''
 
     # Load config
-    def_protocol = config.load('Protocol', 'default')
-    version = config.load('Protocol', 'default_version')
+    def_protocol = libs.config.load('Protocol', 'default')
+    version = libs.config.load('Protocol', 'default_version')
 
     # Should end up in the format:
     #   'protocols.FreeEMS.0_17,

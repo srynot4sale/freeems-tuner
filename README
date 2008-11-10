@@ -20,7 +20,7 @@ freeems-tuner_version/
 
         Serial.py
             Basic serial communications
-        Fake.py
+        Test.py
             Debugging connection
             
     data/

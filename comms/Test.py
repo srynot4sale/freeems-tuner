@@ -18,12 +18,12 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import config
+import libs.config as config
 import logging
 import comms
 import protocols
 
-logger = logging.getLogger('comms.Fake')
+logger = logging.getLogger('comms.Test')
 
 class connection(comms.interface):
     '''
@@ -52,7 +52,7 @@ class connection(comms.interface):
 
         self._connected = True
         
-        logger.info('Fake development comms connection connected')
+        logger.info('Test comms connection connected')
 
 
     def disconnect(self):
@@ -62,7 +62,7 @@ class connection(comms.interface):
 
         self._connected = False
 
-        logger.info('Fake development comms connection disconnected')
+        logger.info('Test comms connection disconnected')
 
 
     def bindSendWatcher(self, watcher):
@@ -84,7 +84,7 @@ class connection(comms.interface):
         self._buffer.extend(packet.getEscaped())
 
         # Log packet hex
-        logger.debug('Packet sent to fake comms connection: %s' % hex_contents)
+        logger.debug('Packet sent to test comms connection: %s' % hex_contents)
         
         for watcher in self._send_watchers:
             watcher(packet)

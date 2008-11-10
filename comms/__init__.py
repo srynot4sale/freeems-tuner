@@ -18,7 +18,7 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import config, logging
+import libs.config, logging
 
 
 # Tuners comms connection
@@ -39,7 +39,7 @@ def loadDefault():
     '''Load default comms conenction'''
 
     # Fetch config data
-    comms = config.load('Comms', 'default')
+    comms = libs.config.load('Comms', 'default')
     path = 'comms.'+comms
 
     logger = logging.getLogger('comms')

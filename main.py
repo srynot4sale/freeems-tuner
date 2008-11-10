@@ -25,13 +25,13 @@ __title__ = '%s %s' % (__name__, __revision__)
 
 
 # Load libraries
-import data, config, logger, protocols, gui, comms
+import libs.data, libs.config, libs.logger, protocols, gui, comms
 
 # Begin setting up program
-data.createDirectory()
+libs.data.createDirectory()
 
 # Turn on logging
-logger.setup()
+libs.logger.setup()
 
 # Load default comms interface
 comms.loadDefault()
