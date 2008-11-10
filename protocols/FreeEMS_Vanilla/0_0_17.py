@@ -36,7 +36,9 @@ REQUEST_INTERFACE_VERSION   = 0
 REQUEST_FIRMWARE_VERSION    = 2
 REQUEST_MAX_PACKET_SIZE     = 4
 REQUEST_ECHO_PACKET_RETURN  = 6
-REQUEST_SYSTEM_RESET        = 8
+REQUEST_SOFT_SYSTEM_RESET   = 8
+REQUEST_HARD_SYSTEM_RESET   = 10
+
 
 START_BYTE = 0xAA
 END_BYTE = 0xCC
@@ -86,9 +88,16 @@ class protocol:
         self._sendPacket(packet)
 
 
-    def sendUtilityHardwareResetRequest(self):
+    def sendUtilityHardResetRequest(self):
         '''Send a hardware reset utility request'''
-        packet = self.requestSystemReset()
+        packet = self.requestHardSystemReset()
+        
+        self._sendPacket(packet)
+
+
+    def sendUtilitySoftResetRequest(self):
+        '''Send a hardware reset utility request'''
+        packet = self.requestSoftSystemReset()
         
         self._sendPacket(packet)
 
@@ -393,12 +402,21 @@ class protocol:
             self.setPayload('test')
 
 
-    # Firmware system reset request
-    class requestSystemReset(request):
+    # Firmware system reset request (hard)
+    class requestHardSystemReset(request):
 
         def __init__(self):
 
             protocol.request.__init__(self)
-            self.setPayloadId(REQUEST_SYSTEM_RESET)
+            self.setPayloadId(REQUEST_HARD_SYSTEM_RESET)
+
+
+    # Firmware system reset request (soft)
+    class requestSoftSystemReset(request):
+
+        def __init__(self):
+
+            protocol.request.__init__(self)
+            self.setPayloadId(REQUEST_SOFT_SYSTEM_RESET)
 
 

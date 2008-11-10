@@ -28,7 +28,8 @@ import logging
 import commsTestFrame
 import commsUtilityRequests
 import commsDiagnostics
-import commsUtilityFirmwareResetButton
+import commsUtilityFirmwareSoftResetButton
+import commsUtilityFirmwareHardResetButton
 
 logger = logging.getLogger('gui')
 
@@ -87,11 +88,14 @@ class Frame(wx.Frame):
         ctrl_h = wx.BoxSizer(wx.HORIZONTAL)
 
         self.requests = commsUtilityRequests.commsUtilityRequests(window)
-        self.button = commsUtilityFirmwareResetButton.commsUtilityFirmwareResetButton(window)
+        self.button  = commsUtilityFirmwareHardResetButton.commsUtilityFirmwareHardResetButton(window)
+        self.button2 = commsUtilityFirmwareSoftResetButton.commsUtilityFirmwareSoftResetButton(window)
 
         ctrl_h.Add((0,0), 1)
         ctrl_h.Add(self.requests, 10, wx.EXPAND)
-        ctrl_h.Add((0,0), 20)
+        ctrl_h.Add((0,0), 9)
+        ctrl_h.Add(self.button2, 10, wx.EXPAND)
+        ctrl_h.Add((0,0), 1)
         ctrl_h.Add(self.button, 10, wx.EXPAND)
         ctrl_h.Add((0,0), 1)
 

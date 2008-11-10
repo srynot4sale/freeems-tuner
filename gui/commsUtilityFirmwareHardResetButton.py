@@ -24,9 +24,9 @@ import protocols
 import logging
 import datetime
 
-logger = logging.getLogger('gui.commsUtilityFirmwareResetButton')
+logger = logging.getLogger('gui.commsUtilityFirmwareHardResetButton')
 
-class commsUtilityFirmwareResetButton(wx.BoxSizer):
+class commsUtilityFirmwareHardResetButton(wx.BoxSizer):
 
     options = {}
     button = None
@@ -57,4 +57,4 @@ class commsUtilityFirmwareResetButton(wx.BoxSizer):
 
     def sendRequest(self, event):
 
-        protocols.getProtocol().sendUtilityHardwareResetRequest()
+        protocols.getProtocol().sendUtilityHardResetRequest()
