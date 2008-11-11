@@ -20,7 +20,7 @@
 
 import wx
 import os
-import __main__ as main
+import version
 import comms
 import protocols
 import logging
@@ -55,10 +55,10 @@ frame = None
 class Frame(wx.Frame):
     """Frame with standard menu items."""
 
-    revision = main.__revision__
+    revision = version.__revision__
     menus = {}
 
-    def __init__(self, parent=None, id=-1, title=main.__title__,
+    def __init__(self, parent=None, id=-1, title=version.__title__,
                  pos=wx.DefaultPosition, size=(800,600), 
                  style=wx.DEFAULT_FRAME_STYLE):
         """Create a Frame instance."""

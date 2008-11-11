@@ -18,23 +18,7 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-# Import version info
-from version import *
-
-# Load libraries
-import libs.data, libs.config, libs.logger, protocols, gui, comms
-
-# Begin setting up program
-libs.data.createDirectory()
-
-# Turn on logging
-libs.logger.setup()
-
-# Load default comms interface
-comms.loadDefault()
-
-# Load default hardware interface protocol
-protocols.loadDefault()
-
-# Setup GUI
-gui.load()
+# FreeEMS-Tuner
+__revision__ = 'r2008111100'
+__name__ = 'FreeEMS-Tuner'
+__title__ = '%s %s' % (__name__, __revision__)
