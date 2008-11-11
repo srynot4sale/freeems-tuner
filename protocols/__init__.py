@@ -18,7 +18,8 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import libs.config, logging
+import libs.config
+import logging, types
 
 
 # Generic protocol constants
@@ -66,6 +67,39 @@ def loadDefault():
     # Dynamically import
     global protocol
     protocol = __import__(path, globals(), locals(), 'protocol').protocol()
+
+
+def to8bit(value, length = None):
+    '''Convert a var to an 8 bit list'''
+    converted = []
+
+    if not isinstance(value, list):
+        if isinstance(value, str):
+            value = list(value)
+        elif isinstance(value, int):
+            value = [value]
+        else:
+            raise TypeError, 'Unexpected type recieved'
+
+    for byte in value:
+        if isinstance(byte, str):
+            byte = ord(byte)
+
+        if byte > 256:
+            converted.append(byte >> 8)
+            byte &= 0xFF
+
+        converted.append(byte)
+
+    # If a specified length is required
+    if length and len(converted) < length:
+        padding = list(range(0, (length - len(converted))))
+        converted = padding + converted
+
+    elif length and len(converted) > length:
+        raise IndexError, 'Bytes larger than specified length'
+        
+    return converted
 
 
 class interface:

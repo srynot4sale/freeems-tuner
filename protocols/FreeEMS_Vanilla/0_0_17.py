@@ -246,7 +246,7 @@ class protocol:
             Return payload id
             This is padded with a 0 byte for inserting directly into packet
             '''
-            return [0x00, self._payload_id]
+            return protocols.to8bit(self._payload_id, 2)
 
 
         def setPayload(self, payload):
@@ -261,24 +261,12 @@ class protocol:
 
         def getPayloadBytes(self):
             '''Return payload as bytes for inserting directly into packet'''
-            bytes = []
-            for byte in self.getPayload():
-                bytes.append(ord(byte))
-
-            return bytes
+            return protocols.to8bit(self.getPayload())
 
 
         def getPayloadLength(self):
             '''Return length of payload'''
-            length = len(self.getPayload())
-
-            if length > 256:
-                byte1 = length - 256
-            else:
-                byte1 = 0
-
-            byte2 = length % 256
-            return [byte1, byte2]
+            return protocols.to8bit(len(self.getPayload()), 2)
 
 
         def getChecksum(self, bytes):
