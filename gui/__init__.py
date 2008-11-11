@@ -140,7 +140,7 @@ class Frame(wx.Frame):
         m.Append(ID_COMMS_CONNECT, '&Connect', 'Connect To Comms Port')
         m.Append(ID_COMMS_DISCONNECT, '&Disconnect', 'Disconnect From Comms Port')
         m.AppendSeparator()
-        m.Append(ID_COMMS_TESTS, 'Interface Protocol &Test', 'Run interface tests on firmware')
+        m.Append(ID_COMMS_TESTS, 'Interface Protocol &Test...', 'Run interface tests on firmware')
 
         # Help
         m = self.menus['help'] = wx.Menu()
