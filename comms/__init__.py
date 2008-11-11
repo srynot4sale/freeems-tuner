@@ -23,6 +23,7 @@ import libs.config, logging
 
 # Tuners comms connection
 connection = None
+plugin = None
 
 
 def createConnection():
@@ -41,6 +42,9 @@ def loadDefault():
     # Fetch config data
     comms = libs.config.load('Comms', 'default')
     path = 'comms.'+comms
+
+    global plugin
+    plugin = comms
 
     logger = logging.getLogger('comms')
     logger.info('Loading comms module: %s' % path)

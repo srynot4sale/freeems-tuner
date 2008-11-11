@@ -25,6 +25,7 @@ import comms
 import protocols
 import logging
 
+import debugFrame
 import commsTestFrame
 import commsUtilityRequests
 import commsDiagnostics
@@ -42,6 +43,7 @@ ID_UNDO = wx.ID_UNDO
 ID_REDO = wx.ID_REDO
 ID_ABOUT = wx.ID_ABOUT
 ID_HELP = wx.NewId()
+ID_DEBUG_FRAME = wx.NewId()
 ID_TOGGLE_MAXIMIZE = wx.NewId()
 ID_COMMS_CONNECT = wx.NewId()
 ID_COMMS_DISCONNECT = wx.NewId()
@@ -147,6 +149,7 @@ class Frame(wx.Frame):
         m.Append(ID_HELP, '&Help\tF1', 'Help!')
         m.AppendSeparator()
         m.Append(ID_ABOUT, '&About...', 'About this program')
+        m.Append(ID_DEBUG_FRAME, '&Debug Info...', 'Show system information for debugging purposes')
 
         b = self.menu_bar = wx.MenuBar()
         b.Append(self.menus['file'], '&File')
@@ -157,14 +160,19 @@ class Frame(wx.Frame):
         self.SetMenuBar(b)
 
         self.Bind(wx.EVT_MENU, self.OnExit, id=ID_EXIT)
+
         self.Bind(wx.EVT_MENU, self.OnUndo, id=ID_UNDO)
         self.Bind(wx.EVT_MENU, self.OnRedo, id=ID_REDO)
-        self.Bind(wx.EVT_MENU, self.OnAbout, id=ID_ABOUT)
-        self.Bind(wx.EVT_MENU, self.OnHelp, id=ID_HELP)
+
         self.Bind(wx.EVT_MENU, self.OnToggleMaximize, id=ID_TOGGLE_MAXIMIZE)
+
         self.Bind(wx.EVT_MENU, self.CommsConnect, id=ID_COMMS_CONNECT)
         self.Bind(wx.EVT_MENU, self.CommsDisconnect, id=ID_COMMS_DISCONNECT)
         self.Bind(wx.EVT_MENU, self.CommsTests, id=ID_COMMS_TESTS)
+
+        self.Bind(wx.EVT_MENU, self.OnAbout, id=ID_ABOUT)
+        self.Bind(wx.EVT_MENU, self.OnHelp, id=ID_HELP)
+        self.Bind(wx.EVT_MENU, self.ShowDebugFrame, id=ID_DEBUG_FRAME)
 
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_UNDO)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_REDO)
@@ -213,6 +221,11 @@ class Frame(wx.Frame):
                                   wx.OK | wx.ICON_INFORMATION)
         dialog.ShowModal()
         dialog.Destroy()
+
+
+    def ShowDebugFrame(self, event):
+        '''Show debug frame'''
+        debugFrame.debugFrame(self)
 
 
     def CommsConnect(self, event):

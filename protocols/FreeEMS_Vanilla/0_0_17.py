@@ -18,7 +18,6 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-# FreeEMS 0.0.17 serial protocol
 import types
 import protocols
 import comms
