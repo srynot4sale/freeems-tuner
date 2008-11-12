@@ -192,10 +192,12 @@ class Frame(wx.Frame):
 
     def OnAbout(self, event):
         """Display an About window."""
-        title = 'About '+main.__name__
-        text  = 'Written by Aaron Barnes\n'
+
+        title = version.__name__
+        text  = 'Version %s\n\n' % version.__revision__
+        text += 'Written by Aaron Barnes\n'
+        text += 'FreeEMS-Tuner is not to be used while intoxicated. Seriously.\n\n'
         text += 'More info at http://www.diyefi.org/\n\n'
-        text += 'Version: '+main.__revision__+'\n\n'
         text += 'Licence information can be found in the LICENCE file'
 
         dialog = wx.MessageDialog(self, text, title,
