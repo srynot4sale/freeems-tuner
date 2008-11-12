@@ -50,6 +50,10 @@ ID_COMMS_DISCONNECT = wx.NewId()
 ID_COMMS_TESTS = wx.NewId()
 
 
+# Helper value for inserting spacing into sizers
+blank = (0,0)
+
+
 # Instance of the parent frame
 frame = None
 
@@ -59,6 +63,8 @@ class Frame(wx.Frame):
 
     revision = version.__revision__
     menus = {}
+    tabctrl = None
+    windows = {}
 
     def __init__(self, parent=None, id=-1, title=version.__title__,
                  pos=wx.DefaultPosition, size=(800,600), 
@@ -68,7 +74,7 @@ class Frame(wx.Frame):
 
         self.CreateStatusBar()
         self.SetStatusText('Version %s' % self.revision)
-        self.__createMenus()
+        self._createMenus()
 
         self.iconized = False
 
@@ -82,32 +88,44 @@ class Frame(wx.Frame):
 
 
     def BuildWindow(self):
+        '''Build and place widgets'''
 
-        self.window = window = wx.Panel(parent=self, id=-1)
+        # Build tab bar
+        self.tabctrl = tabctrl = wx.Notebook(self)
+
+        # Build main window
+        self.windows['main'] = window = wx.Panel(tabctrl)
+        self.tabctrl.AddPage(window, 'Main')
         
-        window.sizer = sizer = wx.BoxSizer(wx.VERTICAL)
-       
-        ctrl_h = wx.BoxSizer(wx.HORIZONTAL)
-
-        self.requests = commsUtilityRequests.commsUtilityRequests(window)
-        self.button  = commsUtilityFirmwareHardResetButton.commsUtilityFirmwareHardResetButton(window)
-        self.button2 = commsUtilityFirmwareSoftResetButton.commsUtilityFirmwareSoftResetButton(window)
-
-        ctrl_h.Add((0,0), 1)
-        ctrl_h.Add(self.requests, 10, wx.EXPAND)
-        ctrl_h.Add((0,0), 9)
-        ctrl_h.Add(self.button2, 10, wx.EXPAND)
-        ctrl_h.Add((0,0), 1)
-        ctrl_h.Add(self.button, 10, wx.EXPAND)
-        ctrl_h.Add((0,0), 1)
+        self.requests       = commsUtilityRequests.commsUtilityRequests(window)
+        self.button_red     = commsUtilityFirmwareHardResetButton.commsUtilityFirmwareHardResetButton(window)
+        self.button_orange  = commsUtilityFirmwareSoftResetButton.commsUtilityFirmwareSoftResetButton(window)
 
         self.comms = commsDiagnostics.commsDiagnostics(window)
 
-        sizer.Add(self.comms, 20, wx.EXPAND)
-        sizer.Add((0,0), 1)
-        sizer.Add(ctrl_h, 5, wx.EXPAND)
+        # Try keep all spaces at 1/60th of the screen width or height
+        # Sizer will only add up to 58 tho as it is enclosed in another
+        # horizontal sizer
+        sizer3 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer3.Add(self.requests, 15, wx.EXPAND)
+        sizer3.Add(blank, 12)
+        sizer3.Add(self.button_orange, 15, wx.EXPAND)
+        sizer3.Add(blank, 1)
+        sizer3.Add(self.button_red, 15, wx.EXPAND)
 
-        window.SetSizer(sizer)
+        sizer2 = wx.BoxSizer(wx.VERTICAL)
+        sizer2.Add(blank, 1)
+        sizer2.Add(self.comms, 45, wx.EXPAND)
+        sizer2.Add(blank, 1)
+        sizer2.Add(sizer3, 12, wx.EXPAND)
+        sizer2.Add(blank, 1)
+
+        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer1.Add(blank, 1)
+        sizer1.Add(sizer2, 58, wx.EXPAND)
+        sizer1.Add(blank, 1)
+
+        window.SetSizer(sizer1)
         window.Layout()
 
 
@@ -121,7 +139,7 @@ class Frame(wx.Frame):
         self.Destroy()
 
 
-    def __createMenus(self):
+    def _createMenus(self):
         # File
         m = self.menus['file'] = wx.Menu()
         m.Append(ID_EXIT, 'E&xit\tCtrl+Q', 'Exit Program')

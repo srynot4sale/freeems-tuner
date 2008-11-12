@@ -44,7 +44,7 @@ class commsDiagnostics(grid.Grid):
         self.SetColLabelValue(2, 'Pld Id')
         self.SetColSize(2, 70)
         self.SetColLabelValue(3, 'Payload')
-        self.SetColSize(3, 150)
+        self.SetColSize(3, 130)
         self.SetColLabelValue(4, 'Raw Bytes')
         self.SetColSize(4, 300)
 
