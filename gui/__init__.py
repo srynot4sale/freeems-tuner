@@ -36,18 +36,21 @@ logger = logging.getLogger('gui')
 
 
 # Create event id's
-ID_NEW = wx.ID_NEW
-ID_OPEN = wx.ID_OPEN
 ID_EXIT = wx.ID_EXIT
+
 ID_UNDO = wx.ID_UNDO
 ID_REDO = wx.ID_REDO
-ID_ABOUT = wx.ID_ABOUT
-ID_HELP = wx.NewId()
-ID_DEBUG_FRAME = wx.NewId()
+
 ID_TOGGLE_MAXIMIZE = wx.NewId()
+ID_TAB_POPOUT = wx.NewId()
+
 ID_COMMS_CONNECT = wx.NewId()
 ID_COMMS_DISCONNECT = wx.NewId()
 ID_COMMS_TESTS = wx.NewId()
+
+ID_ABOUT = wx.ID_ABOUT
+ID_HELP = wx.NewId()
+ID_DEBUG_FRAME = wx.NewId()
 
 
 # Helper value for inserting spacing into sizers
@@ -94,39 +97,8 @@ class Frame(wx.Frame):
         self.tabctrl = tabctrl = wx.Notebook(self)
 
         # Build main window
-        self.windows['main'] = window = wx.Panel(tabctrl)
-        self.tabctrl.AddPage(window, 'Main')
-        
-        self.requests       = commsUtilityRequests.commsUtilityRequests(window)
-        self.button_red     = commsUtilityFirmwareHardResetButton.commsUtilityFirmwareHardResetButton(window)
-        self.button_orange  = commsUtilityFirmwareSoftResetButton.commsUtilityFirmwareSoftResetButton(window)
-
-        self.comms = commsDiagnostics.commsDiagnostics(window)
-
-        # Try keep all spaces at 1/60th of the screen width or height
-        # Sizer will only add up to 58 tho as it is enclosed in another
-        # horizontal sizer
-        sizer3 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer3.Add(self.requests, 15, wx.EXPAND)
-        sizer3.Add(blank, 12)
-        sizer3.Add(self.button_orange, 15, wx.EXPAND)
-        sizer3.Add(blank, 1)
-        sizer3.Add(self.button_red, 15, wx.EXPAND)
-
-        sizer2 = wx.BoxSizer(wx.VERTICAL)
-        sizer2.Add(blank, 1)
-        sizer2.Add(self.comms, 45, wx.EXPAND)
-        sizer2.Add(blank, 1)
-        sizer2.Add(sizer3, 12, wx.EXPAND)
-        sizer2.Add(blank, 1)
-
-        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer1.Add(blank, 1)
-        sizer1.Add(sizer2, 58, wx.EXPAND)
-        sizer1.Add(blank, 1)
-
-        window.SetSizer(sizer1)
-        window.Layout()
+        self.windows['main'] = window_main = tabMain(self.tabctrl)
+        tabctrl.AddPage(window_main, 'Main')
 
 
     def OnIconize(self, event):
@@ -154,6 +126,7 @@ class Frame(wx.Frame):
         # View
         m = self.menus['view'] = wx.Menu()
         m.Append(ID_TOGGLE_MAXIMIZE, '&Toggle Maximize\tF11', 'Maximize/Restore Application')
+        m.Append(ID_TAB_POPOUT, 'Tab Pop&out', 'Turn current tab into its own window')
 
         # Comms
         m = self.menus['comms'] = wx.Menu()
@@ -350,6 +323,45 @@ class Frame(wx.Frame):
             px, py = self.GetPosition()
             config.WriteInt('Window/PosX', px)
             config.WriteInt('Window/PosY', py)
+
+
+class tabMain(wx.Panel):
+    '''Main tab, contains mostly serial stuff for now'''
+
+    def __init__(self, parent):
+        '''Setup interface elements'''
+        wx.Panel.__init__(self, parent)
+
+        self.requests       = commsUtilityRequests.commsUtilityRequests(self)
+        self.button_red     = commsUtilityFirmwareHardResetButton.commsUtilityFirmwareHardResetButton(self)
+        self.button_orange  = commsUtilityFirmwareSoftResetButton.commsUtilityFirmwareSoftResetButton(self)
+
+        self.comms = commsDiagnostics.commsDiagnostics(self)
+
+        # Try keep all spaces at 1/60th of the screen width or height
+        # Sizer will only add up to 58 tho as it is enclosed in another
+        # horizontal sizer
+        sizer3 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer3.Add(self.requests, 15, wx.EXPAND)
+        sizer3.Add(blank, 12)
+        sizer3.Add(self.button_orange, 15, wx.EXPAND)
+        sizer3.Add(blank, 1)
+        sizer3.Add(self.button_red, 15, wx.EXPAND)
+
+        sizer2 = wx.BoxSizer(wx.VERTICAL)
+        sizer2.Add(blank, 1)
+        sizer2.Add(self.comms, 45, wx.EXPAND)
+        sizer2.Add(blank, 1)
+        sizer2.Add(sizer3, 12, wx.EXPAND)
+        sizer2.Add(blank, 1)
+
+        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer1.Add(blank, 1)
+        sizer1.Add(sizer2, 58, wx.EXPAND)
+        sizer1.Add(blank, 1)
+
+        self.SetSizer(sizer1)
+        self.Layout()
 
 
 # Bring up wxpython interface
