@@ -62,9 +62,7 @@ class protocol:
             'Interface Version',
             'Firmware Version',
             'Max Packet Size',
-            'Echo Packet Return',
-            'Request Soft System Reset',
-            'Request Hard System Reset'
+            'Echo Packet Return'
     ]
 
     _utility_request_packets = [
@@ -72,8 +70,6 @@ class protocol:
             'requestFirmwareVersion',
             'requestMaxPacketSize',
             'requestEchoPacketReturn',
-            'requestSoftSystemReset',
-            'requestHardSystemReset'
     ]
 
 
