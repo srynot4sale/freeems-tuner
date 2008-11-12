@@ -36,7 +36,6 @@ BIT7  = 0x80	# 8th bit	= 128
 
 # Currently used protocol
 protocol = None
-plugin = None
 
 
 def getProtocol():
@@ -61,9 +60,6 @@ def loadDefault():
     #   $cwd/protocols/FreeEMS/0_17.py
     #
     path = 'protocols.'+def_protocol+'.'+version
-
-    global plugin
-    plugin = def_protocol+'.'+version
 
     logger = logging.getLogger('protocols')
     logger.info('Loading protocol module: %s' % path)
@@ -102,6 +98,24 @@ def to8bit(value, length = None):
 
     elif length and len(converted) > length:
         raise IndexError, 'Bytes larger than specified length'
+        
+    return converted
+
+
+def from8bit(value):
+    '''Convert an 8 bit list to a var'''
+    converted = 0
+    i = 0
+
+    if not isinstance(value, list):
+        raise TypeError, 'Unexpected type recieved'
+
+    for num in reversed(value):
+        if i < 1:
+            converted += num
+        else:
+            converted += num * (i * 256)
+        i += 1               #No i++ in Python? Really?
         
     return converted
 
