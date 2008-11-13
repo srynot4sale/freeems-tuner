@@ -38,15 +38,30 @@ REQUEST_ECHO_PACKET_RETURN  = 6
 REQUEST_SOFT_SYSTEM_RESET   = 8
 REQUEST_HARD_SYSTEM_RESET   = 10
 
-
 START_BYTE = 0xAA
 END_BYTE = 0xCC
 ESCAPE_BYTE = 0xBB
 
-
 STATE_NOT_PACKET            = 0
 STATE_ESCAPE_BYTE           = 1
 STATE_IN_PACKET             = 2
+
+TEST_RESPONSES = {
+    REQUEST_INTERFACE_VERSION:      [0xAA, 0x11, 0x00, 0x01, 0x00, 0x14, 0x00, 0x00,
+                                     0x11, 0x49, 0x46, 0x72, 0x65, 0x65, 0x45, 0x4D,
+                                     0x53, 0x20, 0x56, 0x61, 0x6E, 0x69, 0x6C, 0x6C,
+                                     0x61, 0x00, 0xCE, 0xCC],
+    REQUEST_FIRMWARE_VERSION:       [0xAA, 0x11, 0x00, 0x03, 0x00, 0x22, 0x46, 0x72,
+                                     0x65, 0x65, 0x45, 0x4D, 0x53, 0x20, 0x56, 0x61,
+                                     0x6E, 0x69, 0x6C, 0x6C, 0x61, 0x20, 0x76, 0x30,
+                                     0x2E, 0x30, 0x2E, 0x31, 0x37, 0x20, 0x70, 0x72,
+                                     0x65, 0x2D, 0x61, 0x6C, 0x70, 0x68, 0x61, 0x00,
+                                     0xDB, 0xCC],
+    REQUEST_MAX_PACKET_SIZE:        [0xAA, 0x01, 0x00, 0x05, 0x04, 0x10, 0x1A, 0xCC],
+    REQUEST_ECHO_PACKET_RETURN:     [],
+    REQUEST_SOFT_SYSTEM_RESET: [],
+    REQUEST_HARD_SYSTEM_RESET: []
+}
 
 
 # Load logging interface
@@ -100,6 +115,15 @@ class protocol:
         self._sendPacket(packet)
 
 
+    def getTestResponse(self, response_to):
+        '''Return hardcoded correct raw response packet'''
+        if response_to in TEST_RESPONSES:
+            return TEST_RESPONSES[response_to]
+
+        else:
+            return []
+
+    
     def _getComms(self):
         '''Return the protocols comm connection'''
         if not self._connection:
@@ -315,6 +339,11 @@ class protocol:
             This is padded with a 0 byte for inserting directly into packet
             '''
             return protocols.to8bit(self._payload_id, 2)
+
+
+        def getPayloadIdInt(self):
+            '''Return payload id as int'''
+            return self._payload_id
 
 
         def setPayload(self, payload):
