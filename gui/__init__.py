@@ -24,6 +24,7 @@ import version
 import comms
 import protocols
 import logging
+import libs.logger as logger
 
 import debugFrame
 import commsTestFrame
@@ -98,7 +99,9 @@ class Frame(wx.Frame):
 
         # Build main window
         self.windows['main'] = window_main = tabMain(self.tabctrl)
+        self.windows['debug'] = window_debug = tabDebuglog(self.tabctrl)
         tabctrl.AddPage(window_main, 'Main')
+        tabctrl.AddPage(window_debug, 'Debug Log')
 
 
     def OnIconize(self, event):
@@ -364,6 +367,51 @@ class tabMain(wx.Panel):
 
         self.SetSizer(sizer1)
         self.Layout()
+
+
+class tabDebuglog(wx.Panel):
+    '''Debug log tab'''
+
+    def __init__(self, parent):
+        '''Setup interface elements'''
+        wx.Panel.__init__(self, parent)
+
+        self.display = display = wx.TextCtrl(self, -1, style=wx.SUNKEN_BORDER | wx.VSCROLL | wx.TE_MULTILINE)
+        display.SetEditable(False)
+
+        # Try keep all spaces at 1/60th of the screen width or height
+        sizer2 = wx.BoxSizer(wx.VERTICAL)
+        sizer2.Add(blank, 1)
+        sizer2.Add(self.display, 58, wx.EXPAND)
+        sizer2.Add(blank, 1)
+
+        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer1.Add(blank, 1)
+        sizer1.Add(sizer2, 58, wx.EXPAND)
+        sizer1.Add(blank, 1)
+
+        self.SetSizer(sizer1)
+        self.Layout()
+
+        # Add a logger
+        base = logging.getLogger()
+        base.addHandler(self.loggingHandler(self))
+
+
+    def updateDisplay(self, message):
+        '''Add a new line to the display'''
+        self.display.SetValue(self.display.GetValue() + str(message) + '\n')
+    
+    
+    # Logging handler for printing to this display
+    class loggingHandler(logging.Handler):
+
+        def __init__(self, parent):
+            logging.Handler.__init__(self)
+            self.parent = parent
+    
+        def emit(self, record):
+            self.parent.updateDisplay(record)
 
 
 # Bring up wxpython interface
