@@ -43,6 +43,7 @@ START_BYTE = 0xAA
 END_BYTE = 0xCC
 ESCAPE_BYTE = 0xBB
 
+
 STATE_NOT_PACKET            = 0
 STATE_ESCAPE_BYTE           = 1
 STATE_IN_PACKET             = 2
@@ -115,6 +116,24 @@ class protocol:
         self._getComms().send(packet)
 
 
+    def _unEscape(self, packet):
+        '''Unescape a raw packet'''
+        i = 0
+        while i < len(packet):
+
+            if packet[i] == ESCAPE_BYTE:
+
+                del packet[i]
+                packet[i] ^= 0xFF
+
+                if packet[i] not in (START_BYTE, ESCAPE_BYTE, END_BYTE):
+                    logger.error('Wrongly escaped byte found in packet: %X' % packet[i])
+
+            i += 1
+
+        return packet
+
+
     def processRecieveBuffer(self, buffer):
         '''Check for any incoming packets and return if found'''
 
@@ -171,7 +190,59 @@ class protocol:
 
             # Check if we have a complete packet
             if len(packet) and state == STATE_NOT_PACKET:
+                self.processIncomingPacket(packet)
                 return packet
+
+
+    def processIncomingPacket(self, packet):
+        '''Takes a raw packet, checks it and returns the correct packet class'''
+
+        # Quick checks to make sure this is a legitimate packet
+        if not isinstance(packet, list):
+            raise TypeError, 'Expected a list'
+
+        if packet[0] != START_BYTE or packet[-1] != END_BYTE:
+            raise Exception, 'Start and/or end byte missing'
+
+        packet = self._unEscape(packet)
+
+        contents = {}
+        contents['flags'] = None
+        contents['payload_id'] = None
+        contents['payload_length'] = None
+        contents['payload'] = []
+        contents['checksum'] = None
+
+        index = 1
+
+        # Grab flags
+        contents['flags'] = flags = packet[index]
+        index += 1
+
+        # Grab payload id
+        contents['payload_id'] = protocols.from8bit(packet[index:index+2])
+        index += 2
+
+        # Grab payload length & payload
+        if flags & HEADER_HAS_LENGTH:
+
+            contents['payload_length'] = plength = protocols.from8bit(packet[index:index+2])
+            index += 2
+            contents['payload'] = packet[index:index+plength]
+            index += plength
+
+        # Grab checksum
+        contents['checksum'] = checksum = packet[index]
+        index += 1
+
+        # Check checksum
+        if checksum != getChecksum(packet[1:index-1]):
+            raise Exception, 'Checksum is incorrect! Provided: %d, generated: %d' % (checksum, getChecksum(packet[1:index-1]))
+
+        # Just double check we only have one byte left
+        if index != (len(packet) - 1):
+            raise Exception, 'Packet incorrectly processed, %d bytes left' % (len(packet) - 1 - index)
+
 
 
     class packet:
@@ -266,19 +337,6 @@ class protocol:
             return protocols.to8bit(len(self.getPayload()), 2)
 
 
-        def getChecksum(self, bytes):
-            '''Generate checksum of bytes'''
-            checksum = 0
-            for byte in bytes:
-                checksum += byte
-
-            if checksum <= 256:
-                return checksum
-
-            checksum = checksum % 256
-            return checksum 
-
-
         def __str__(self):
             '''Generate a string for serial connections'''
             packet = self.getEscaped()
@@ -309,7 +367,7 @@ class protocol:
                 packet.extend   ( self.getPayloadLength() )
                 packet.extend   ( self.getPayloadBytes() )
 
-            packet.append   ( self.getChecksum(packet) )
+            packet.append   ( getChecksum(packet) )
             packet.insert   ( 0, START_BYTE )
             packet.append   ( END_BYTE )
             
@@ -413,3 +471,14 @@ class protocol:
             self.setPayloadId(REQUEST_SOFT_SYSTEM_RESET)
 
 
+def getChecksum(bytes):
+    '''Generate checksum of bytes'''
+    checksum = 0
+    for byte in bytes:
+        checksum += byte
+
+    if checksum <= 256:
+        return checksum
+
+    checksum = checksum % 256
+    return checksum 
