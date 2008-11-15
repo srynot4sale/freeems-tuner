@@ -37,6 +37,28 @@ REQUEST_MAX_PACKET_SIZE     = 4
 REQUEST_ECHO_PACKET_RETURN  = 6
 REQUEST_SOFT_SYSTEM_RESET   = 8
 REQUEST_HARD_SYSTEM_RESET   = 10
+REQUEST_ASYNC_ERROR_CODE    = 12
+REQUEST_ASYNC_DEBUG_INFO    = 14
+
+RESPONSE_SOFT_SYSTEM_RESET  = 9
+RESPONSE_HARD_SYSTEM_RESET  = 11
+RESPONSE_ASYNC_ERROR_CODE   = 13
+RESPONSE_ASYNC_DEBUG_INFO   = 15
+
+PACKET_IDS = {
+        REQUEST_INTERFACE_VERSION:  "Request interface version",
+        REQUEST_FIRMWARE_VERSION:   "Request firmware version",
+        REQUEST_MAX_PACKET_SIZE:    "Request maximum packet size",
+        REQUEST_ECHO_PACKET_RETURN: "Request echo packet return",
+        REQUEST_SOFT_SYSTEM_RESET:  "Request soft system reset",
+        RESPONSE_SOFT_SYSTEM_RESET: "Reply to soft system reset",
+        REQUEST_HARD_SYSTEM_RESET:  "Request hard system reset",
+        RESPONSE_HARD_SYSTEM_RESET: "Reply to hard system reset",
+        REQUEST_ASYNC_ERROR_CODE:   "Request asynchronous error code",
+        RESPONSE_ASYNC_ERROR_CODE:  "Asynchronous error code packet",
+        REQUEST_ASYNC_DEBUG_INFO:   "Request asynchronous debug info",
+        RESPONSE_ASYNC_DEBUG_INFO:  "Asynchronous debug info packet"
+}
 
 START_BYTE = 0xAA
 END_BYTE = 0xCC
@@ -87,6 +109,11 @@ class protocol:
             'requestMaxPacketSize',
             'requestEchoPacketReturn',
     ]
+
+
+    def getPacketType(self, id):
+        '''Returns human readable packet type'''
+        return PACKET_IDS[id]
 
 
     def getUtilityRequestList(self):
@@ -360,7 +387,12 @@ class protocol:
 
         def getPayloadLength(self):
             '''Return length of payload'''
-            return protocols.to8bit(len(self.getPayload()), 2)
+            return protocols.to8bit(self.getPayloadLengthInt(), 2)
+
+
+        def getPayloadLengthInt(self):
+            '''Return length of payload as int'''
+            return len(self.getPayload())
 
 
         def __str__(self):
@@ -433,6 +465,16 @@ class protocol:
                 raw_hex.append(byte)
             
             return raw_hex
+
+
+        def getPayloadHex(self):
+            '''Return the payload as hex'''
+            length = self.getPayloadLengthInt()
+
+            if not length:
+                return []
+
+            return self.getPacketHex()[6:(length-6)]
 
 
     # Request
