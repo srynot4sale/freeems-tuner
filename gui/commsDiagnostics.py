@@ -47,7 +47,7 @@ class commsDiagnostics(grid.Grid):
     def __init__(self, parent):
         grid.Grid.__init__(self, parent)
 
-        self.CreateGrid(1, 5)
+        self.CreateGrid(1, 4)
         self.SetRowLabelSize(50)
         self.SetColLabelValue(0, 'Time')
         self.SetColSize(0, 100)
@@ -112,7 +112,7 @@ class commsDiagnostics(grid.Grid):
 
         self.SetCellValue(self.row, 0, str(time))
         self.SetCellValue(self.row, 1, str(header))
-        self.SetCellValue(self.row, 4, str(raw_hex))
+        self.SetCellValue(self.row, 3, str(raw_hex))
         
         self.MakeCellVisible(self.row + 1, 1)
         self.ForceRefresh()
