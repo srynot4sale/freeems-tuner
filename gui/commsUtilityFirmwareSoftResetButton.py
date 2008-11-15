@@ -39,7 +39,7 @@ class commsUtilityFirmwareSoftResetButton(wx.BoxSizer):
         wx.BoxSizer.__init__(self, wx.VERTICAL)
 
         button_text  = 'The Big Orange Button\n'
-        button_text += '    (ECU Soft Reset)'
+        button_text += '    (Soft EMS Reset)'
         self.button = wx.Button(parent, self.ID_SEND_FIRMWARE_SOFT_RESET, button_text)
         self.button.SetBackgroundColour('#FF6400')
         self.button.SetForegroundColour(wx.WHITE)
