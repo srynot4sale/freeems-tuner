@@ -56,9 +56,7 @@ class commsDiagnostics(grid.Grid):
         self.SetColLabelValue(2, 'Id')
         self.SetColSize(2, 170)
         self.SetColLabelValue(3, 'Payload')
-        self.SetColSize(3, 140)
-        self.SetColLabelValue(4, 'Raw Bytes')
-        self.SetColSize(4, 250)
+        self.SetColSize(3, 530)
         #self.SetDefaultRowSize(30, 1)
 
         self.conn = comms.getConnection()
@@ -71,6 +69,8 @@ class commsDiagnostics(grid.Grid):
         time = datetime.datetime.time(datetime.datetime.now())
         header = request.getHeaderFlags()
         payload_id_bit_list = request.getPayloadId()
+        payload_id = protocols.from8bit(payload_id_bit_list)
+        payload_id_hum = self.protocolPayloadTypeID[payload_id]
         payload = request.getPayload()
         payload_hex = request.getPayloadHex()
         

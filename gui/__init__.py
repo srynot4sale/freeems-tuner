@@ -24,6 +24,7 @@ import version
 import comms
 import protocols
 import logging
+import libs.logger as logger
 
 import debugFrame
 import commsTestFrame
@@ -36,18 +37,25 @@ logger = logging.getLogger('gui')
 
 
 # Create event id's
-ID_NEW = wx.ID_NEW
-ID_OPEN = wx.ID_OPEN
 ID_EXIT = wx.ID_EXIT
+
 ID_UNDO = wx.ID_UNDO
 ID_REDO = wx.ID_REDO
-ID_ABOUT = wx.ID_ABOUT
-ID_HELP = wx.NewId()
-ID_DEBUG_FRAME = wx.NewId()
+
 ID_TOGGLE_MAXIMIZE = wx.NewId()
+ID_TAB_POPOUT = wx.NewId()
+
 ID_COMMS_CONNECT = wx.NewId()
 ID_COMMS_DISCONNECT = wx.NewId()
 ID_COMMS_TESTS = wx.NewId()
+
+ID_ABOUT = wx.ID_ABOUT
+ID_HELP = wx.NewId()
+ID_DEBUG_FRAME = wx.NewId()
+
+
+# Helper value for inserting spacing into sizers
+blank = (0,0)
 
 
 # Instance of the parent frame
@@ -59,6 +67,8 @@ class Frame(wx.Frame):
 
     revision = version.__revision__
     menus = {}
+    tabctrl = None
+    windows = {}
 
     def __init__(self, parent=None, id=-1, title=version.__title__,
                  pos=wx.DefaultPosition, size=(800,600), 
@@ -68,7 +78,7 @@ class Frame(wx.Frame):
 
         self.CreateStatusBar()
         self.SetStatusText('Version %s' % self.revision)
-        self.__createMenus()
+        self._createMenus()
 
         self.iconized = False
 
@@ -82,33 +92,16 @@ class Frame(wx.Frame):
 
 
     def BuildWindow(self):
+        '''Build and place widgets'''
 
-        self.window = window = wx.Panel(parent=self, id=-1)
-        
-        window.sizer = sizer = wx.BoxSizer(wx.VERTICAL)
-       
-        ctrl_h = wx.BoxSizer(wx.HORIZONTAL)
+        # Build tab bar
+        self.tabctrl = tabctrl = wx.Notebook(self)
 
-        self.requests = commsUtilityRequests.commsUtilityRequests(window)
-        self.button  = commsUtilityFirmwareHardResetButton.commsUtilityFirmwareHardResetButton(window)
-        self.button2 = commsUtilityFirmwareSoftResetButton.commsUtilityFirmwareSoftResetButton(window)
-
-        ctrl_h.Add((0,0), 1)
-        ctrl_h.Add(self.requests, 10, wx.EXPAND)
-        ctrl_h.Add((0,0), 9)
-        ctrl_h.Add(self.button2, 10, wx.EXPAND)
-        ctrl_h.Add((0,0), 1)
-        ctrl_h.Add(self.button, 10, wx.EXPAND)
-        ctrl_h.Add((0,0), 1)
-
-        self.comms = commsDiagnostics.commsDiagnostics(window)
-
-        sizer.Add(self.comms, 20, wx.EXPAND)
-        sizer.Add((0,0), 1)
-        sizer.Add(ctrl_h, 5, wx.EXPAND)
-
-        window.SetSizer(sizer)
-        window.Layout()
+        # Build main window
+        self.windows['main'] = window_main = tabMain(self.tabctrl)
+        self.windows['debug'] = window_debug = tabDebuglog(self.tabctrl)
+        tabctrl.AddPage(window_main, 'Main')
+        tabctrl.AddPage(window_debug, 'Debug Log')
 
 
     def OnIconize(self, event):
@@ -121,7 +114,7 @@ class Frame(wx.Frame):
         self.Destroy()
 
 
-    def __createMenus(self):
+    def _createMenus(self):
         # File
         m = self.menus['file'] = wx.Menu()
         m.Append(ID_EXIT, 'E&xit\tCtrl+Q', 'Exit Program')
@@ -136,6 +129,7 @@ class Frame(wx.Frame):
         # View
         m = self.menus['view'] = wx.Menu()
         m.Append(ID_TOGGLE_MAXIMIZE, '&Toggle Maximize\tF11', 'Maximize/Restore Application')
+        m.Append(ID_TAB_POPOUT, 'Tab Pop&out', 'Turn current tab into its own window')
 
         # Comms
         m = self.menus['comms'] = wx.Menu()
@@ -201,10 +195,12 @@ class Frame(wx.Frame):
 
     def OnAbout(self, event):
         """Display an About window."""
-        title = 'About '+main.__name__
-        text  = 'Written by Aaron Barnes\n'
+
+        title = version.__name__
+        text  = 'Version %s\n\n' % version.__revision__
+        text += 'Written by Aaron Barnes\n'
+        text += 'FreeEMS-Tuner is not to be used while intoxicated. Seriously.\n\n'
         text += 'More info at http://www.diyefi.org/\n\n'
-        text += 'Version: '+main.__revision__+'\n\n'
         text += 'Licence information can be found in the LICENCE file'
 
         dialog = wx.MessageDialog(self, text, title,
@@ -332,6 +328,90 @@ class Frame(wx.Frame):
             px, py = self.GetPosition()
             config.WriteInt('Window/PosX', px)
             config.WriteInt('Window/PosY', py)
+
+
+class tabMain(wx.Panel):
+    '''Main tab, contains mostly serial stuff for now'''
+
+    def __init__(self, parent):
+        '''Setup interface elements'''
+        wx.Panel.__init__(self, parent)
+
+        self.requests       = commsUtilityRequests.commsUtilityRequests(self)
+        self.button_red     = commsUtilityFirmwareHardResetButton.commsUtilityFirmwareHardResetButton(self)
+        self.button_orange  = commsUtilityFirmwareSoftResetButton.commsUtilityFirmwareSoftResetButton(self)
+
+        self.comms = commsDiagnostics.commsDiagnostics(self)
+
+        # Try keep all spaces at 1/60th of the screen width or height
+        # Sizer will only add up to 58 tho as it is enclosed in another
+        # horizontal sizer
+        sizer3 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer3.Add(self.requests, 15, wx.EXPAND)
+        sizer3.Add(blank, 12)
+        sizer3.Add(self.button_orange, 15, wx.EXPAND)
+        sizer3.Add(blank, 1)
+        sizer3.Add(self.button_red, 15, wx.EXPAND)
+
+        sizer2 = wx.BoxSizer(wx.VERTICAL)
+        sizer2.Add(blank, 1)
+        sizer2.Add(self.comms, 45, wx.EXPAND)
+        sizer2.Add(blank, 1)
+        sizer2.Add(sizer3, 12, wx.EXPAND)
+        sizer2.Add(blank, 1)
+
+        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer1.Add(blank, 1)
+        sizer1.Add(sizer2, 58, wx.EXPAND)
+        sizer1.Add(blank, 1)
+
+        self.SetSizer(sizer1)
+        self.Layout()
+
+
+class tabDebuglog(wx.Panel):
+    '''Debug log tab'''
+
+    def __init__(self, parent):
+        '''Setup interface elements'''
+        wx.Panel.__init__(self, parent)
+
+        self.display = display = wx.TextCtrl(self, -1, style=wx.SUNKEN_BORDER | wx.VSCROLL | wx.TE_MULTILINE)
+        display.SetEditable(False)
+
+        # Try keep all spaces at 1/60th of the screen width or height
+        sizer2 = wx.BoxSizer(wx.VERTICAL)
+        sizer2.Add(blank, 1)
+        sizer2.Add(self.display, 58, wx.EXPAND)
+        sizer2.Add(blank, 1)
+
+        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer1.Add(blank, 1)
+        sizer1.Add(sizer2, 58, wx.EXPAND)
+        sizer1.Add(blank, 1)
+
+        self.SetSizer(sizer1)
+        self.Layout()
+
+        # Add a logger
+        base = logging.getLogger()
+        base.addHandler(self.loggingHandler(self))
+
+
+    def updateDisplay(self, message):
+        '''Add a new line to the display'''
+        self.display.SetValue(self.display.GetValue() + str(message) + '\n')
+    
+    
+    # Logging handler for printing to this display
+    class loggingHandler(logging.Handler):
+
+        def __init__(self, parent):
+            logging.Handler.__init__(self)
+            self.parent = parent
+    
+        def emit(self, record):
+            self.parent.updateDisplay(record)
 
 
 # Bring up wxpython interface
