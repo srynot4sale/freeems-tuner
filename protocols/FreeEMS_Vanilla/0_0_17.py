@@ -355,6 +355,18 @@ class protocol:
             return raw_hex
 
 
+        def getPayloadHex(self):
+            '''Return the payload as hex'''
+            raw_hex = []
+            if self.getPayloadLength():
+                raw_hex = self.getPacketHex()
+                del raw_hex[0:6]
+                del raw_hex[-1]
+                del raw_hex[-1]
+
+            return raw_hex
+
+
     # Request
     class request(packet):
 

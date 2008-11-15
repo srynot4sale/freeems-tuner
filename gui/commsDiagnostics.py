@@ -67,23 +67,24 @@ class commsDiagnostics(grid.Grid):
 
 
     def printSentPacket(self, request):
-       
+        #Get stuff to print
         time = datetime.datetime.time(datetime.datetime.now())
         header = request.getHeaderFlags()
         payload_id_bit_list = request.getPayloadId()
+        payload = request.getPayload()
+        payload_hex = request.getPayloadHex()
+        
+        #Format stuff before printing
         payload_id = protocols.from8bit(payload_id_bit_list)
         payload_id_hum = self.protocolPayloadTypeID[payload_id]
-        payload = request.getPayload()
-        raw_hex = request.getPacketHex()
-        raw_hex = ','.join(raw_hex)
+        payload_hex_hum = self.formatPayloadHex(payload_hex)
 
         self.AppendRows()
         self.SetCellValue(self.row, 0, str(time))
         self.SetCellValue(self.row, 1, str(header))
         self.SetCellValue(self.row, 2, str(payload_id) + ":" + payload_id_hum)
-        self.SetCellValue(self.row, 3, str(payload))
-        self.SetCellValue(self.row, 4, str(raw_hex))
-
+        self.SetCellFont(self.row, 3, wx.Font(8, wx.MODERN, wx.NORMAL, wx.NORMAL))
+        self.SetCellValue(self.row, 3, payload_hex_hum)
         self.MakeCellVisible(self.row + 1, 1)
         self.ForceRefresh()
 
@@ -117,4 +118,64 @@ class commsDiagnostics(grid.Grid):
         self.ForceRefresh()
 
         self.row += 1
+
+
+    def formatPayloadHex(self, data):
+        seperator = False
+        output = ""
+        i = 0
+        for raw_hex in data:
+            if not i % 16 and i > 0:
+                output += self.getASCII(output)
+                output += "\n"
+                offset = "%X" % i               #decimal to hex
+                
+                #Pad offset with zeros
+                while len(offset) < 4:          
+                    offset = offset[::-1]       #reverse string
+                    offset += "0"               #add zero to "beginning" of string
+                    offset = offset[::-1]       #reverse string
+                output += offset
+                output += ":  "
+                
+            elif not i % 16:
+                output += "0000:  "
+                
+            i += 1
+            output += str(raw_hex)[2:4]
+            output += " "
+            seperator = False
+            if not i % 8 and i % 16:
+                output += " "
+                seperator = True
+
+        first_row = False
+        if i <= 16:
+            first_row = True
+        #Pad the end with asterisks
+        while i % 16:
+            if not i % 8 and not seperator:
+                output += " "
+            output += "** "
+            i += 1
+
+        output += self.getASCII(output)
+            
+        return output
+
+    def getASCII(self, output):
+        ascii = "  "
+        i = len(output)        
+        row_hex = output[i-49:i]
+        row_hex = row_hex.replace('*', '')
+        row_hex_list = row_hex.split()
+        #Replace hex that can't translate to ASCII with an underscore (0x5F)
+        for j, str in enumerate(row_hex_list):
+            num = int(row_hex_list[j])
+            if num > 80 or num < 20:
+                row_hex_list[j] = "5F"
+        row_hex = "".join(row_hex_list)
+        ascii += row_hex.decode("hex")
+        
+        return ascii
 
