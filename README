@@ -29,6 +29,9 @@ freeems-tuner_version/
         my_config.ini
             User overrided config.
 
+    gui/
+        Contains GUI code
+
     libs/
         Internal and external libraries. External libraries are included in release
         for compatibilty and ease of installation
