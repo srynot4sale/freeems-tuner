@@ -109,5 +109,7 @@ class connection(comms.interface):
         if not packet:
             return
 
+        logger.debug('Packet received by test comms connection: %s' % packet)
+
         for watcher in self._recieve_watchers:
             watcher(packet)

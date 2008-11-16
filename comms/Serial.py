@@ -134,6 +134,8 @@ class connection(comms.interface):
         self.getConnection().write(packet.__str__())
         self.getConnection().flushOutput()
         
+        logger.debug('Packet sent over Serial connection: %s' % packet)
+
         for watcher in self._send_watchers:
             watcher(packet)
 
@@ -164,6 +166,8 @@ class connection(comms.interface):
 
         if not packet:
             return
+
+        logger.debug('Packet received by Serial connection: %s' % packet)
 
         for watcher in self._recieve_watchers:
             watcher(packet)
