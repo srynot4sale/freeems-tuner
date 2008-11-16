@@ -56,7 +56,7 @@ TEST_RESPONSES = {
                                      0x6E, 0x69, 0x6C, 0x6C, 0x61, 0x20, 0x76, 0x30,
                                      0x2E, 0x30, 0x2E, 0x31, 0x37, 0x20, 0x70, 0x72,
                                      0x65, 0x2D, 0x61, 0x6C, 0x70, 0x68, 0x61, 0x00,
-                                     0xDB, 0xCC],
+                                     0xD8, 0xCC],
     REQUEST_MAX_PACKET_SIZE:        [0xAA, 0x01, 0x00, 0x05, 0x04, 0x10, 0x1A, 0xCC],
     REQUEST_ECHO_PACKET_RETURN:     [],
     REQUEST_SOFT_SYSTEM_RESET: [],
@@ -233,7 +233,6 @@ class protocol:
         contents = {}
         contents['flags'] = None
         contents['payload_id'] = None
-        contents['payload_length'] = None
         contents['payload'] = []
         contents['checksum'] = None
 
@@ -247,21 +246,19 @@ class protocol:
         contents['payload_id'] = protocols.from8bit(packet[index:index+2])
         index += 2
 
-        # Grab payload length & payload
-        if flags & HEADER_HAS_LENGTH:
-
-            contents['payload_length'] = plength = protocols.from8bit(packet[index:index+2])
-            index += 2
-            contents['payload'] = packet[index:index+plength]
-            index += plength
+        # Grab payload
+        contents['payload'] = payload = packet[index:(len(packet) - 2)]
+        index += len(payload)
 
         # Grab checksum
         contents['checksum'] = checksum = packet[index]
         index += 1
 
         # Check checksum
-        if checksum != getChecksum(packet[1:index-1]):
-            raise Exception, 'Checksum is incorrect! Provided: %d, generated: %d' % (checksum, getChecksum(packet[1:index-1]))
+        gen_checksum = getChecksum(packet[1:index-1])
+
+        if checksum != gen_checksum:
+            raise Exception, 'Checksum is incorrect! Provided: %d, generated: %d' % (checksum, gen_checksum)
 
         # Just double check we only have one byte left
         if index != (len(packet) - 1):
