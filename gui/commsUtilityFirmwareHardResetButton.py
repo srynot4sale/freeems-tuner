@@ -23,6 +23,8 @@ import comms
 import protocols
 import logging
 import datetime
+import gui
+import commsConnectWarning
 
 logger = logging.getLogger('gui.commsUtilityFirmwareHardResetButton')
 
@@ -39,7 +41,7 @@ class commsUtilityFirmwareHardResetButton(wx.BoxSizer):
         wx.BoxSizer.__init__(self, wx.VERTICAL)
 
         button_text  = 'The Big Red Button\n'
-        button_text += '      (ECU Reset)'
+        button_text += '  (ECU Hard Reset)'
         self.button = wx.Button(parent, self.ID_SEND_FIRMWARE_RESET, button_text)
         self.button.SetBackgroundColour(wx.RED)
         self.button.SetForegroundColour(wx.WHITE)
@@ -56,5 +58,9 @@ class commsUtilityFirmwareHardResetButton(wx.BoxSizer):
 
 
     def sendRequest(self, event):
+
+        # Check connected
+        if not commsConnectWarning.confirmConnected(gui.frame):
+            return
 
         protocols.getProtocol().sendUtilityHardResetRequest()

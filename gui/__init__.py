@@ -224,7 +224,7 @@ class Frame(wx.Frame):
         debugFrame.debugFrame(self)
 
 
-    def CommsConnect(self, event):
+    def CommsConnect(self, event = None):
         '''Connect comms'''
         if self.CommsIsConnected():
             return
@@ -430,8 +430,11 @@ class tabDebuglog(wx.Panel):
 def load():
     
     app = wx.App()
+
+    global frame
     frame = Frame()
     frame.Show()
+
     app.MainLoop()
 
     return app

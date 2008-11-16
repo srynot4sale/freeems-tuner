@@ -18,7 +18,30 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-# FreeEMS-Tuner
-__revision__ = 'r2008111703'
-__name__ = 'FreeEMS-Tuner'
-__title__ = '%s %s' % (__name__, __revision__)
+import wx
+import logging
+
+logger = logging.getLogger('gui.commsConnectWarning')
+
+def confirmConnected(window):
+    '''Confirm the comms plugin is connected, if not show dialog'''
+    
+    if window.CommsIsConnected():
+        return True
+
+    return _displayDialog(window)
+
+
+def _displayDialog(window):
+    '''Show warning dialog'''
+    message = 'You are not currently connected to an ECU,\nwould you like to connect now?'
+    
+    dialog = wx.MessageDialog(window, message, 'Connect to ECU?', 
+                    style=wx.YES_NO | wx.YES_DEFAULT | wx.ICON_EXCLAMATION | wx.CENTRE)
+
+    if dialog.ShowModal() != wx.ID_YES:
+        return False
+
+    # Attempt to connect comms
+    window.CommsConnect()
+    return True

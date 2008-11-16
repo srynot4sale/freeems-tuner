@@ -23,6 +23,8 @@ import comms
 import protocols
 import logging
 import datetime
+import gui
+import commsConnectWarning
 
 logger = logging.getLogger('gui.commsUtilityRequests')
 
@@ -37,7 +39,7 @@ class commsUtilityRequests(wx.BoxSizer):
 
 
     def __init__(self, parent):
-
+        '''Setup UI elements'''
         wx.BoxSizer.__init__(self, wx.VERTICAL)
 
         self.text = wx.StaticText(parent, -1, 'Data to request', style=wx.ALIGN_CENTER)
@@ -59,9 +61,16 @@ class commsUtilityRequests(wx.BoxSizer):
 
 
     def sendRequest(self, event):
+        '''Send utility request'''
         
+        # Check connected
+        if not commsConnectWarning.confirmConnected(gui.frame):
+            return
+
         selection = self.input.GetSelection()
 
+        # Correct small bug where selection will be -1 if input has not
+        # been in focus
         if selection < 0:
             selection = 0
 
