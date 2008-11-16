@@ -403,15 +403,27 @@ class tabDebuglog(wx.Panel):
         self.display.SetValue(self.display.GetValue() + str(message) + '\n')
     
     
-    # Logging handler for printing to this display
     class loggingHandler(logging.Handler):
+        '''Logging handler for printing to this display'''
 
-        def __init__(self, parent):
+        # UI elements with a updateDisplay method
+        _display = None
+
+        def __init__(self, display):
+            '''Setup any defaults, important vars'''
             logging.Handler.__init__(self)
-            self.parent = parent
+
+            # Save UI elements
+            self._display = display
+
     
         def emit(self, record):
-            self.parent.updateDisplay(record)
+            '''Actually print the logging record'''
+
+            #! Important, formats message nicely
+            msg = self.format(record)
+
+            self._display.updateDisplay(msg)
 
 
 # Bring up wxpython interface

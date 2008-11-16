@@ -30,7 +30,6 @@ LEVELS = {
 
 LOG_FILENAME = data.getPath()+'app.log'
 
-
 def setup():
 
     global LEVELS, LOG_FILENAME
@@ -43,20 +42,18 @@ def setup():
     base = logging.getLogger()
     base.setLevel(level)
 
+    # Setup formatting
+    logging._defaultFormatter = formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(name)s - %(message)s')
+
     # Get log types from config
     if config.loadBool('Logging', 'to_file'):
         handler = logging.FileHandler(LOG_FILENAME, 'w')
+        handler.setFormatter(formatter)
         base.addHandler(handler)
 
     if config.loadBool('Logging', 'to_terminal'):
-        handler = terminalHandler()
+        handler = logging.StreamHandler()
+        handler.setFormatter(formatter)
         base.addHandler(handler)
 
     base.debug('Logging set up')
-
-
-# Logging handler for printing to terminal
-class terminalHandler(logging.Handler):
-    
-    def emit(self, record):
-        print record
