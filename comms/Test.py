@@ -75,16 +75,19 @@ class connection(comms.interface):
 
     def send(self, packet):
 
-        # Get packet contents
-        hex_contents = packet.getPacketHex()
+        # Get protocol
+        protocol = protocols.getProtocol()
+
+        # Get return packet
+        hex = protocol.getTestResponse(packet.getPayloadIdInt())
 
         # Append to input buffer
         # In this fake comms plugin, all sent packets
         # are reflected back at the moment
-        self._buffer.extend(packet.getEscaped())
+        self._buffer.extend(hex)
 
         # Log packet hex
-        logger.debug('Packet sent to test comms connection: %s' % hex_contents)
+        logger.debug('Packet sent to test comms connection: %s' % packet.getEscaped())
         
         for watcher in self._send_watchers:
             watcher(packet)
@@ -105,6 +108,8 @@ class connection(comms.interface):
         
         if not packet:
             return
+
+        logger.debug('Packet received by test comms connection: %s' % packet)
 
         for watcher in self._recieve_watchers:
             watcher(packet)

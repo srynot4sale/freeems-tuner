@@ -23,6 +23,8 @@ import comms
 import protocols
 import logging
 import datetime
+import gui
+import commsConnectWarning
 
 logger = logging.getLogger('gui.commsUtilityFirmwareHardResetButton')
 
@@ -56,5 +58,9 @@ class commsUtilityFirmwareHardResetButton(wx.BoxSizer):
 
 
     def sendRequest(self, event):
+
+        # Check connected
+        if not commsConnectWarning.confirmConnected(gui.frame):
+            return
 
         protocols.getProtocol().sendUtilityHardResetRequest()
