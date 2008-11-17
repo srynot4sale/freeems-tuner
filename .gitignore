@@ -1,4 +1,5 @@
 data/my_config.ini
 data/app.log
+utils/*
 docs/*
 *.pyc
