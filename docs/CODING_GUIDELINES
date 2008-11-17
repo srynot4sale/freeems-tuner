@@ -1,0 +1,13 @@
+Use underscores for the start of all private variables/properties/methods
+
+All external class property access should be through set/get methods, to facilitate for adding
+validation/error checking logic in at a later date.
+
+Try to use one internal method each for getting and setting, and all methods that perform
+extra processing you the master methods.
+
+Class and method names to begin with a lower case letter and be camelCase
+
+Constants should be in UPPER_CASE
+
+

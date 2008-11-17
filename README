@@ -29,6 +29,9 @@ freeems-tuner_version/
         my_config.ini
             User overrided config.
 
+    docs/
+        Documentation
+
     gui/
         Contains GUI code
 
