@@ -303,7 +303,8 @@ class protocol:
         _payload_id = 0
 
         # Payload
-        _payload = ''
+        _payload = []
+
 
         def getHeaderFlags(self):
             '''Returns header flags'''
@@ -362,7 +363,7 @@ class protocol:
             Return payload id
             This is padded with a 0 byte for inserting directly into packet
             '''
-            return protocols.to8bit(self._payload_id, 2)
+            return protocols.to8bit(self.getPayloadIdInt(), 2)
 
 
         def getPayloadIdInt(self):
@@ -371,18 +372,21 @@ class protocol:
 
 
         def setPayload(self, payload):
-            '''Save payload'''
-            self._payload = payload
+            '''Save payload as 8bit bytes'''
+            if isinstance(payload, list):
+                self._payload = payload
+            else:
+                self._payload = protocols.to8bit(payload)
 
 
         def getPayload(self):
-            '''Return payload'''
-            return self._payload
+            '''Return payload as string'''
+            return self.__str__(self.getPayloadBytes())
 
 
         def getPayloadBytes(self):
             '''Return payload as bytes for inserting directly into packet'''
-            return protocols.to8bit(self.getPayload())
+            return self._payload
 
 
         def getPayloadLength(self):
@@ -392,15 +396,20 @@ class protocol:
 
         def getPayloadLengthInt(self):
             '''Return length of payload as int'''
-            return len(self.getPayload())
+            return len(self.getPayloadBytes())
 
 
-        def __str__(self):
-            '''Generate a string for serial connections'''
-            packet = self.getEscaped()
+        def __str__(self, bytes = None):
+            '''
+            Generate a raw string.
+            Main use is for sending to serial connections
+            '''
+            if not bytes:
+                bytes = self.getEscaped()
+
             string = ''.encode('latin-1')
 
-            for byte in packet:
+            for byte in bytes:
                 if byte <= 256:
                     string += chr(byte)
                 else:
