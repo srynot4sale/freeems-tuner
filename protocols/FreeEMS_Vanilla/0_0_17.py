@@ -213,20 +213,21 @@ class protocol:
         
         # Begin state control machine :-)
         state = STATE_NOT_PACKET
-        index = -1
+        index = 0
         packet = []
+        bad_bytes = []
+        complete = False
 
         # Loop through buffer_copy, delete from buffer
         buffer_copy = copy.copy(buffer)
 
         for byte in buffer_copy:
-            index += 1
 
             # If have not started a packet yet check for start_byte
             if state == STATE_NOT_PACKET:
                 # If not a start byte, its bad/incomplete data to trash it
                 if byte != START_BYTE:
-                    logger.error('Bad/incomplete data found in buffer before start byte: %X' % byte)
+                    bad_bytes.append(byte)
                 # Otherwise, start packet
                 else:
                     state = STATE_IN_PACKET
@@ -252,11 +253,21 @@ class protocol:
                 else:
                     logger.error('Wrongly escaped byte found in buffer: %X' % byte)
 
+            # Remove this byte from buffer as it has been processed
             del buffer[0]
+
+            index += 1
 
             # Check if we have a complete packet
             if len(packet) and state == STATE_NOT_PACKET:
-                return self.processIncomingPacket(packet)
+                complete = self.processIncomingPacket(packet)
+                break
+
+        # Process bad_bytes buffer
+        if len(bad_bytes):
+            logger.debug('Bad/incomplete data found in buffer before start byte: %s' % ','.join(protocols.toHex(bad_bytes)))
+
+        return complete        
 
 
     def processIncomingPacket(self, packet):
@@ -510,16 +521,7 @@ class protocol:
         def getPacketHex(self):
             '''Return a packet as hex strings'''
             packet = self.getEscaped()
-
-            raw_hex = []
-            for byte in packet:
-                byte = hex(byte).upper().replace('X','x')
-                if len(byte) == 3:
-                    byte = '0x0'+byte[-1]
-
-                raw_hex.append(byte)
-            
-            return raw_hex
+            return protocols.toHex(packet)
 
 
     # Request

@@ -124,6 +124,21 @@ def from8bit(value):
     return converted
 
 
+def toHex(bytes):
+    '''Convert a list of bytes to a list of hex strings'''
+    raw_hex = []
+    
+    for byte in bytes:
+        byte = hex(byte).upper().replace('X','x')
+        
+        if len(byte) == 3:
+            byte = '0x0'+byte[-1]
+
+        raw_hex.append(byte)
+            
+    return raw_hex
+
+
 class interface:
     '''Base class for all protocol plugins'''
 
