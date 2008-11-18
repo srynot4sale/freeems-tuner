@@ -27,21 +27,51 @@ import ConfigParser
 def getParser():
 
     config = ConfigParser.RawConfigParser()
-    config.read(['config.default.ini', 'data/my_config.ini'])
+    config.read(['data/my_config.cached.ini', 'config.default.ini', 'data/my_config.ini'])
     
     return config
 
 
 # Load option from config file
-def load(section, option):
+def load(section, option, default = None):
 
     # Get defaults and user settings
     parser = getParser()
+
+    if not parser.has_section(section):
+        return default
+
+    if not parser.has_option(section, option):
+        return default
+    
     return parser.get(section, option)
 
 
 # Load option but return as a boolean value
-def loadBool(section, option):
+def loadBool(section, option, default = None):
 
     parser = getParser()
+
+    if not parser.has_section(section):
+        return default
+
+    if not parser.has_option(section, option):
+        return default
+    
     return parser.getboolean(section, option)
+
+
+# Save option to my_config.ini file
+def save(section, option, value):
+
+    parser = getParser()
+    if not parser.has_section(section):
+        parser.add_section(section)
+
+    parser.set(section, option, value)
+
+    # Write options to the users config file
+    configfile = open('data/my_config.cached.ini', 'wb')
+    parser.write(configfile)
+
+

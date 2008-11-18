@@ -24,7 +24,7 @@ import version
 import comms
 import protocols
 import logging
-import libs.logger as logger
+import libs.config as config
 
 import debugFrame
 import commsTestFrame
@@ -70,6 +70,12 @@ class Frame(wx.Frame):
     tabctrl = None
     windows = {}
 
+    # Iconized state (minimized)
+    iconized = None
+
+    # Flag to trigger the window size/position to be saved next EVT_IDLE
+    _save_settings = False
+
     def __init__(self, parent=None, id=-1, title=version.__title__,
                  pos=wx.DefaultPosition, size=(800,600), 
                  style=wx.DEFAULT_FRAME_STYLE):
@@ -82,13 +88,17 @@ class Frame(wx.Frame):
 
         self.iconized = False
 
+        self.Bind(wx.EVT_MOVE, self.OnMove)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_ICONIZE, self.OnIconize)
 
-        # Handle incoming comms when the UI is idle
-        self.Bind(wx.EVT_IDLE, self.CommsRecieve)
+        # Handle incoming comms and settings when the UI is idle
+        self.Bind(wx.EVT_IDLE, self.OnIdle)
 
         self.BuildWindow()
+
+        # Load saved location/size settings
+        self.LoadSettings()
 
 
     def BuildWindow(self):
@@ -104,13 +114,32 @@ class Frame(wx.Frame):
         tabctrl.AddPage(window_debug, 'Debug Log')
 
 
+    def OnIdle(self, event = None):
+        '''Idle UI handler'''
+
+        # Save window settings
+        self.SaveSettings()
+
+        # Handle comms receive logic
+        self.CommsReceive()
+
+
+    def OnMove(self, event):
+        '''Event handler for moving window'''
+        # Trigger the new window location to be saved
+        self._save_settings = True
+
+
     def OnIconize(self, event):
         """Event handler for Iconize."""
         self.iconized = event.Iconized()
 
 
     def OnClose(self, event):
-        """Event handler for closing."""
+        '''Event handler for closing.'''
+        # If the window has been moved/resized but not saved yet, do that now
+        self.SaveSettings()
+
         self.Destroy()
 
 
@@ -252,7 +281,7 @@ class Frame(wx.Frame):
         comms.getConnection().disconnect()
 
 
-    def CommsRecieve(self, event):
+    def CommsReceive(self, event = None):
         '''Check for any packets in the buffer'''
         if not self.CommsIsConnected():
             return
@@ -288,46 +317,46 @@ class Frame(wx.Frame):
             event.Enable(False)
 
 
-    def OnActivate(self, event):
-        """
-        Event Handler for losing the focus of the Frame. Should close
-        Autocomplete listbox, if shown.
-        """
-        if not event.GetActive():
-            # If autocomplete active, cancel it.  Otherwise, the
-            # autocomplete list will stay visible on top of the
-            # z-order after switching to another application
-            win = wx.Window.FindFocus()
-            if hasattr(win, 'AutoCompActive') and win.AutoCompActive():
-                win.AutoCompCancel()
-        event.Skip()
+    def LoadSettings(self):
+        '''Load position/size settings for main frame'''
+        section = 'UI Settings'
 
+        x = config.load(section, 'win.main.pos.x', -1)
+        y = config.load(section, 'win.main.pos.y', -1)
 
-    def LoadSettings(self, config):
-        """Called be derived classes to load settings specific to the Frame"""
-        pos  = wx.Point(config.ReadInt('Window/PosX', -1),
-                        config.ReadInt('Window/PosY', -1))
-                        
-        size = wx.Size(config.ReadInt('Window/Width', -1),
-                       config.ReadInt('Window/Height', -1))
+        pos  = wx.Point(int(x), int(y))
+        
+        h = config.load(section, 'win.main.size.h', -1)
+        w = config.load(section, 'win.main.size.w', -1)
+
+        size = wx.Size(int(h), int(w))
 
         self.SetSize(size)
         self.Move(pos)
 
 
-    def SaveSettings(self, config):
-        """Called by derived classes to save Frame settings to a wx.Config object"""
+    def SaveSettings(self):
+        '''Save position,size settings for main frame'''
 
-        # TODO: track position/size so we can save it even if the
-        # frame is maximized or iconized.
-        if not self.iconized and not self.IsMaximized():
-            w, h = self.GetSize()
-            config.WriteInt('Window/Width', w)
-            config.WriteInt('Window/Height', h)
+        # If a setting save has not been triggered, dont
+        # waste time
+        if not self._save_settings:
+            return
+
+        if self.iconized or self.IsMaximized():
+            return
+
+        self._save_settings = False
+        
+        section = 'UI Settings'
+
+        h, w = self.GetSize()
+        config.save(section, 'win.main.size.h', h)
+        config.save(section, 'win.main.size.w', w)
             
-            px, py = self.GetPosition()
-            config.WriteInt('Window/PosX', px)
-            config.WriteInt('Window/PosY', py)
+        x, y = self.GetPosition()
+        config.save(section, 'win.main.pos.x', x)
+        config.save(section, 'win.main.pos.y', y)
 
 
 class tabMain(wx.Panel):
