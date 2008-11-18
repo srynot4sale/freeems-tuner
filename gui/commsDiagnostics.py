@@ -55,36 +55,23 @@ class commsDiagnostics(grid.Grid):
 
 
     def printSentPacket(self, request):
-        #Get stuff to print
-        time = datetime.datetime.time(datetime.datetime.now())
-
-        header = self.getHeaderFlags(request)
-        payload_hex = request.getPayloadBytes()
-        
-        #Format stuff before printing
-        payload_id = request.getPayloadIdInt()
-        payload_id_hum = protocols.getProtocol().getPacketType(payload_id)
-        payload_hex_hum = self.formatPayloadHex(payload_hex)
-
-        self.AppendRows()
-        self.SetCellValue(self.row, 0, str(time))
-        self.SetCellValue(self.row, 1, str(header))
-        self.SetCellValue(self.row, 2, str(payload_id) + ":" + payload_id_hum)
-        self.SetCellValue(self.row, 3, payload_hex_hum)
-        self.MakeCellVisible(self.row + 1, 1)
-        self.ForceRefresh()
-
-        self.row += 1
+        '''Print sent packet to grid'''
+        self.insertRow(request)
 
     
-    def printRecievedPacket(self, request):
-        #Get stuff to print
+    def printRecievedPacket(self, response):
+        '''Print received packet to grid'''
+        self.insertRow(response)
+
+
+    def insertRow(self, packet):
+        '''Insert row into grid'''
         time = datetime.datetime.time(datetime.datetime.now())
-        header = self.getHeaderFlags(request)
-        payload_hex = request.getPayloadBytes()
+        header = self.getHeaderFlags(packet)
+        payload_hex = packet.getPayloadBytes()
         
         #Format stuff before printing
-        payload_id = request.getPayloadIdInt()
+        payload_id = packet.getPayloadIdInt()
         payload_id_hum = protocols.getProtocol().getPacketType(payload_id)
         payload_hex_hum = self.formatPayloadHex(payload_hex)
 
@@ -93,6 +80,13 @@ class commsDiagnostics(grid.Grid):
         self.SetCellValue(self.row, 1, str(header))
         self.SetCellValue(self.row, 2, str(payload_id) + ":" + payload_id_hum)
         self.SetCellValue(self.row, 3, payload_hex_hum)
+
+        # Make sure entire row is visible
+        if self.GetCellOverflow(self.row, 3):
+            lines = payload_hex_hum.count('\n') + 1
+            print lines
+            self.SetRowSize(self.row, (lines * 15) + 3)
+
         self.MakeCellVisible(self.row + 1, 1)
         self.ForceRefresh()
 
