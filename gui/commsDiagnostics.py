@@ -84,7 +84,6 @@ class commsDiagnostics(grid.Grid):
         # Make sure entire row is visible
         if self.GetCellOverflow(self.row, 3):
             lines = payload_hex_hum.count('\n') + 1
-            print lines
             self.SetRowSize(self.row, (lines * 15) + 3)
 
         self.MakeCellVisible(self.row + 1, 1)

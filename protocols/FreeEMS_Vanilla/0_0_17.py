@@ -589,11 +589,16 @@ class protocol:
     class response(packet):
         '''Reponse packet'''
 
-        _validation_rules = {
-            'preset_payload_length': None,
-            'requires_length': None,
-            'firmware_type': None,
-        }
+        _validation_rules = {}
+
+        def __init__(self):
+            '''Set defaults'''
+
+            self._validation_rules = {
+                'preset_payload_length': False,
+                'requires_length': False,
+                'firmware_type': False,
+            }
 
 
         def validate(self):
@@ -646,6 +651,7 @@ class protocol:
         '''EMS response to interface version request'''
 
         def __init__(self):
+            protocol.response.__init__(self)
             rules = self._validation_rules
             rules['requires_length'] = True
 
@@ -654,6 +660,7 @@ class protocol:
         '''EMS response to firmware version request'''
 
         def __init__(self):
+            protocol.response.__init__(self)
             rules = self._validation_rules
             rules['requires_length'] = True
 
@@ -662,6 +669,7 @@ class protocol:
         '''EMS response to max packet length request'''
 
         def __init__(self):
+            protocol.response.__init__(self)
             rules = self._validation_rules
             rules['preset_payload_length'] = 2
 
