@@ -40,24 +40,32 @@ REQUEST_HARD_SYSTEM_RESET   = 10
 REQUEST_ASYNC_ERROR_CODE    = 12
 REQUEST_ASYNC_DEBUG_INFO    = 14
 
+RESPONSE_INTERFACE_VERSION  = 1
+RESPONSE_FIRMWARE_VERSION   = 3
+RESPONSE_MAX_PACKET_SIZE    = 5
+RESPONSE_ECHO_PACKET_RETURN = 7
 RESPONSE_SOFT_SYSTEM_RESET  = 9
 RESPONSE_HARD_SYSTEM_RESET  = 11
 RESPONSE_ASYNC_ERROR_CODE   = 13
 RESPONSE_ASYNC_DEBUG_INFO   = 15
 
 PACKET_IDS = {
-        REQUEST_INTERFACE_VERSION:  "Request interface version",
-        REQUEST_FIRMWARE_VERSION:   "Request firmware version",
-        REQUEST_MAX_PACKET_SIZE:    "Request maximum packet size",
-        REQUEST_ECHO_PACKET_RETURN: "Request echo packet return",
-        REQUEST_SOFT_SYSTEM_RESET:  "Request soft system reset",
-        RESPONSE_SOFT_SYSTEM_RESET: "Reply to soft system reset",
-        REQUEST_HARD_SYSTEM_RESET:  "Request hard system reset",
-        RESPONSE_HARD_SYSTEM_RESET: "Reply to hard system reset",
-        REQUEST_ASYNC_ERROR_CODE:   "Request asynchronous error code",
-        RESPONSE_ASYNC_ERROR_CODE:  "Asynchronous error code packet",
-        REQUEST_ASYNC_DEBUG_INFO:   "Request asynchronous debug info",
-        RESPONSE_ASYNC_DEBUG_INFO:  "Asynchronous debug info packet"
+        REQUEST_INTERFACE_VERSION:   "ifVer",
+        RESPONSE_INTERFACE_VERSION:  "ifVer",
+        REQUEST_FIRMWARE_VERSION:    "firmVer",
+        RESPONSE_FIRMWARE_VERSION:   "firmVer",
+        REQUEST_MAX_PACKET_SIZE:     "maxPktSize",
+        RESPONSE_MAX_PACKET_SIZE:    "maxPktSize",
+        REQUEST_ECHO_PACKET_RETURN:  "echoPacket",
+        RESPONSE_ECHO_PACKET_RETURN: "echoPacket",
+        REQUEST_SOFT_SYSTEM_RESET:   "softReset",
+        RESPONSE_SOFT_SYSTEM_RESET:  "softReset",
+        REQUEST_HARD_SYSTEM_RESET:   "hardReset",
+        RESPONSE_HARD_SYSTEM_RESET:  "hardReset",
+        REQUEST_ASYNC_ERROR_CODE:    "asyncError",
+        RESPONSE_ASYNC_ERROR_CODE:   "asyncError",
+        REQUEST_ASYNC_DEBUG_INFO:    "asyncDebug",
+        RESPONSE_ASYNC_DEBUG_INFO:   "asyncDebug"
 }
 
 START_BYTE = 0xAA
@@ -109,6 +117,13 @@ class protocol:
             'requestMaxPacketSize',
             'requestEchoPacketReturn',
     ]
+
+    _response_packets = {
+        1: 'responseInterfaceVersion',
+        3: 'responseFirmwareVersion',
+        5: 'responseMaxPacketSize',
+        7: 'responseEchoPacketReturn',
+    }
 
 
     def getPacketType(self, id):
@@ -241,8 +256,7 @@ class protocol:
 
             # Check if we have a complete packet
             if len(packet) and state == STATE_NOT_PACKET:
-                self.processIncomingPacket(packet)
-                return packet
+                return self.processIncomingPacket(packet)
 
 
     def processIncomingPacket(self, packet):
@@ -291,6 +305,17 @@ class protocol:
         if index != (len(packet) - 1):
             raise Exception, 'Packet incorrectly processed, %d bytes left' % (len(packet) - 1 - index)
 
+        # Create response packet object
+        type = self._response_packets[contents['payload_id']]
+        response = getattr(self, type)()
+
+        # Populate data
+        response.parseHeaderFlags(contents['flags'])
+        response.setPayloadId(contents['payload_id'])
+        response.parsePayload(contents['payload'])
+        response.validate()
+
+        return response
 
 
     class packet:
@@ -302,6 +327,9 @@ class protocol:
         # Payload id
         _payload_id = 0
 
+        # Parsed payload length
+        _payload_parsed_len = 0
+
         # Payload
         _payload = []
 
@@ -309,6 +337,11 @@ class protocol:
         def getHeaderFlags(self):
             '''Returns header flags'''
             return self._headerFlags
+
+
+        def parseHeaderFlags(self, flags):
+            '''Saves header flags'''
+            self._headerFlags = flags
 
 
         def setHeaderProtocolFlag(self, bool = True):
@@ -352,8 +385,8 @@ class protocol:
 
         def setPayloadId(self, id):
             '''Set payload id'''
-            if not isinstance(id, types.IntType):
-                raise TypeError, 'Integer required for payload id'
+            if isinstance(id, list):
+                id = protocols.from8bit(id)
 
             self._payload_id = id
 
@@ -397,6 +430,19 @@ class protocol:
         def getPayloadLengthInt(self):
             '''Return length of payload as int'''
             return len(self.getPayloadBytes())
+
+
+        def setPayloadLengthParsed(self, length):
+            '''Save parsed payload length'''
+            if isinstance(length, list):
+                length = protocols.from8bit(length)
+
+            self._payload_parsed_length = length
+
+
+        def getPayloadLengthParsed(self):
+            '''Return parsed payload length'''
+            return self._payload_parsed_length
 
 
         def __str__(self, bytes = None):
@@ -476,16 +522,6 @@ class protocol:
             return raw_hex
 
 
-        def getPayloadHex(self):
-            '''Return the payload as hex'''
-            length = self.getPayloadLengthInt()
-
-            if not length:
-                return []
-
-            return self.getPacketHex()[6:(length-6)]
-
-
     # Request
     class request(packet):
 
@@ -546,6 +582,86 @@ class protocol:
 
             protocol.request.__init__(self)
             self.setPayloadId(REQUEST_SOFT_SYSTEM_RESET)
+
+    
+    class response(packet):
+        '''Reponse packet'''
+
+        _validation_rules = {
+            'preset_payload_length': None,
+            'requires_length': None,
+            'firmware_type': None,
+        }
+
+
+        def validate(self):
+            '''Validate packet based on validation rules'''
+            
+            rules = self._validation_rules
+            pid = self.getPayloadIdInt()
+
+            if rules['preset_payload_length']:
+                # Check payload is the required length
+                if rules['preset_payload_length'] != self.getPayloadLengthInt():
+                    raise Exception, 'Packet type %d preset length of %s does not match the actual payload length of %s' % (pid, rules['preset_payload_length'], self.getPayloadLengthInt())
+            
+            if rules['requires_length']:
+                # Check a length was supplied and the payload matches
+                if not self.hasHeaderLengthFlag():
+                    raise Exception, 'Packet type %s was expecting a length flag to be set' % pid
+
+                length = self.getPayloadLengthParsed()
+                if not length:
+                    raise Exception, 'Packet type %s was expecting a length to be set' % pid
+
+                if self.getPayloadLengthInt() != length:
+                    raise Exception, 'Packet type %s, payload length of %s does not match parsed length of %s' % (pid, self.getPayloadLengthInt(), length)
+
+            if rules['firmware_type']:
+                # Check firmware type flag is set
+                if self.hasHeaderProtocolFlag():
+                    raise Exception, 'Packet type %s requires the firmware flag is set' % pid
+
+            else:
+                # Check firmware type flag is not set
+                if not self.hasHeaderProtocolFlag():
+                    raise Exception, 'Packet type %s requires the protocol flag is set' % pid
+
+
+        def parsePayload(self, payload):
+            '''Parse the payload'''
+
+            if self.hasHeaderLengthFlag():
+                # If length set, account for 2 length bytes
+                self.setPayloadLengthParsed(payload[0:2])
+                self.setPayload(payload[2:])
+
+            else:
+                self.setPayload(payload)
+
+
+    class responseInterfaceVersion(response):
+        '''EMS response to interface version request'''
+
+        def __init__(self):
+            rules = self._validation_rules
+            rules['requires_length'] = True
+
+
+    class responseFirmwareVersion(response):
+        '''EMS response to firmware version request'''
+
+        def __init__(self):
+            rules = self._validation_rules
+            rules['requires_length'] = True
+
+
+    class responseMaxPacketSize(response):
+        '''EMS response to max packet length request'''
+
+        def __init__(self):
+            rules = self._validation_rules
+            rules['preset_payload_length'] = 2
 
 
 def getChecksum(bytes):
