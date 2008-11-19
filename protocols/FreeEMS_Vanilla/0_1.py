@@ -229,6 +229,7 @@ class protocol:
             start = buffer.index(START_BYTE, 1)
             logger.debug('Bad/incomplete packet found in buffer before a legitimate packet: %s' % ','.join(protocols.toHex(buffer[0:start])))
             del buffer[0:start]
+            return
         
         # Begin state control machine :-)
         state = STATE_NOT_PACKET
