@@ -134,11 +134,11 @@ class commsDiagnostics(grid.Grid):
     def getASCII(self, output):
         ascii = "  "
         
-        # Replace hex that can't translate to ASCII with an underscore (0x5F)
+        # Replace hex that can't translate to ASCII with a period
         for j, str in enumerate(output):
 
             if str > 128 or str < 20:
-                ascii += '_'
+                ascii += '.'
             else:
                 ascii += chr(str)
         
