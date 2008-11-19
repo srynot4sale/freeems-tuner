@@ -88,7 +88,7 @@ TEST_RESPONSES = {
                                      0x65, 0x2D, 0x61, 0x6C, 0x70, 0x68, 0x61, 0x00,
                                      0xD8, 0xCC],
     REQUEST_MAX_PACKET_SIZE:        [0xAA, 0x01, 0x00, 0x05, 0x04, 0x10, 0x1A, 0xCC],
-    REQUEST_ECHO_PACKET_RETURN:     [0xAA, 0x01, 0x00, 0x07, 0x04, 0x10, 0x1A, 0xCC],
+    REQUEST_ECHO_PACKET_RETURN:     [0xAA, 0x01, 0x00, 0x20, 0x04, 0x10, 0x35, 0xCC],
     REQUEST_SOFT_SYSTEM_RESET: [],
     REQUEST_HARD_SYSTEM_RESET: []
 }
@@ -128,7 +128,10 @@ class protocol:
 
     def getPacketType(self, id):
         '''Returns human readable packet type'''
-        return PACKET_IDS[id]
+        try:
+            return PACKET_IDS[id]
+        except KeyError:
+            return 'unknown'
 
 
     def getUtilityRequestList(self):
@@ -333,7 +336,14 @@ class protocol:
             raise Exception, 'Packet incorrectly processed, %d bytes left' % (len(packet) - 1 - index)
 
         # Create response packet object
-        type = self._response_packets[contents['payload_id']]
+        try:
+            type = self._response_packets[contents['payload_id']]
+        except KeyError:
+            type = 'responseGeneric'
+
+        if not hasattr(self, type):
+            type = 'responseGeneric'
+
         response = getattr(self, type)()
 
         # Populate data
@@ -661,6 +671,13 @@ class protocol:
 
             else:
                 self.setPayload(payload)
+
+
+    class responseGeneric(response):
+        '''Generic EMS response for bad/not yet implemented packets'''
+
+        def __init__(self):
+            protocol.response.__init__(self)
 
 
     class responseInterfaceVersion(response):
