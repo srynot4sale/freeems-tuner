@@ -20,6 +20,7 @@
 
 import libs.config as config
 import logging
+import copy
 import comms
 import protocols
 
@@ -104,7 +105,13 @@ class connection(comms.interface):
         protocol = protocols.getProtocol()
 
         # Check for any complete packets
-        packet = protocol.processRecieveBuffer(self._buffer)
+        cache = copy.copy(self._buffer)
+
+        try:
+            packet = protocol.processRecieveBuffer(self._buffer)
+        except Exception, msg:
+            logger.error('processRecieveBuffer failed to parse packet from buffer: %s' % cache)
+            return
         
         if not packet:
             return
