@@ -207,9 +207,25 @@ class protocol:
         if len(buffer) < 4:
             return
         
-        # Check to make sure a start byte and an end byte exists in the buffer
-        if START_BYTE not in buffer or END_BYTE not in buffer:
-            return
+        # Check to make sure the first byte is a start byte
+        # If not, clean up bad bytes
+        if buffer[0] != START_BYTE:
+            # Remove everything before
+            start = buffer.index(START_BYTE)
+            logger.debug('Bad/incomplete data found in buffer before start byte: %s' % ','.join(protocols.toHex(buffer[0:start])))
+            del buffer[0:start]
+
+        # If no end byte, try again later when the rest of the packet has arrived
+        if END_BYTE not in buffer:
+
+            # Quick check to make sure there isn't another packet banked up after
+            # an incomplete one
+            if not buffer.index(START_BYTE, 1):
+                return
+
+            start = buffer.index(START_BYTE, 1)
+            logger.debug('Bad/incomplete packet found in buffer before a legitimate packet: %s' % ','.join(protocols.toHex(buffer[0:start])))
+            del buffer[0:start]
         
         # Begin state control machine :-)
         state = STATE_NOT_PACKET
@@ -225,9 +241,9 @@ class protocol:
 
             # If have not started a packet yet check for start_byte
             if state == STATE_NOT_PACKET:
-                # If not a start byte, its bad/incomplete data to trash it
+                # If not a start byte, we should never have got here
                 if byte != START_BYTE:
-                    bad_bytes.append(byte)
+                    raise Exception, 'Should never have got here, expecting a start byte'
                 # Otherwise, start packet
                 else:
                     state = STATE_IN_PACKET

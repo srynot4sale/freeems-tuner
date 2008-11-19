@@ -168,6 +168,7 @@ class connection(comms.interface):
             packet = protocol.processRecieveBuffer(self._buffer)
         except Exception, msg:
             logger.error('processRecieveBuffer failed to parse packet from buffer: %s' % cache)
+            self._buffer = []
             return
 
         if not packet:
