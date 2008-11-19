@@ -22,8 +22,10 @@ import wx
 import wx.grid as grid
 import comms
 import protocols
+import gui
 import logging
 import datetime
+import settings
 
 
 logger = logging.getLogger('gui.commsDiagnostics')
@@ -36,22 +38,42 @@ class commsDiagnostics(grid.Grid):
     def __init__(self, parent):
         grid.Grid.__init__(self, parent)
 
-        self.CreateGrid(1, 4)
-        self.SetRowLabelSize(50)
-        self.SetColLabelValue(0, 'Time')
-        self.SetColSize(0, 110)
-        self.SetColLabelValue(1, 'Flags')
-        self.SetColSize(1, 45)
-        self.SetColLabelValue(2, 'Id')
-        self.SetColSize(2, 75)
-        self.SetColLabelValue(3, 'Payload')
-        self.SetColSize(3, 530)
+        key = 'ui.commsdiagnostics.row.size.'
+        width = []
+        width.append( settings.get(key+'0', 110)    )
+        width.append( settings.get(key+'1', 45)     )
+        width.append( settings.get(key+'2', 75)     )
+        width.append( settings.get(key+'3', 530)    )
+
+        self.CreateGrid(        1, 4                )
+        self.SetRowLabelSize(   50                  )
+        self.SetColLabelValue(  0, 'Time'           )
+        self.SetColSize(        0, int(width[0])    )
+        self.SetColLabelValue(  1, 'Flags'          )             
+        self.SetColSize(        1, int(width[1])    )
+        self.SetColLabelValue(  2, 'Id'             )
+        self.SetColSize(        2, int(width[2])    )
+        self.SetColLabelValue(  3, 'Payload'        )
+        self.SetColSize(        3, int(width[3])    )
 
         self.SetDefaultCellFont(wx.Font(8, wx.MODERN, wx.NORMAL, wx.NORMAL))
 
+        # Get all column resizing
+        self.Bind(grid.EVT_GRID_COL_SIZE, self.onResize)
+
+        # Bind to connection
         self.conn = comms.getConnection()
         self.conn.bindSendWatcher(self.printSentPacket)
         self.conn.bindRecieveWatcher(self.printRecievedPacket)
+
+
+    def onResize(self, event):
+        '''Record new size'''
+        key = 'ui.commsdiagnostics.row.size.'
+        r = 0
+        while r < self.GetNumberCols():
+            settings.set(key+str(r), self.GetColSize(r))
+            r += 1
 
 
     def printSentPacket(self, request):

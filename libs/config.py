@@ -61,14 +61,32 @@ def loadBool(section, option, default = None):
     return parser.getboolean(section, option)
 
 
-# Save option to my_config.ini file
-def save(section, option, value):
+# Get all options in a section as a dict
+def getItems(section):
+
+    parser = getParser()
+
+    if not parser.has_section(section):
+        return {}
+
+    items = parser.items(section)
+    dict = {}
+
+    for (item, value) in items:
+        dict[item] = value
+
+    return dict
+
+
+# Set option
+def set(section, options):
 
     parser = getParser()
     if not parser.has_section(section):
         parser.add_section(section)
 
-    parser.set(section, option, value)
+    for option in options.keys():
+        parser.set(section, option, options[option])
 
     # Write options to the users config file
     configfile = open('data/my_config.cached.ini', 'wb')
