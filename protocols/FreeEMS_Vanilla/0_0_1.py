@@ -205,10 +205,6 @@ class protocol:
 
     def processRecieveBuffer(self, buffer):
         '''Check for any incoming packets and return if found'''
-
-        # Check buffer is long enough to contain an entire packet
-        if len(buffer) < 4:
-            return
         
         # Check to make sure the first byte is a start byte
         # If not, clean up bad bytes
