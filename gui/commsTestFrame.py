@@ -52,6 +52,8 @@ class commsTestFrame(wx.Frame):
         sizer3.Add(stop_button, 2)
         sizer3.Add((0,0), 11)
         sizer3.Add(close_button, 2)
+
+dfgjhd
         
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
         sizer2.Add((0,0), 1)
