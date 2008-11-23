@@ -36,6 +36,7 @@ BIT7  = 0x80	# 8th bit	= 128
 
 # Currently used protocol
 protocol = None
+plugin = None
 
 
 def getProtocol():
@@ -60,6 +61,9 @@ def loadDefault():
     #   $cwd/protocols/FreeEMS/0_17.py
     #
     path = 'protocols.'+def_protocol+'.'+version
+
+    global plugin
+    plugin = def_protocol+'.'+version
 
     logger = logging.getLogger('protocols')
     logger.info('Loading protocol module: %s' % path)
