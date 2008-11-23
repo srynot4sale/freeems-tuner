@@ -22,8 +22,11 @@ import wx
 import wx.grid as grid
 import comms
 import protocols
+import gui
 import logging
 import datetime
+import settings
+
 
 logger = logging.getLogger('gui.commsDiagnostics')
 
@@ -31,89 +34,80 @@ class commsDiagnostics(grid.Grid):
     
     conn = None
     row = 0
-    protocolPayloadTypeID = {0:"Request interface version",
-                             2:"Request firmware version",
-                             4:"Request maximum packet size",
-                             6:"Request echo packet return",
-                             8:"Request soft system reset",
-                             9:"Reply to soft system reset",
-                             10:"Request hard system reset",
-                             11:"Reply to hard system reset",
-                             12:"Request asynchronous error code",
-                             13:"Asynchronous error code packet",
-                             14:"Request asynchronous debug info",
-                             15:"Asynchronous debug info packet"}
 
     def __init__(self, parent):
         grid.Grid.__init__(self, parent)
 
-        self.CreateGrid(1, 4)
-        self.SetRowLabelSize(50)
-        self.SetColLabelValue(0, 'Time')
-        self.SetColSize(0, 110)
-        self.SetColLabelValue(1, 'Flags')
-        self.SetColSize(1, 45)
-        self.SetColLabelValue(2, 'Id')
-        self.SetColSize(2, 180)
-        self.SetColLabelValue(3, 'Payload')
-        self.SetColSize(3, 530)
-        #self.SetDefaultRowSize(30, 1)
+        key = 'ui.commsdiagnostics.row.size.'
+        width = []
+        width.append( settings.get(key+'0', 110)    )
+        width.append( settings.get(key+'1', 45)     )
+        width.append( settings.get(key+'2', 75)     )
+        width.append( settings.get(key+'3', 530)    )
 
+        self.CreateGrid(        1, 4                )
+        self.SetRowLabelSize(   50                  )
+        self.SetColLabelValue(  0, 'Time'           )
+        self.SetColSize(        0, int(width[0])    )
+        self.SetColLabelValue(  1, 'Flags'          )             
+        self.SetColSize(        1, int(width[1])    )
+        self.SetColLabelValue(  2, 'Id'             )
+        self.SetColSize(        2, int(width[2])    )
+        self.SetColLabelValue(  3, 'Payload'        )
+        self.SetColSize(        3, int(width[3])    )
+
+        self.SetDefaultCellFont(wx.Font(8, wx.MODERN, wx.NORMAL, wx.NORMAL))
+
+        # Get all column resizing
+        self.Bind(grid.EVT_GRID_COL_SIZE, self.onResize)
+
+        # Bind to connection
         self.conn = comms.getConnection()
         self.conn.bindSendWatcher(self.printSentPacket)
         self.conn.bindRecieveWatcher(self.printRecievedPacket)
 
 
+    def onResize(self, event):
+        '''Record new size'''
+        key = 'ui.commsdiagnostics.row.size.'
+        r = 0
+        while r < self.GetNumberCols():
+            settings.set(key+str(r), self.GetColSize(r))
+            r += 1
+
+
     def printSentPacket(self, request):
-        #Get stuff to print
+        '''Print sent packet to grid'''
+        self.insertRow(request)
+
+    
+    def printRecievedPacket(self, response):
+        '''Print received packet to grid'''
+        self.insertRow(response)
+
+
+    def insertRow(self, packet):
+        '''Insert row into grid'''
         time = datetime.datetime.time(datetime.datetime.now())
-        header = request.getHeaderFlags()
-        payload_id_bit_list = request.getPayloadId()
-        payload_id = protocols.from8bit(payload_id_bit_list)
-        payload_id_hum = self.protocolPayloadTypeID[payload_id]
-        payload = request.getPayload()
-        payload_hex = request.getPayloadHex()
+        header = self.getHeaderFlags(packet)
+        payload_hex = packet.getPayloadBytes()
         
         #Format stuff before printing
-        payload_id = protocols.from8bit(payload_id_bit_list)
-        payload_id_hum = self.protocolPayloadTypeID[payload_id]
+        payload_id = packet.getPayloadIdInt()
+        payload_id_hum = protocols.getProtocol().getPacketType(payload_id)
         payload_hex_hum = self.formatPayloadHex(payload_hex)
 
         self.AppendRows()
         self.SetCellValue(self.row, 0, str(time))
         self.SetCellValue(self.row, 1, str(header))
         self.SetCellValue(self.row, 2, str(payload_id) + ":" + payload_id_hum)
-        self.SetCellFont(self.row, 3, wx.Font(8, wx.MODERN, wx.NORMAL, wx.NORMAL))
         self.SetCellValue(self.row, 3, payload_hex_hum)
-        self.MakeCellVisible(self.row + 1, 1)
-        self.ForceRefresh()
 
-        self.row += 1
+        # Make sure entire row is visible
+        if self.GetCellOverflow(self.row, 3):
+            lines = payload_hex_hum.count('\n') + 1
+            self.SetRowSize(self.row, (lines * 15) + 3)
 
-    
-    def printRecievedPacket(self, request):
-
-        time = datetime.datetime.time(datetime.datetime.now())
-        header = 'rec'
-        raw_hex = []
-
-        for byte in request:
-            hex_byte = hex(byte).upper().replace('X','x')
-
-            if len(hex_byte) < 4:
-                hex_byte = '0x0'+hex_byte[-1]
-
-            raw_hex.append(hex_byte)
-
-
-        raw_hex = ','.join(raw_hex)
-
-        self.AppendRows()
-
-        self.SetCellValue(self.row, 0, str(time))
-        self.SetCellValue(self.row, 1, str(header))
-        self.SetCellValue(self.row, 3, str(raw_hex))
-        
         self.MakeCellVisible(self.row + 1, 1)
         self.ForceRefresh()
 
@@ -121,61 +115,71 @@ class commsDiagnostics(grid.Grid):
 
 
     def formatPayloadHex(self, data):
-        seperator = False
-        output = ""
+        output = ''
+        bytes = []
         i = 0
+
         for raw_hex in data:
-            if not i % 16 and i > 0:
-                output += self.getASCII(output)
-                output += "\n"
-                offset = "%X" % i               #decimal to hex
+            # If end of line
+            if i % 16 == 0:
                 
-                #Pad offset with zeros
-                while len(offset) < 4:          
-                    offset = offset[::-1]       #reverse string
-                    offset += "0"               #add zero to "beginning" of string
-                    offset = offset[::-1]       #reverse string
-                output += offset
-                output += ":  "
+                # If not first line, add string to end
+                if i > 0:
+                    output += self.getASCII(bytes)+'\n'
+                    bytes = []
+
+                # Get offset and pad with 0's
+                offset = hex(i)[2:5].rjust(4, '0')
                 
-            elif not i % 16:
-                output += "0000:  "
+                output += offset+':  '
                 
             i += 1
-            output += str(raw_hex)[2:4]
-            output += " "
-            seperator = False
-            if not i % 8 and i % 16:
-                output += " "
-                seperator = True
+            output += hex(raw_hex)[2:5].rjust(2, '0')
+            output += ' '
+            bytes.append(raw_hex)
 
-        first_row = False
-        if i <= 16:
-            first_row = True
-        #Pad the end with asterisks
+            if i % 8 == 0 and i % 16:
+                output += " "
+
+        # Pad the end
         while i % 16:
-            if not i % 8 and not seperator:
-                output += " "
-            output += "** "
+            if not i % 8:
+                output += ' '
+            output += '-- '
             i += 1
 
-        output += self.getASCII(output)
+        output += self.getASCII(bytes)
             
         return output
 
+
     def getASCII(self, output):
         ascii = "  "
-        i = len(output)        
-        row_hex = output[i-49:i]
-        row_hex = row_hex.replace('*', '')
-        row_hex_list = row_hex.split()
-        #Replace hex that can't translate to ASCII with an underscore (0x5F)
-        for j, str in enumerate(row_hex_list):
-            num = int(row_hex_list[j])
-            if num > 80 or num < 20:
-                row_hex_list[j] = "5F"
-        row_hex = "".join(row_hex_list)
-        ascii += row_hex.decode("hex")
+        
+        # Replace hex that can't translate to ASCII with a period
+        for j, str in enumerate(output):
+
+            if str > 128 or str < 20:
+                ascii += '.'
+            else:
+                ascii += chr(str)
         
         return ascii
 
+
+    def getHeaderFlags(self, packet):
+        '''Retrieve noterised version of flag bits'''
+        ascii = str()
+
+        if packet.hasHeaderProtocolFlag():
+            ascii += 'P'
+        else:
+            ascii += 'I'
+
+        if packet.hasHeaderLengthFlag():
+            ascii += 'L'
+
+        if packet.hasHeaderAckFlag():
+            ascii += 'A'
+
+        return ascii

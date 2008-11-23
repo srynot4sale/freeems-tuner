@@ -37,6 +37,36 @@ REQUEST_MAX_PACKET_SIZE     = 4
 REQUEST_ECHO_PACKET_RETURN  = 6
 REQUEST_SOFT_SYSTEM_RESET   = 8
 REQUEST_HARD_SYSTEM_RESET   = 10
+REQUEST_ASYNC_ERROR_CODE    = 12
+REQUEST_ASYNC_DEBUG_INFO    = 14
+
+RESPONSE_INTERFACE_VERSION  = 1
+RESPONSE_FIRMWARE_VERSION   = 3
+RESPONSE_MAX_PACKET_SIZE    = 5
+RESPONSE_ECHO_PACKET_RETURN = 7
+RESPONSE_SOFT_SYSTEM_RESET  = 9
+RESPONSE_HARD_SYSTEM_RESET  = 11
+RESPONSE_ASYNC_ERROR_CODE   = 13
+RESPONSE_ASYNC_DEBUG_INFO   = 15
+
+PACKET_IDS = {
+        REQUEST_INTERFACE_VERSION:   "ifVer",
+        RESPONSE_INTERFACE_VERSION:  "ifVer",
+        REQUEST_FIRMWARE_VERSION:    "firmVer",
+        RESPONSE_FIRMWARE_VERSION:   "firmVer",
+        REQUEST_MAX_PACKET_SIZE:     "maxPktSize",
+        RESPONSE_MAX_PACKET_SIZE:    "maxPktSize",
+        REQUEST_ECHO_PACKET_RETURN:  "echoPacket",
+        RESPONSE_ECHO_PACKET_RETURN: "echoPacket",
+        REQUEST_SOFT_SYSTEM_RESET:   "softReset",
+        RESPONSE_SOFT_SYSTEM_RESET:  "softReset",
+        REQUEST_HARD_SYSTEM_RESET:   "hardReset",
+        RESPONSE_HARD_SYSTEM_RESET:  "hardReset",
+        REQUEST_ASYNC_ERROR_CODE:    "asyncError",
+        RESPONSE_ASYNC_ERROR_CODE:   "asyncError",
+        REQUEST_ASYNC_DEBUG_INFO:    "asyncDebug",
+        RESPONSE_ASYNC_DEBUG_INFO:   "asyncDebug"
+}
 
 START_BYTE = 0xAA
 END_BYTE = 0xCC
@@ -48,9 +78,9 @@ STATE_IN_PACKET             = 2
 
 TEST_RESPONSES = {
     REQUEST_INTERFACE_VERSION:      [0xAA, 0x11, 0x00, 0x01, 0x00, 0x14, 0x00, 0x00,
-                                     0x11, 0x49, 0x46, 0x72, 0x65, 0x65, 0x45, 0x4D,
+                                     0x02, 0x49, 0x46, 0x72, 0x65, 0x65, 0x45, 0x4D,
                                      0x53, 0x20, 0x56, 0x61, 0x6E, 0x69, 0x6C, 0x6C,
-                                     0x61, 0x00, 0xCE, 0xCC],
+                                     0x61, 0x00, 0xBF, 0xCC],
     REQUEST_FIRMWARE_VERSION:       [0xAA, 0x11, 0x00, 0x03, 0x00, 0x22, 0x46, 0x72,
                                      0x65, 0x65, 0x45, 0x4D, 0x53, 0x20, 0x56, 0x61,
                                      0x6E, 0x69, 0x6C, 0x6C, 0x61, 0x20, 0x76, 0x30,
@@ -58,7 +88,7 @@ TEST_RESPONSES = {
                                      0x65, 0x2D, 0x61, 0x6C, 0x70, 0x68, 0x61, 0x00,
                                      0xD8, 0xCC],
     REQUEST_MAX_PACKET_SIZE:        [0xAA, 0x01, 0x00, 0x05, 0x04, 0x10, 0x1A, 0xCC],
-    REQUEST_ECHO_PACKET_RETURN:     [],
+    REQUEST_ECHO_PACKET_RETURN:     [0xAA, 0x01, 0x00, 0x20, 0x04, 0x10, 0x35, 0xCC],
     REQUEST_SOFT_SYSTEM_RESET: [],
     REQUEST_HARD_SYSTEM_RESET: []
 }
@@ -87,6 +117,21 @@ class protocol:
             'requestMaxPacketSize',
             'requestEchoPacketReturn',
     ]
+
+    _response_packets = {
+        1: 'responseInterfaceVersion',
+        3: 'responseFirmwareVersion',
+        5: 'responseMaxPacketSize',
+        7: 'responseEchoPacketReturn',
+    }
+
+
+    def getPacketType(self, id):
+        '''Returns human readable packet type'''
+        try:
+            return PACKET_IDS[id]
+        except KeyError:
+            return 'unknown'
 
 
     def getUtilityRequestList(self):
@@ -165,26 +210,44 @@ class protocol:
         if len(buffer) < 4:
             return
         
-        # Check to make sure a start byte and an end byte exists in the buffer
-        if START_BYTE not in buffer or END_BYTE not in buffer:
+        # Check to make sure the first byte is a start byte
+        # If not, clean up bad bytes
+        if buffer[0] != START_BYTE:
+            # Remove everything before
+            start = buffer.index(START_BYTE)
+            logger.debug('Bad/incomplete data found in buffer before start byte: %s' % ','.join(protocols.toHex(buffer[0:start])))
+            del buffer[0:start]
+
+        # If no end byte, try again later when the rest of the packet has arrived
+        if END_BYTE not in buffer:
+
+            # Quick check to make sure there isn't another packet banked up after
+            # an incomplete one
+            if not buffer.index(START_BYTE, 1):
+                return
+
+            start = buffer.index(START_BYTE, 1)
+            logger.debug('Bad/incomplete packet found in buffer before a legitimate packet: %s' % ','.join(protocols.toHex(buffer[0:start])))
+            del buffer[0:start]
             return
         
         # Begin state control machine :-)
         state = STATE_NOT_PACKET
-        index = -1
+        index = 0
         packet = []
+        bad_bytes = []
+        complete = False
 
         # Loop through buffer_copy, delete from buffer
         buffer_copy = copy.copy(buffer)
 
         for byte in buffer_copy:
-            index += 1
 
             # If have not started a packet yet check for start_byte
             if state == STATE_NOT_PACKET:
-                # If not a start byte, its bad/incomplete data to trash it
+                # If not a start byte, we should never have got here
                 if byte != START_BYTE:
-                    logger.error('Bad/incomplete data found in buffer before start byte: %X' % byte)
+                    raise Exception, 'Should never have got here, expecting a start byte'
                 # Otherwise, start packet
                 else:
                     state = STATE_IN_PACKET
@@ -210,12 +273,21 @@ class protocol:
                 else:
                     logger.error('Wrongly escaped byte found in buffer: %X' % byte)
 
+            # Remove this byte from buffer as it has been processed
             del buffer[0]
+
+            index += 1
 
             # Check if we have a complete packet
             if len(packet) and state == STATE_NOT_PACKET:
-                self.processIncomingPacket(packet)
-                return packet
+                complete = self.processIncomingPacket(packet)
+                break
+
+        # Process bad_bytes buffer
+        if len(bad_bytes):
+            logger.debug('Bad/incomplete data found in buffer before start byte: %s' % ','.join(protocols.toHex(bad_bytes)))
+
+        return complete        
 
 
     def processIncomingPacket(self, packet):
@@ -264,6 +336,24 @@ class protocol:
         if index != (len(packet) - 1):
             raise Exception, 'Packet incorrectly processed, %d bytes left' % (len(packet) - 1 - index)
 
+        # Create response packet object
+        try:
+            type = self._response_packets[contents['payload_id']]
+        except KeyError:
+            type = 'responseGeneric'
+
+        if not hasattr(self, type):
+            type = 'responseGeneric'
+
+        response = getattr(self, type)()
+
+        # Populate data
+        response.parseHeaderFlags(contents['flags'])
+        response.setPayloadId(contents['payload_id'])
+        response.parsePayload(contents['payload'])
+        response.validate()
+
+        return response
 
 
     class packet:
@@ -275,12 +365,21 @@ class protocol:
         # Payload id
         _payload_id = 0
 
+        # Parsed payload length
+        _payload_parsed_len = 0
+
         # Payload
-        _payload = ''
+        _payload = []
+
 
         def getHeaderFlags(self):
             '''Returns header flags'''
             return self._headerFlags
+
+
+        def parseHeaderFlags(self, flags):
+            '''Saves header flags'''
+            self._headerFlags = flags
 
 
         def setHeaderProtocolFlag(self, bool = True):
@@ -324,8 +423,8 @@ class protocol:
 
         def setPayloadId(self, id):
             '''Set payload id'''
-            if not isinstance(id, types.IntType):
-                raise TypeError, 'Integer required for payload id'
+            if isinstance(id, list):
+                id = protocols.from8bit(id)
 
             self._payload_id = id
 
@@ -335,7 +434,7 @@ class protocol:
             Return payload id
             This is padded with a 0 byte for inserting directly into packet
             '''
-            return protocols.to8bit(self._payload_id, 2)
+            return protocols.to8bit(self.getPayloadIdInt(), 2)
 
 
         def getPayloadIdInt(self):
@@ -344,31 +443,57 @@ class protocol:
 
 
         def setPayload(self, payload):
-            '''Save payload'''
-            self._payload = payload
+            '''Save payload as 8bit bytes'''
+            if isinstance(payload, list):
+                self._payload = payload
+            else:
+                self._payload = protocols.to8bit(payload)
 
 
         def getPayload(self):
-            '''Return payload'''
-            return self._payload
+            '''Return payload as string'''
+            return self.__str__(self.getPayloadBytes())
 
 
         def getPayloadBytes(self):
             '''Return payload as bytes for inserting directly into packet'''
-            return protocols.to8bit(self.getPayload())
+            return self._payload
 
 
         def getPayloadLength(self):
             '''Return length of payload'''
-            return protocols.to8bit(len(self.getPayload()), 2)
+            return protocols.to8bit(self.getPayloadLengthInt(), 2)
 
 
-        def __str__(self):
-            '''Generate a string for serial connections'''
-            packet = self.getEscaped()
+        def getPayloadLengthInt(self):
+            '''Return length of payload as int'''
+            return len(self.getPayloadBytes())
+
+
+        def setPayloadLengthParsed(self, length):
+            '''Save parsed payload length'''
+            if isinstance(length, list):
+                length = protocols.from8bit(length)
+
+            self._payload_parsed_length = length
+
+
+        def getPayloadLengthParsed(self):
+            '''Return parsed payload length'''
+            return self._payload_parsed_length
+
+
+        def __str__(self, bytes = None):
+            '''
+            Generate a raw string.
+            Main use is for sending to serial connections
+            '''
+            if not bytes:
+                bytes = self.getEscaped()
+
             string = ''.encode('latin-1')
 
-            for byte in packet:
+            for byte in bytes:
                 if byte <= 256:
                     string += chr(byte)
                 else:
@@ -423,16 +548,7 @@ class protocol:
         def getPacketHex(self):
             '''Return a packet as hex strings'''
             packet = self.getEscaped()
-
-            raw_hex = []
-            for byte in packet:
-                byte = hex(byte).upper().replace('X','x')
-                if len(byte) == 3:
-                    byte = '0x0'+byte[-1]
-
-                raw_hex.append(byte)
-            
-            return raw_hex
+            return protocols.toHex(packet)
 
 
         def getPayloadHex(self):
@@ -507,6 +623,101 @@ class protocol:
 
             protocol.request.__init__(self)
             self.setPayloadId(REQUEST_SOFT_SYSTEM_RESET)
+
+    
+    class response(packet):
+        '''Reponse packet'''
+
+        _validation_rules = {}
+
+        def __init__(self):
+            '''Set defaults'''
+
+            self._validation_rules = {
+                'preset_payload_length': False,
+                'requires_length': False,
+                'firmware_type': False,
+            }
+
+
+        def validate(self):
+            '''Validate packet based on validation rules'''
+            
+            rules = self._validation_rules
+            pid = self.getPayloadIdInt()
+
+            if rules['preset_payload_length']:
+                # Check payload is the required length
+                if rules['preset_payload_length'] != self.getPayloadLengthInt():
+                    raise Exception, 'Packet type %d preset length of %s does not match the actual payload length of %s' % (pid, rules['preset_payload_length'], self.getPayloadLengthInt())
+            
+            if rules['requires_length']:
+                # Check a length was supplied and the payload matches
+                if not self.hasHeaderLengthFlag():
+                    raise Exception, 'Packet type %s was expecting a length flag to be set' % pid
+
+                length = self.getPayloadLengthParsed()
+                if not length:
+                    raise Exception, 'Packet type %s was expecting a length to be set' % pid
+
+                if self.getPayloadLengthInt() != length:
+                    raise Exception, 'Packet type %s, payload length of %s does not match parsed length of %s' % (pid, self.getPayloadLengthInt(), length)
+
+            if rules['firmware_type']:
+                # Check firmware type flag is set
+                if self.hasHeaderProtocolFlag():
+                    raise Exception, 'Packet type %s requires the firmware flag is set' % pid
+
+            else:
+                # Check firmware type flag is not set
+                if not self.hasHeaderProtocolFlag():
+                    raise Exception, 'Packet type %s requires the protocol flag is set' % pid
+
+
+        def parsePayload(self, payload):
+            '''Parse the payload'''
+
+            if self.hasHeaderLengthFlag():
+                # If length set, account for 2 length bytes
+                self.setPayloadLengthParsed(payload[0:2])
+                self.setPayload(payload[2:])
+
+            else:
+                self.setPayload(payload)
+
+
+    class responseGeneric(response):
+        '''Generic EMS response for bad/not yet implemented packets'''
+
+        def __init__(self):
+            protocol.response.__init__(self)
+
+
+    class responseInterfaceVersion(response):
+        '''EMS response to interface version request'''
+
+        def __init__(self):
+            protocol.response.__init__(self)
+            rules = self._validation_rules
+            rules['requires_length'] = True
+
+
+    class responseFirmwareVersion(response):
+        '''EMS response to firmware version request'''
+
+        def __init__(self):
+            protocol.response.__init__(self)
+            rules = self._validation_rules
+            rules['requires_length'] = True
+
+
+    class responseMaxPacketSize(response):
+        '''EMS response to max packet length request'''
+
+        def __init__(self):
+            protocol.response.__init__(self)
+            rules = self._validation_rules
+            rules['preset_payload_length'] = 2
 
 
 def getChecksum(bytes):

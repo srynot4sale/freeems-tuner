@@ -29,6 +29,15 @@ freeems-tuner_version/
         my_config.ini
             User overrided config.
 
+        my_config.cached.ini
+            System file used for storing internal settings
+
+        app.log
+            Application log
+
+    docs/
+        Documentation
+
     gui/
         Contains GUI code
 

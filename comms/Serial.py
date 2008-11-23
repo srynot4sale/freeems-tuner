@@ -22,6 +22,7 @@ import libs.serial as serial
 import libs.serial.serialutil as serialutil
 import libs.config as config
 import logging
+import copy
 import comms
 import protocols
 
@@ -134,7 +135,7 @@ class connection(comms.interface):
         self.getConnection().write(packet.__str__())
         self.getConnection().flushOutput()
         
-        logger.debug('Packet sent over Serial connection: %s' % packet)
+        logger.debug('Packet sent over Serial connection: %s' % packet.getPacketHex())
 
         for watcher in self._send_watchers:
             watcher(packet)
@@ -162,12 +163,19 @@ class connection(comms.interface):
         protocol = protocols.getProtocol()
 
         # Check for any complete packets
-        packet = protocol.processRecieveBuffer(self._buffer)
+        try:
+            cache = copy.copy(self._buffer)
+            packet = protocol.processRecieveBuffer(self._buffer)
+        except Exception, msg:
+            logger.error(msg)
+            logger.error('processRecieveBuffer failed to parse packet from buffer: %s' % cache)
+            self._buffer = []
+            return
 
         if not packet:
             return
 
-        logger.debug('Packet received by Serial connection: %s' % packet)
+        logger.debug('Packet received by Serial connection: %s' % packet.getPacketHex())
 
         for watcher in self._recieve_watchers:
             watcher(packet)

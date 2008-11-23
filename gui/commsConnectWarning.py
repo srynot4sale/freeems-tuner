@@ -34,9 +34,9 @@ def confirmConnected(window):
 
 def _displayDialog(window):
     '''Show warning dialog'''
-    message = 'You are not currently connected to an ECU,\nwould you like to connect now?'
+    message = 'You are not currently connected to an EMS,\nwould you like to connect now?'
     
-    dialog = wx.MessageDialog(window, message, 'Connect to ECU?', 
+    dialog = wx.MessageDialog(window, message, 'Connect to EMS?', 
                     style=wx.YES_NO | wx.YES_DEFAULT | wx.ICON_EXCLAMATION | wx.CENTRE)
 
     if dialog.ShowModal() != wx.ID_YES:
