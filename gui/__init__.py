@@ -31,6 +31,7 @@ import debugFrame
 import commsTestFrame
 import tab.main
 import tab.debugLog
+import tab.memoryUtils
 
 
 logger = logging.getLogger('gui')
@@ -113,8 +114,10 @@ class Frame(wx.Frame):
 
         # Build main window
         self.windows['main'] = window_main = tab.main.tab(self.tabctrl)
+        self.windows['memory_utils'] = window_memory_utils = tab.memoryUtils.tab(self.tabctrl)
         self.windows['debug'] = window_debug = tab.debugLog.tab(self.tabctrl)
         tabctrl.AddPage(window_main, 'Main')
+        tabctrl.AddPage(window_memory_utils, 'Memory Utils')
         tabctrl.AddPage(window_debug, 'Debug Log')
 
 
@@ -211,7 +214,7 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnAbout, id=ID_ABOUT)
         self.Bind(wx.EVT_MENU, self.OnHelp, id=ID_HELP)
         self.Bind(wx.EVT_MENU, self.ShowDebugFrame, id=ID_DEBUG_FRAME)
-
+        
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_UNDO)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_REDO)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_CONNECT)
@@ -266,6 +269,11 @@ class Frame(wx.Frame):
     def ShowDebugFrame(self, event):
         '''Show debug frame'''
         debugFrame.debugFrame(self)
+
+
+    def ShowMemoryRequestFrame(self, event):
+        '''Show memory request frame'''
+        memoryRequestFrame.memoryRequestFrame(self)
 
 
     def CommsConnect(self, event = None):
@@ -330,6 +338,57 @@ class Frame(wx.Frame):
         except AttributeError:
             # This menu option is not supported in the current context.
             event.Enable(False)
+
+
+
+class tabMemoryRequest(wx.Panel):
+    '''Memory request tab'''
+
+    def __init__(self, parent):
+        '''Setup interface elements'''
+        wx.Panel.__init__(self, parent)
+
+        self.memory_block_id_drop_menu = memoryRequestBlockIdDropMenu.memoryRequestBlockIdDropMenu(self)
+
+        # Try keep all spaces at 1/60th of the screen width or height
+        # Sizer will only add up to 58 tho as it is enclosed in another
+        # horizontal sizer
+        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer1.Add(self.memory_block_id_drop_menu, 15, wx.EXPAND)
+        sizer1.Add(blank, 1)
+
+        self.SetSizer(sizer1)
+        self.Layout()
+
+        
+
+
+    def updateDisplay(self, message):
+        '''Add a new line to the display'''
+        self.display.SetValue(self.display.GetValue() + str(message) + '\n')
+    
+    
+    class loggingHandler(logging.Handler):
+        '''Logging handler for printing to this display'''
+
+        # UI elements with a updateDisplay method
+        _display = None
+
+        def __init__(self, display):
+            '''Setup any defaults, important vars'''
+            logging.Handler.__init__(self)
+
+            # Save UI elements
+            self._display = display
+
+    
+        def emit(self, record):
+            '''Actually print the logging record'''
+
+            #! Important, formats message nicely
+            msg = self.format(record)
+
+            self._display.updateDisplay(msg)
 
 
 # Bring up wxpython interface
