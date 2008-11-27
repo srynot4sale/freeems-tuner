@@ -654,6 +654,7 @@ class protocol:
 
         def __init__(self, block_id):
             protocol.request.__init__(self)
+            self.setHeaderProtocolFlag(False)
             self.setPayloadId(RETRIEVE_BLOCK_FROM_RAM)
             self.setPayload(block_id)
 
@@ -663,6 +664,7 @@ class protocol:
 
         def __init__(self, block_id):
             protocol.request.__init__(self)
+            self.setHeaderProtocolFlag(False)
             self.setPayloadId(RETRIEVE_BLOCK_FROM_FLASH)
             self.setPayload(block_id)
 
@@ -671,6 +673,7 @@ class protocol:
         
         def __init__(self, block_id):
             protocol.request.__init__(self)
+            self.setHeaderProtocolFlag(False)
             self.setPayloadId(BURN_BLOCK_FROM_RAM_TO_FLASH)
             self.setPayload(block_id)
             
