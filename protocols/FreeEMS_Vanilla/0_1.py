@@ -40,6 +40,10 @@ REQUEST_HARD_SYSTEM_RESET   = 10
 REQUEST_ASYNC_ERROR_CODE    = 12
 REQUEST_ASYNC_DEBUG_INFO    = 14
 
+RETRIEVE_BLOCK_FROM_RAM     = 4
+RETRIEVE_BLOCK_FROM_FLASH   = 6
+BURN_BLOCK_FROM_RAM_TO_FLASH = 8
+
 RESPONSE_INTERFACE_VERSION  = 1
 RESPONSE_FIRMWARE_VERSION   = 3
 RESPONSE_MAX_PACKET_SIZE    = 5
@@ -157,6 +161,12 @@ class protocol:
         'MAFTransferTableLocationID 28',
         ]
 
+    _memory_request_payload_ids = [
+        'retrieveBlockFromRAM',
+        'retrieveBlockFromFlash',
+        'burnBlockFromRamToFlash',
+        ]
+
 
     def getPacketType(self, id):
         '''Returns human readable packet type'''
@@ -174,12 +184,21 @@ class protocol:
         '''Return a list of this protocols memory request block IDs'''
         return self._memory_request_block_ids
 
+    def getMemoryRequestPayloadIdList(self):
+        '''Return a list of this protocols memory request payload IDs'''
+        return self._memory_request_payload_ids
+
     def sendUtilityRequest(self, request_type = None):
         '''Send a utility request'''
         packet = getattr(self, self._utility_request_packets[request_type])()
 
         self._sendPacket(packet)
 
+    def sendMemoryRequest(self, request_type = None, request_type2 = None):
+        '''Send a memory request'''
+        packet = getattr(self, self._memory_request_payload_ids[request_type])(request_type2)
+        
+        self._sendPacket(packet)
 
     def sendUtilityHardResetRequest(self):
         '''Send a hardware reset utility request'''
@@ -629,6 +648,32 @@ class protocol:
             self.setPayloadId(REQUEST_ECHO_PACKET_RETURN)
             self.setPayload('test')
 
+
+    # Firmware memory block request
+    class retrieveBlockFromRAM(request):
+
+        def __init__(self, block_id):
+            protocol.request.__init__(self)
+            self.setPayloadId(RETRIEVE_BLOCK_FROM_RAM)
+            self.setPayload(block_id)
+
+
+    # Firmware memory block request
+    class retrieveBlockFromFlash(request):
+
+        def __init__(self, block_id):
+            protocol.request.__init__(self)
+            self.setPayloadId(RETRIEVE_BLOCK_FROM_FLASH)
+            self.setPayload(block_id)
+
+    # Firmware memory block request
+    class burnBlockFromRamToFlash(request):
+        
+        def __init__(self, block_id):
+            protocol.request.__init__(self)
+            self.setPayloadId(BURN_BLOCK_FROM_RAM_TO_FLASH)
+            self.setPayload(block_id)
+            
 
     # Firmware system reset request (hard)
     class requestHardSystemReset(request):
