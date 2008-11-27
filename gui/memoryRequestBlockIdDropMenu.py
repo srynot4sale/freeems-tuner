@@ -112,6 +112,6 @@ class memoryRequestBlockIdDropMenu(wx.BoxSizer):
         if selection < 0:
             selection = 0
         if selection2 < 0:
-            selection2
+            selection2 = 0
 
         protocols.getProtocol().sendMemoryRequest(selection, selection2)
