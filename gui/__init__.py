@@ -27,6 +27,7 @@ import logging
 import libs.config as config
 import settings
 
+import debugFrame
 import commsTestFrame
 import tab.main
 import tab.debugLog
