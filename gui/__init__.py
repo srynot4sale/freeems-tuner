@@ -340,57 +340,6 @@ class Frame(wx.Frame):
             event.Enable(False)
 
 
-
-class tabMemoryRequest(wx.Panel):
-    '''Memory request tab'''
-
-    def __init__(self, parent):
-        '''Setup interface elements'''
-        wx.Panel.__init__(self, parent)
-
-        self.memory_block_id_drop_menu = memoryRequestBlockIdDropMenu.memoryRequestBlockIdDropMenu(self)
-
-        # Try keep all spaces at 1/60th of the screen width or height
-        # Sizer will only add up to 58 tho as it is enclosed in another
-        # horizontal sizer
-        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer1.Add(self.memory_block_id_drop_menu, 15, wx.EXPAND)
-        sizer1.Add(blank, 1)
-
-        self.SetSizer(sizer1)
-        self.Layout()
-
-        
-
-
-    def updateDisplay(self, message):
-        '''Add a new line to the display'''
-        self.display.SetValue(self.display.GetValue() + str(message) + '\n')
-    
-    
-    class loggingHandler(logging.Handler):
-        '''Logging handler for printing to this display'''
-
-        # UI elements with a updateDisplay method
-        _display = None
-
-        def __init__(self, display):
-            '''Setup any defaults, important vars'''
-            logging.Handler.__init__(self)
-
-            # Save UI elements
-            self._display = display
-
-    
-        def emit(self, record):
-            '''Actually print the logging record'''
-
-            #! Important, formats message nicely
-            msg = self.format(record)
-
-            self._display.updateDisplay(msg)
-
-
 # Bring up wxpython interface
 def load():
     
