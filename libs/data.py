@@ -18,7 +18,7 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import os
+import os, sys
 
 def createDirectory():
 
@@ -35,4 +35,8 @@ def createDirectory():
 
 def getPath():
 
-    return os.getcwd()+'/data/'
+    cwd = sys.path[0]
+    if not len(cwd):
+        cwd = os.getcwd()
+        
+    return cwd+'/data/'

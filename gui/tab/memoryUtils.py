@@ -18,7 +18,25 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-# FreeEMS-Tuner
-__revision__ = 'r2008112803'
-__name__ = 'FreeEMS-Tuner'
-__title__ = '%s %s' % (__name__, __revision__)
+import wx
+import logging
+
+import gui.memoryRequestInterface
+
+logger = logging.getLogger('gui.tabs.memoryUtils')
+
+# Helper value for inserting spacing into sizers
+blank = (0,0)
+
+class tab(wx.Panel):
+    '''Memory utilities tab'''
+
+    def __init__(self, parent):
+        '''Setup interface elements'''
+        wx.Panel.__init__(self, parent)
+
+        self.interface = gui.memoryRequestInterface.memoryRequestInterface(self)
+
+        self.SetSizer(self.interface)
+        self.Layout()
+

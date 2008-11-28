@@ -25,8 +25,11 @@ import sys
 import comms
 import protocols
 import version
+import libs.data
+
 
 logger = logging.getLogger('gui.debugFrame')
+
 
 class debugFrame(wx.Frame):
     """Debug info fFrame"""
@@ -71,14 +74,15 @@ class debugFrame(wx.Frame):
         data += '--------------------\n'
         data += 'Platform: %s\n' % sys.platform
         data += 'Python version: %s\n' % str(sys.version).replace('\n', '')
-        data += 'Python path: %s\n\n' % sys.path
-        data += 'wxPython version: %s\n' % wx.__version__
+        data += 'Python path: %s\n' % sys.path
+        data += 'wxPython version: %s\n\n' % wx.__version__
 
         data += 'FreeEMS:\n'
         data += '--------------------\n'
         data += 'Tuner version: %s\n' % version.__revision__
         data += 'Comms plugin: %s\n' % comms.plugin
         data += 'Protocol plugin: %s\n' % protocols.plugin
+        data += 'Data directory: %s\n' % libs.data.getPath()
 
         display.SetValue(data)
 
