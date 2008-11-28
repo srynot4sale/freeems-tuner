@@ -10,4 +10,5 @@ Class and method names to begin with a lower case letter and be camelCase
 
 Constants should be in UPPER_CASE
 
-
+Two empty lines should be used between methods and classes and groups of global vars. Single
+empty lines should be used to break up code for readability, but no more.
