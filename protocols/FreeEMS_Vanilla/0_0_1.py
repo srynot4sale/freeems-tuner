@@ -129,43 +129,20 @@ class protocol:
         7: 'responseEchoPacketReturn',
     }
 
-    _memory_request_block_ids = [
-        'VETableMainFlashLocationID 0',
-        'VETableMainFlash2LocationID 1',
-        'VETableSecondaryFlashLocationID 2',
-        'VETableSecondaryFlash2LocationID 3',
-        'VETableTertiaryFlashLocationID 4',
-        'VETableTertiaryFlash2LocationID 5',
-        'LambdaTableFlashLocationID 6',
-        'LambdaTableFlash2LocationID 7',
-        'IgnitionAdvanceTableMainFlashLocationID 8',
-        'IgnitionAdvanceTableMainFlash2LocationID 9',
-        'IgnitionAdvanceTableSecondaryFlashLocationID 10',
-        'IgnitionAdvanceTableSecondaryFlash2LocationID 11',
-        'InjectionAdvanceTableMainFlashLocationID 12',
-        'InjectionAdvanceTableMainFlash2LocationID 13',
-        'InjectionAdvanceTableSecondaryFlashLocationID 14',
-        'InjectionAdvanceTableSecondaryFlash2LocationID 15',
-        'SmallTablesAFlashLocationID 16',
-        'SmallTablesAFlash2LocationID 17',
-        'SmallTablesBFlashLocationID 18',
-        'SmallTablesBFlash2LocationID 19',
-        'SmallTablesCFlashLocationID 20',
-        'SmallTablesCFlash2LocationID 21',
-        'SmallTablesDFlashLocationID 22',
-        'SmallTablesDFlash2LocationID 23',
-        'FixedConfigLocationID 24',
-        'FixedConfig2LocationID 25',
-        'IATTransferTableLocationID 26',
-        'CHTTransferTableLocationID 27',
-        'MAFTransferTableLocationID 28',
-        ]
+    _memory_request_block_ids = {
+        0: 'VETableMainFlashLocationID',
+        1: 'VETableMainFlash2LocationID',
+        2: 'VETableSecondaryFlashLocationID',
+        3: 'VETableSecondaryFlash2LocationID',
+        4: 'VETableTertiaryFlashLocationID',
+        5: 'VETableTertiaryFlash2LocationID',
+    }
 
-    _memory_request_payload_ids = [
-        'retrieveBlockFromRAM',
-        'retrieveBlockFromFlash',
-        'burnBlockFromRamToFlash',
-        ]
+    _memory_request_payload_ids = {
+        0: 'retrieveBlockFromRAM',
+        1: 'retrieveBlockFromFlash',
+        2: 'burnBlockFromRamToFlash',
+    }
 
 
     def getPacketType(self, id):
@@ -180,13 +157,16 @@ class protocol:
         '''Return a list of this protocols utility requests'''
         return self._utility_requests
 
+
     def getMemoryRequestBlockIdList(self):
         '''Return a list of this protocols memory request block IDs'''
         return self._memory_request_block_ids
 
+
     def getMemoryRequestPayloadIdList(self):
         '''Return a list of this protocols memory request payload IDs'''
         return self._memory_request_payload_ids
+
 
     def sendUtilityRequest(self, request_type = None):
         '''Send a utility request'''
@@ -194,11 +174,13 @@ class protocol:
 
         self._sendPacket(packet)
 
+
     def sendMemoryRequest(self, request_type = None, request_type2 = None):
         '''Send a memory request'''
         packet = getattr(self, self._memory_request_payload_ids[request_type])(request_type2)
         
         self._sendPacket(packet)
+
 
     def sendUtilityHardResetRequest(self):
         '''Send a hardware reset utility request'''

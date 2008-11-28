@@ -21,7 +21,7 @@
 import wx
 import logging
 
-import gui.memoryRequestBlockIdDropMenu
+import gui.memoryRequestInterface
 
 logger = logging.getLogger('gui.tabs.memoryUtils')
 
@@ -35,14 +35,8 @@ class tab(wx.Panel):
         '''Setup interface elements'''
         wx.Panel.__init__(self, parent)
 
-        self.memory_block_id_drop_menu = gui.memoryRequestBlockIdDropMenu.memoryRequestBlockIdDropMenu(self)
+        self.interface = gui.memoryRequestInterface.memoryRequestInterface(self)
 
-        # Try keep all spaces at 1/60th of the screen width or height
-        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer1.Add(blank, 1)
-        sizer1.Add(self.memory_block_id_drop_menu, 58, wx.EXPAND)
-        sizer1.Add(blank, 1)
-
-        self.SetSizer(sizer1)
+        self.SetSizer(self.interface)
         self.Layout()
 
