@@ -122,12 +122,14 @@ class protocol:
             'requestEchoPacketReturn',
     ]
 
-    _response_packets = {
+    _response_protocol_packets = {
         1: 'responseInterfaceVersion',
         3: 'responseFirmwareVersion',
         5: 'responseMaxPacketSize',
         7: 'responseEchoPacketReturn',
     }
+
+    _response_firmware_packets = {}
 
     _memory_request_block_ids = {
         0: 'VETableMainFlashLocationID',
@@ -369,8 +371,13 @@ class protocol:
             raise Exception, 'Packet incorrectly processed, %d bytes left' % (len(packet) - 1 - index)
 
         # Create response packet object
+        if contents['flags'] & HEADER_IS_PROTO:
+            packet_types = self._response_protocol_packets
+        else:
+            packet_types = self._response_firmware_packets
+
         try:
-            type = self._response_packets[contents['payload_id']]
+            type = packet_types[contents['payload_id']]
         except KeyError:
             type = 'responseGeneric'
 
