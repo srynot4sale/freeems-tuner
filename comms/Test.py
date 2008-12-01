@@ -110,8 +110,9 @@ class connection(comms.interface):
         try:
             packet = protocol.processRecieveBuffer(self._buffer)
         except Exception, msg:
+            raise
             logger.error(msg)
-            logger.error('processRecieveBuffer failed to parse packet from buffer: %s' % cache)
+            logger.error('processRecieveBuffer failed to parse packet from buffer: %s' % join(protocols.toHex(cache)))
             self._buffer = []
             return
         
