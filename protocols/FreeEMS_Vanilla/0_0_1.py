@@ -304,6 +304,7 @@ class protocol:
                 # Check it is a legitimately escaped byte
                 if esc_byte in (START_BYTE, ESCAPE_BYTE, END_BYTE):
                     packet.append(esc_byte)
+                    state = STATE_IN_PACKET
                 else:
                     logger.error('Wrongly escaped byte found in buffer: %X' % byte)
 
