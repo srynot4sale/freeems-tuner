@@ -244,26 +244,24 @@ class protocol:
     def processRecieveBuffer(self, buffer):
         '''Check for any incoming packets and return if found'''
         
-        # Check to make sure the first byte is a start byte
-        # If not, clean up bad bytes
-        if buffer[0] != START_BYTE:
-            # Remove everything before
-            start = buffer.index(START_BYTE)
-            logger.debug('Bad/incomplete data found in buffer before start byte: %s' % ','.join(protocols.toHex(buffer[0:start])))
-            del buffer[0:start]
-
-        # If no end byte, try again later when the rest of the packet has arrived
-        if END_BYTE not in buffer:
-
-            # Quick check to make sure there isn't another packet banked up after
-            # an incomplete one
-            if not buffer.index(START_BYTE, 1):
-                return
-
-            start = buffer.index(START_BYTE, 1)
-            logger.debug('Bad/incomplete packet found in buffer before a legitimate packet: %s' % ','.join(protocols.toHex(buffer[0:start])))
-            del buffer[0:start]
+        # If no start or end byte, try again later when the rest of the packet has arrived
+        if START_BYTE not in buffer or END_BYTE not in buffer:
             return
+
+        # Find the last start byte before the first end byte
+        # Keep looping until there are no start byte after the first and
+        # before the first stop byte
+        try:
+            while buffer.index(START_BYTE, 1, buffer.index(END_BYTE)):
+                # Remove everything before second start byte
+                start = buffer.index(START_BYTE, 1)
+                logger.debug('Bad/incomplete packet found in buffer before start byte: %s' % ','.join(protocols.toHex(buffer[0:start])))
+                del buffer[0:start]
+        except ValueError:
+            # If we have pruned so much there is no longer a complete packet,
+            # try again later
+            if START_BYTE not in buffer or END_BYTE not in buffer:
+                return
         
         # Begin state control machine :-)
         state = STATE_NOT_PACKET
