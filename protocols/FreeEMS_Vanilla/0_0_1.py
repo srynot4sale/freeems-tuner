@@ -727,11 +727,6 @@ class protocol:
                 if self.hasHeaderProtocolFlag():
                     raise Exception, 'Packet type %s requires the firmware flag is set' % pid
 
-            else:
-                # Check firmware type flag is not set
-                if not self.hasHeaderProtocolFlag():
-                    raise Exception, 'Packet type %s requires the protocol flag is set' % pid
-
 
         def parsePayload(self, payload):
             '''Parse the payload'''
