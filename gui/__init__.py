@@ -27,12 +27,11 @@ import logging
 import libs.config as config
 import settings
 
-import memoryRequestFrame
-import memoryRequestBlockIdDropMenu
 import debugFrame
 import commsTestFrame
 import tab.main
 import tab.debugLog
+import tab.realtimeData
 import tab.memoryUtils
 
 
@@ -55,8 +54,6 @@ ID_COMMS_TESTS = wx.NewId()
 ID_ABOUT = wx.ID_ABOUT
 ID_HELP = wx.NewId()
 ID_DEBUG_FRAME = wx.NewId()
-
-ID_MEMORY_REQUEST_FRAME = wx.NewId()
 
 
 # Instance of the parent frame
@@ -119,9 +116,11 @@ class Frame(wx.Frame):
         # Build main window
         self.windows['main'] = window_main = tab.main.tab(self.tabctrl)
         self.windows['memory_utils'] = window_memory_utils = tab.memoryUtils.tab(self.tabctrl)
+        self.windows['realtime_data'] = window_realtime_data = tab.realtimeData.tab(self.tabctrl)
         self.windows['debug'] = window_debug = tab.debugLog.tab(self.tabctrl)
         tabctrl.AddPage(window_main, 'Main')
         tabctrl.AddPage(window_memory_utils, 'Memory Utils')
+        tabctrl.AddPage(window_realtime_data, 'Real-Time Data')
         tabctrl.AddPage(window_debug, 'Debug Log')
 
 

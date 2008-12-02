@@ -159,10 +159,10 @@ class commsDiagnostics(grid.Grid):
         # Replace hex that can't translate to ASCII with a period
         for j, str in enumerate(output):
 
-            if str > 128 or str < 20:
-                ascii += '.'
-            else:
+            if str in range(32, 127):
                 ascii += chr(str)
+            else:
+                ascii += '.'
         
         return ascii
 
