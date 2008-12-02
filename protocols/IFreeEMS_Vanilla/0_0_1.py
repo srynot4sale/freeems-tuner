@@ -604,15 +604,6 @@ class protocol:
 
     _response_firmware_packets = {}
 
-    _memory_request_block_ids = {
-        0: 'VETableMainFlashLocationID',
-        1: 'VETableMainFlash2LocationID',
-        2: 'VETableSecondaryFlashLocationID',
-        3: 'VETableSecondaryFlash2LocationID',
-        4: 'VETableTertiaryFlashLocationID',
-        5: 'VETableTertiaryFlash2LocationID',
-    }
-
     _memory_request_payload_ids = {
         0: 'retrieveBlockFromRAM',
         1: 'retrieveBlockFromFlash',
@@ -1160,7 +1151,7 @@ class protocol:
             protocol.request.__init__(self)
             self.setPayloadId(REQUEST_SOFT_SYSTEM_RESET)
 
-    
+
     class response(packet):
         '''Reponse packet'''
 

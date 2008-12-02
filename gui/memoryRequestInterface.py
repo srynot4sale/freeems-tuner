@@ -23,6 +23,7 @@ import comms
 import protocols
 import logging
 import datetime
+import libs.data as data
 import gui
 import commsConnectWarning
 
@@ -65,10 +66,24 @@ class memoryRequestInterface(wx.BoxSizer):
         self._p_input = wx.Choice(parent, -1, choices = self._p_options)
 
         # Get block id's
-        options = protocols.getProtocol().getMemoryRequestBlockIdList()
-        for id in options.keys():
-            self._b_options.append('%s (%d)' % (options[id], id))
-            self._b_ids.append(id)
+        try:
+            locations = data.loadProtocolDataFile('location_ids')['FreeEMSLocationIDs']
+            location_keys = []
+            for key in locations.keys():
+                location_keys.append(int(key))
+
+            location_keys.sort()
+            
+            options = {}
+            for location in location_keys:
+                self._b_options.append('%s (%d)' % (locations[str(location)], location))
+                self._b_ids.append(location)
+
+        except KeyError, e:
+            # Data file appears to be formed incorrectly
+            logger.error('Data location ids data file appears to be formed incorrectly: %s' % e)
+            self._b_options = []
+            self._b_ids = []
 
         self._b_text = wx.StaticText(parent, -1, 'Block ID', style = wx.ALIGN_CENTER)
         self._b_input = wx.Choice(parent, -1, choices = self._b_options)

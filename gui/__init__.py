@@ -25,6 +25,7 @@ import comms
 import protocols
 import logging
 import libs.config as config
+import libs.data as data
 import settings
 
 import debugFrame
@@ -49,6 +50,7 @@ ID_TAB_POPOUT = wx.NewId()
 ID_COMMS_CONNECT = wx.NewId()
 ID_COMMS_DISCONNECT = wx.NewId()
 ID_COMMS_TESTS = wx.NewId()
+ID_COMMS_DATA_UPDATE = wx.NewId()
 
 ID_ABOUT = wx.ID_ABOUT
 ID_HELP = wx.NewId()
@@ -183,6 +185,7 @@ class Frame(wx.Frame):
         m.Append(ID_COMMS_CONNECT, '&Connect', 'Connect To Comms Port')
         m.Append(ID_COMMS_DISCONNECT, '&Disconnect', 'Disconnect From Comms Port')
         m.AppendSeparator()
+        m.Append(ID_COMMS_DATA_UPDATE, '&Update Comms Data Settings...', 'Update Comms Data Settings')
         m.Append(ID_COMMS_TESTS, 'Interface Protocol &Test...', 'Run interface tests on firmware')
 
         # Help
@@ -209,6 +212,7 @@ class Frame(wx.Frame):
 
         self.Bind(wx.EVT_MENU, self.CommsConnect, id=ID_COMMS_CONNECT)
         self.Bind(wx.EVT_MENU, self.CommsDisconnect, id=ID_COMMS_DISCONNECT)
+        self.Bind(wx.EVT_MENU, self.CommsUpdateData, id=ID_COMMS_DATA_UPDATE)
         self.Bind(wx.EVT_MENU, self.CommsTests, id=ID_COMMS_TESTS)
 
         self.Bind(wx.EVT_MENU, self.OnAbout, id=ID_ABOUT)
@@ -288,6 +292,31 @@ class Frame(wx.Frame):
             logger.error(msg)
 
     
+    def CommsUpdateData(self, event):
+        '''Update comms data'''
+        file_dialog = wx.FileDialog(self, 'Select Data Package')#, style = wx.FD_OPEN)
+        file_dialog.ShowModal()
+        path = file_dialog.GetDirectory()
+        path += '/'+file_dialog.GetFilename()
+        
+        if data.installProtocolDataFiles(path):
+            dialog = wx.MessageDialog(
+                    self,
+                    'Comms data settings successfully updated',
+                    'Update Successful',
+                    wx.OK | wx.ICON_INFORMATION)
+
+        else:
+            dialog = wx.MessageDialog(
+                    self,
+                    'Comms data setting update failed',
+                    'Update Failed', 
+                    wx.OK | wx.ICON_ERROR)
+
+        dialog.ShowModal()
+        dialog.Destroy()
+
+
     def CommsTests(self, event):
         '''Run comms unit tests'''
         if not self.CommsIsConnected():
