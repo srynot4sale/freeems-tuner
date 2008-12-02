@@ -97,7 +97,7 @@ class realtimeDataInterface(wx.BoxSizer):
         sizer4 = wx.BoxSizer(wx.VERTICAL)
         sizer4.Add(blank, 1)
         for data in self.realtime_data:
-            text = wx.StaticText(parent, -1, str(data), style = wx.ALIGN_LEFT)
+            text = wx.StaticText(parent, -1, str(data), style = wx.ALIGN_RIGHT)
             sizer4.Add(text, 40, wx.EXPAND)
             sizer4.Add(blank, 1)
             
@@ -117,12 +117,12 @@ class realtimeDataInterface(wx.BoxSizer):
 
         sizer1 = wx.BoxSizer(wx.HORIZONTAL)
         sizer1.Add(blank, 1)
-        sizer1.Add(sizer2, 10, wx.EXPAND)
+        sizer1.Add(sizer2, 15, wx.EXPAND)
         sizer1.Add(blank, 1)
-        sizer1.Add(sizer3, 4, wx.EXPAND)
+        sizer1.Add(sizer3, 8, wx.EXPAND)
         sizer1.Add(blank, 1)
-        sizer1.Add(sizer4, 5, wx.EXPAND)
-        sizer1.Add(blank, 3)
+        sizer1.Add(sizer4, 3, wx.EXPAND)
+        sizer1.Add(blank, 40)
 
         self.Add(blank, 1)
         self.Add(sizer1, 10, wx.EXPAND)
