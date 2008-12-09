@@ -28,7 +28,7 @@ import gui
 import commsConnectWarning
 
 
-logger = logging.getLogger('gui.memoryRequestBLockIdDropMenu')
+logger = logging.getLogger('gui.memoryRequestInterface')
 
 
 blank = (0,0)
@@ -109,13 +109,13 @@ class memoryRequestInterface(wx.BoxSizer):
         sizer2.Add(self._p_input, 5, wx.EXPAND)
 
         sizer1 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer1.Add((0,0), 1)
+        sizer1.Add(blank, 1)
         sizer1.Add(sizer2, 23, wx.EXPAND)
-        sizer1.Add((0,0), 1)
+        sizer1.Add(blank, 1)
         sizer1.Add(sizer3, 23, wx.EXPAND)
-        sizer1.Add((0,0), 1)
+        sizer1.Add(blank, 1)
         sizer1.Add(sizer4, 10, wx.EXPAND)
-        sizer1.Add((0,0), 1)
+        sizer1.Add(blank, 1)
 
         self.Add(blank, 5)
         self.Add(sizer1, 10, wx.EXPAND)
