@@ -1,4 +1,5 @@
-Use underscores for the start of all private variables/properties/methods
+Use underscores for the start of all private variables/properties/methods.
+Public properties and methods should come before private in the source file.
 
 All external class property access should be through set/get methods, to facilitate for adding
 validation/error checking logic in at a later date.

@@ -18,63 +18,37 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import threading, logging
-import comms, protocols, gui
+import threading, datetime
+import libs.thread, comms, protocols
 
 
-class app(threading.Thread):
+class app(libs.thread.thread):
     '''
     Controls program logic and manages threads
     '''
 
-    # Keep-alive flag, thread will terminate when not True
-    _alive = True
-
-    # Blocking object to keep thread idle between actions
-    _idleBlock = None
-
     # Queue of actions to perform, use .action() to add an action
     _actionQueue = []
 
-
+    
     def __init__(self):
         '''
         Initialisation routine
         '''
 
-        logger = logging.getLogger('controller.app')
-        logger.debug('Controller class started')
+        self._setup('controller.app', self)
+
+        self._debug('Controller class started')
 
         # Setup default comms thread
         comms.createConnection()
 
         # Load default hardware interface protocol
+        # TODO: comms should load protocol
         protocols.loadDefault()
 
-        threading.Thread.__init__(self, name = 'controller.app')
+        # Start threading!
         self.start()
-
-
-    def shutdown(self):
-        '''
-        Start shutdown routine
-        '''
-        self.action('Shutdown')
-
-
-    def _checkIdleBlock(self):
-        '''
-        Starts blocking using self._idleBlock
-        The thread will remained blocked (halted)
-        until another thread runs the action() method
-        '''
-        if self._idleBlock == None:
-            self._idleBlock = threading.Event()
-
-        logger = logging.getLogger('controller.app')
-        logger.debug('Waiting')
-
-        self._idleBlock.wait()
 
     
     def action(self, action, data = None):
@@ -83,9 +57,23 @@ class app(threading.Thread):
         '''
         self._actionQueue.append((action, data))
 
-        # Just in case we get here before creating the block
-        if self._idleBlock:
-            self._idleBlock.set()
+        self.wake()
+
+
+    def log(self, section, severity, message, data = None):
+        '''
+        Application logging
+        '''
+        time = str(datetime.date.today())
+
+        self.action('Log', (time, section, severity, message, data))
+
+
+    def shutdown(self):
+        '''
+        Simply public access to shutdown routine
+        '''
+        self.action('Shutdown')
 
 
     def run(self):
@@ -96,7 +84,7 @@ class app(threading.Thread):
 
             # If no actions in queue, block
             if not self._actionQueue:
-                self._checkIdleBlock()
+                self._checkBlock()
 
             # Loop through actions
             while self._actionQueue:
@@ -108,25 +96,23 @@ class app(threading.Thread):
                 action = '_action'+action
                 getattr(self, action)(data)
 
+    
+    def _actionLog(self, data = None):
+        '''
+        Prints log to console (for now)
+        '''
+        (time, section, severity, message, data) = data
+        print '%s %s %s %s %s' % (time, section, severity, message, data)
 
-    def exit(self):
-        pass
 
     def _actionShutdown(self, data = None):
         '''
         Shutdown all threads in app
         '''
-        #logger = logging.getLogger('controller.app')
-        #logger.debug('Shutdown action performed')
+        self._debug('Shutdown action performed')
 
-        # Shutdown this thread 
-        self._alive = False
-
-        # Shutdown other threads
+        # Shutdown threads
         for thread in threading.enumerate():
             
-            # Runs thread.__del__()
-            #del thread
             if not isinstance(thread, threading._MainThread):
-                #del thread
                 thread.exit()
