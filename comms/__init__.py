@@ -18,62 +18,122 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import libs.config, logging
+import logging, threading, wx
+import libs.config
 
 
-# Tuners comms connection
-connection = None
-plugin = None
+# Tuners comms connections
+_connection = {}
 
 
-def createConnection():
-    '''Create comms connection'''
-    loadDefault()
+def createConnection(name = 'default', type = None):
+    '''
+    Create new comms connection, with an optional name
+    '''
+    if type == None:
+        type = _loadDefault()
+    
+    type = 'comms.'+type
 
-
-def getConnection():
-    '''Get comms connection'''
-    return connection
-
-
-def loadDefault():
-    '''Load default comms conenction'''
-
-    # Fetch config data
-    comms = libs.config.load('Comms', 'default')
-    path = 'comms.'+comms
-
-    global plugin
-    plugin = comms
-
+    # Logger
     logger = logging.getLogger('comms')
-    logger.info('Loading comms module: %s' % path)
+    logger.info('Loading comms module: %s' % type)
 
     # Dynamically import
-    global connection
-    connection = __import__(path, globals(), locals(), 'connection').connection()
+    _connection[name] = __import__(type, globals(), locals(), 'connection').connection(type)
 
 
-class interface:
-    '''Base class for all comms plugins'''
+def getConnection(name = 'default'):
+    '''
+    Get comms connection
+    '''
+    return _connection[name]
+
+
+def _loadDefault():
+    '''
+    Load default comms connection type from config
+    '''
+    return libs.config.load('Comms', 'default')
+
+
+class interface(threading.Thread):
+    '''
+    Base class for all comms plugins
+
+    Serial thread overview:
+    - Send queue, containing raw packets.
+
+    - run() method will process the oldest packet in the queue,
+      check the receive buffer,
+      send any receive buffer to the receive thread (after waking it),
+      then loop again.
+
+    - The thread must keep the connected flag up-to-date,
+      as other threads will poll this continuously,
+      and cant wait for the run() method to answer.
+
+    - The thread starts in a blocked condition, waiting to receive a
+      notify from a controller when its to be turned on
+    '''
+
+    _alive = True
+
+    _connected = False
+    _connectBlock = None
+
+    _sendBuffer = []
+
+    # Watching methods
+    _send_watchers = []
+    _receive_watchers = []
+
+
+    def __init__(self, name):
+        '''
+        Sets up threading stuff
+        '''
+        threading.Thread.__init__(self, name = name)
+
 
     def isConnected(self):
-        pass
+        '''
+        Returns bool flag
+        '''
+        return self._connected
+
+
+    def _startConnectBlock(self):
+        '''
+        Starts blocking using self._connectBlock
+        The thread will remained blocked (halted)
+        until another thread runs the connect() method
+        '''
+        self._connectBlock = threading.Event()
+        self._connectBlock.wait()
 
     
     def connect(self):
-        pass
+        '''
+        Wakes up this thread and connects
+        '''
+        self._connectBlock.set()
 
 
     def disconnect(self):
         pass
 
 
+    def exit(self):
+        self._alive = False
+        self._connectBlock.set()
+
+
     def bindSendWatcher(self, watcher):
         pass
 
 
-    def bindRecieveWatcher(self, watcher):
+    def bindReceiveWatcher(self, watcher):
         pass
 
 
@@ -81,7 +141,18 @@ class interface:
         pass
 
 
-    def recieve(self):
+    def bindSendWatcher(self, watcher):
+        self._send_watchers.append(watcher)
+
+
+    def bindReceiveWatcher(self, watcher):
+        self._receive_watchers.append(watcher)
+    
+    
+    def run(self):
+        '''
+        The actual threaded code
+        '''
         pass
 
 

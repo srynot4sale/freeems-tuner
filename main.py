@@ -18,11 +18,8 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-# Import version info
-from version import *
-
 # Load libraries
-import libs.data, libs.config, libs.logger, protocols, gui, comms
+import libs.data, libs.logger, controller, gui
 
 # Begin setting up program
 libs.data.createDirectory()
@@ -30,11 +27,8 @@ libs.data.createDirectory()
 # Turn on logging
 libs.logger.setup()
 
-# Load default comms interface
-comms.loadDefault()
+# Start up the program controller
+ctr = controller.app()
 
-# Load default hardware interface protocol
-protocols.loadDefault()
-
-# Setup GUI
-gui.load()
+# Start up the gui
+gui.load(ctr)

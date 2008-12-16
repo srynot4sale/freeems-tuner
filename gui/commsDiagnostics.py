@@ -64,7 +64,7 @@ class commsDiagnostics(grid.Grid):
         # Bind to connection
         self.conn = comms.getConnection()
         self.conn.bindSendWatcher(self.printSentPacket)
-        self.conn.bindRecieveWatcher(self.printRecievedPacket)
+        self.conn.bindReceiveWatcher(self.printRecievedPacket)
 
 
     def onResize(self, event):

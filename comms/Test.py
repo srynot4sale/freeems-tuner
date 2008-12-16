@@ -19,7 +19,7 @@
 
 
 import libs.config as config
-import logging
+import logging, time
 import copy
 import comms
 import protocols
@@ -34,19 +34,17 @@ class connection(comms.interface):
     # Connected flag
     _connected = False
 
-    # Watching objects
-    _send_watchers = []
-    _recieve_watchers = []
 
     # Fake buffer
     _buffer = []
 
-    def isConnected(self):
 
-        return self._connected
+    def __init__(self, name):
+        comms.interface.__init__(self, name)
+        self.start()
 
-    
-    def connect(self):
+
+    def _connect(self):
 
         if self.isConnected():
             return
@@ -64,14 +62,6 @@ class connection(comms.interface):
         self._connected = False
 
         logger.info('Test comms connection disconnected')
-
-
-    def bindSendWatcher(self, watcher):
-        self._send_watchers.append(watcher)
-
-
-    def bindRecieveWatcher(self, watcher):
-        self._recieve_watchers.append(watcher)
 
 
     def send(self, packet):
@@ -94,32 +84,41 @@ class connection(comms.interface):
             watcher(packet)
 
 
-    def recieve(self):
+    def run(self):
         '''Check for and recieve packets waiting in the connection'''
-        
-        # If nothing in buffer
-        if not len(self._buffer):
-            return
 
+        if not self.isConnected():
+            self._startConnectBlock()
+
+        self._connect()
+        
         # Get protocol
         protocol = protocols.getProtocol()
 
-        # Check for any complete packets
-        cache = copy.copy(self._buffer)
+        while self._alive:
 
-        try:
-            packet = protocol.processRecieveBuffer(self._buffer)
-        except Exception, msg:
-            raise
-            logger.error(msg)
-            logger.error('processRecieveBuffer failed to parse packet from buffer: %s' % join(protocols.toHex(cache)))
-            self._buffer = []
-            return
+            # If nothing in buffer
+            if not len(self._buffer):
+                continue
+
+            # Check for any complete packets
+            cache = copy.copy(self._buffer)
+
+            try:
+                packet = protocol.processRecieveBuffer(self._buffer)
+            except Exception, msg:
+                raise
+                logger.error(msg)
+                logger.error('processRecieveBuffer failed to parse packet from buffer: %s' % join(protocols.toHex(cache)))
+                self._buffer = []
+                continue
         
-        if not packet:
-            return
+            if not packet:
+                continue
 
-        logger.debug('Packet received by test comms connection: %s' % packet.getPacketHex())
+            logger.debug('Packet received by test comms connection: %s' % packet.getPacketHex())
 
-        for watcher in self._recieve_watchers:
-            watcher(packet)
+            for watcher in self._receive_watchers:
+                watcher(packet)
+
+            time.sleep(1)

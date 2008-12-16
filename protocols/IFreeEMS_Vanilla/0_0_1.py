@@ -676,8 +676,8 @@ class protocol:
         if not self._connection:
             self._connection = comms.getConnection()
 
-        if not self._connection.isConnected():
-            raise Exception, 'Serial comms not connected!'
+        #if not self._connection.isConnected():
+        #    raise Exception, 'Serial comms not connected!'
 
         return self._connection 
 

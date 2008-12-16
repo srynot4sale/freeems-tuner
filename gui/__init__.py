@@ -18,12 +18,10 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import wx
-import os
+import wx, os, threading, logging
 import version
 import comms
 import protocols
-import logging
 import libs.config as config
 import libs.data as data
 import settings
@@ -58,12 +56,18 @@ ID_HELP = wx.NewId()
 ID_DEBUG_FRAME = wx.NewId()
 
 
+# Instance of controller
+_controller = None
+
+
 # Instance of the parent frame
 frame = None
 
 
 class Frame(wx.Frame):
     """Frame with standard menu items."""
+
+    _controller = None
 
     revision = version.__revision__
     menus = {}
@@ -73,11 +77,11 @@ class Frame(wx.Frame):
     # Iconized state (minimized)
     iconized = None
 
-    def __init__(self, parent=None, id=-1, title=version.__title__,
-                 pos=wx.DefaultPosition, size=(800,600), 
-                 style=wx.DEFAULT_FRAME_STYLE):
+    def __init__(self, controller):
         """Create a Frame instance."""
-        wx.Frame.__init__(self, parent, id, title, pos, size, style)
+        wx.Frame.__init__(self, parent = None, id = -1, title = version.__title__, size = (800,600))
+
+        self._controller = controller
 
         settings.loadSettings()
 
@@ -132,7 +136,7 @@ class Frame(wx.Frame):
         settings.saveSettings()
 
         # Handle comms receive logic
-        self.CommsReceive()
+        #self.CommsReceive()
 
 
     def OnMove(self, event):
@@ -163,6 +167,7 @@ class Frame(wx.Frame):
             logger.error(msg)
             logger.error('Error during shutdown')
 
+        self._controller.shutdown()
         self.Destroy()
 
 
@@ -373,37 +378,12 @@ class Frame(wx.Frame):
 
 
 # Bring up wxpython interface
-def load():
-    
-    app = wx.App()
+def load(controller):
 
+    application = wx.App()
+        
     global frame
-    frame = Frame()
+    frame = Frame(controller)
     frame.Show()
 
-    app.MainLoop()
-
-    return app
-
-
-#########################################################
-# User-defined layout main page
-# NOTE: This an example. not currently used
-def layout(frame):
-
-    # We have a 10 x 10 grid to layout in
-
-    # frame.place() parameters:
-    # - int, horizontal axis, top left of element
-    # - int, vertical axis, top left of element
-    # - element object
-    # - non default height of element
-    # - non default width of element
-
-    # commsDiagnostics is flexible
-    frame.place(0, 0, commsDiagnostics(), 5, 10) 
-    
-    # commsUtilityRequests is 3x3
-    frame.place(6, 0, commsUtilityRequests()) 
-
-
+    application.MainLoop()

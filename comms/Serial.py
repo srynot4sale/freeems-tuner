@@ -18,17 +18,18 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
+import logging, threading, copy
 import libs.serial as serial
 import libs.serial.serialutil as serialutil
 import libs.config as config
-import logging
-import copy
 import comms
 import protocols
 
-logger = logging.getLogger('comms.Serial')
 
 class connection(comms.interface):
+    '''
+    Serial comms connection thread
+    '''
 
     _connection = None
 
@@ -45,13 +46,18 @@ class connection(comms.interface):
 
     # Watching objects
     _send_watchers = []
-    _recieve_watchers = []
+    _receive_watchers = []
 
 
     # Unprocessed buffer contents
     _buffer = []
 
-    def __init__(self):
+
+    def __init__(self, name):
+        '''
+        Setup serial stuff
+        '''
+        comms.interface.__init__(self, name)
 
         section     = 'Comms_Serial'
         s           = self._settings
@@ -67,12 +73,7 @@ class connection(comms.interface):
         s.parity    = s.parity[0:1]
 
 
-    def isConnected(self):
-
-        return bool(self._connection)# and self.isOpen()
-
-    
-    def getConnection(self):
+    def _getConnection(self):
 
         if not self.isConnected():
             raise Exception, 'Not connected'
@@ -80,7 +81,7 @@ class connection(comms.interface):
         return self._connection
 
 
-    def connect(self):
+    def _connect(self):
 
         if self.isConnected():
             return
@@ -126,8 +127,8 @@ class connection(comms.interface):
         self._send_watchers.append(watcher)
 
 
-    def bindRecieveWatcher(self, watcher):
-        self._recieve_watchers.append(watcher)
+    def bindReceiveWatcher(self, watcher):
+        self._receive_watchers.append(watcher)
 
 
     def send(self, packet):
@@ -141,8 +142,14 @@ class connection(comms.interface):
             watcher(packet)
 
 
-    def recieve(self):
-        '''Check for and recieve packets waiting in the connection'''
+    def run(self):
+        '''Check for and receive packets waiting in the connection'''
+
+        if not self.isConnected():
+            self._startConnectBlock()
+
+        self._connect()
+
         conn = self.getConnection()
         buffer_size = conn.inWaiting()
 
@@ -177,5 +184,5 @@ class connection(comms.interface):
 
         logger.debug('Packet received by Serial connection: %s' % packet.getPacketHex())
 
-        for watcher in self._recieve_watchers:
+        for watcher in self._receive_watchers:
             watcher(packet)
