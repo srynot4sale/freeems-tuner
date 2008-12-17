@@ -18,53 +18,51 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import libs.config as config
-import logging, time
-import copy
-import comms
-import protocols
+import time, copy
+import libs.config as config, comms, protocols
 
-logger = logging.getLogger('comms.Test')
 
 class connection(comms.interface):
     '''
-    Fake comms interface for testings
+    Fake comms interface for testing
     '''
-
-    # Connected flag
-    _connected = False
-
 
     # Fake buffer
     _buffer = []
 
 
-    def __init__(self, name):
-        comms.interface.__init__(self, name)
+    def __init__(self, name, controller):
+        '''
+        Initialise comms thread
+        '''
+        comms.interface.__init__(self, name, controller)
         self.start()
 
 
     def _connect(self):
-
+        '''
+        "Connect" to fake serial connection
+        '''
         if self.isConnected():
             return
 
         self._connected = True
-        
-        logger.info('Test comms connection connected')
+        self._debug('Test comms connection connected')
 
 
     def disconnect(self):
-        
+        '''
+        "Disconnect" from fake serial connection
+        '''
         if not self.isConnected():
             return
 
         self._connected = False
-
-        logger.info('Test comms connection disconnected')
+        self._debug('Test comms connection disconnected')
 
 
     def send(self, packet):
+
 
         # Get protocol
         protocol = protocols.getProtocol()
@@ -78,7 +76,7 @@ class connection(comms.interface):
         self._buffer.extend(hex)
 
         # Log packet hex
-        logger.debug('Packet sent to test comms connection: %s' % packet.getPacketHex())
+        self._debug('Packet sent to test comms connection: %s' % packet.getPacketHex())
         
         for watcher in self._send_watchers:
             watcher(packet)
@@ -88,7 +86,7 @@ class connection(comms.interface):
         '''Check for and recieve packets waiting in the connection'''
 
         if not self.isConnected():
-            self._startConnectBlock()
+            self._checkBlock()
 
         self._connect()
         

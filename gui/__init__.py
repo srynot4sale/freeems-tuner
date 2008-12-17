@@ -18,23 +18,11 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import wx, os, threading, logging
-import version
-import comms
-import protocols
-import libs.config as config
-import libs.data as data
-import settings
+import wx, os
+import version, comms, settings
+import libs.config as config, libs.data as data
 
-import debugFrame
-import commsTestFrame
-import tab.main
-import tab.debugLog
-import tab.realtimeData
-import tab.memoryUtils
-
-
-logger = logging.getLogger('gui')
+import debugFrame, commsTestFrame, tab.main, tab.debugLog, tab.realtimeData, tab.memoryUtils
 
 
 # Create event id's
@@ -54,10 +42,6 @@ ID_COMMS_DATA_UPDATE = wx.NewId()
 ID_ABOUT = wx.ID_ABOUT
 ID_HELP = wx.NewId()
 ID_DEBUG_FRAME = wx.NewId()
-
-
-# Instance of controller
-_controller = None
 
 
 # Instance of the parent frame
@@ -134,9 +118,6 @@ class Frame(wx.Frame):
         '''Idle UI handler'''
         # Save window settings
         settings.saveSettings()
-
-        # Handle comms receive logic
-        #self.CommsReceive()
 
 
     def OnMove(self, event):

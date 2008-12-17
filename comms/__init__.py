@@ -18,15 +18,14 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import logging, threading, wx
-import libs.config
+import libs.config, libs.thread
 
 
 # Tuners comms connections
 _connection = {}
 
 
-def createConnection(name = 'default', type = None):
+def createConnection(controller, name = 'default', type = None):
     '''
     Create new comms connection, with an optional name
     '''
@@ -36,11 +35,10 @@ def createConnection(name = 'default', type = None):
     type = 'comms.'+type
 
     # Logger
-    logger = logging.getLogger('comms')
-    logger.info('Loading comms module: %s' % type)
+    controller.log('comms', 'DEBUG', 'Loading comms module: %s' % type)
 
     # Dynamically import
-    _connection[name] = __import__(type, globals(), locals(), 'connection').connection(type)
+    _connection[name] = __import__(type, globals(), locals(), 'connection').connection(type, controller)
 
 
 def getConnection(name = 'default'):
@@ -57,7 +55,7 @@ def _loadDefault():
     return libs.config.load('Comms', 'default')
 
 
-class interface(threading.Thread):
+class interface(libs.thread.thread):
     '''
     Base class for all comms plugins
 
@@ -77,10 +75,7 @@ class interface(threading.Thread):
       notify from a controller when its to be turned on
     '''
 
-    _alive = True
-
     _connected = False
-    _connectBlock = None
 
     _sendBuffer = []
 
@@ -89,11 +84,11 @@ class interface(threading.Thread):
     _receive_watchers = []
 
 
-    def __init__(self, name):
+    def __init__(self, name, controller):
         '''
         Sets up threading stuff
         '''
-        threading.Thread.__init__(self, name = name)
+        self._setup(name, controller)
 
 
     def isConnected(self):
@@ -103,30 +98,15 @@ class interface(threading.Thread):
         return self._connected
 
 
-    def _startConnectBlock(self):
-        '''
-        Starts blocking using self._connectBlock
-        The thread will remained blocked (halted)
-        until another thread runs the connect() method
-        '''
-        self._connectBlock = threading.Event()
-        self._connectBlock.wait()
-
-    
     def connect(self):
         '''
         Wakes up this thread and connects
         '''
-        self._connectBlock.set()
+        self.wake()
 
 
     def disconnect(self):
         pass
-
-
-    def exit(self):
-        self._alive = False
-        self._connectBlock.set()
 
 
     def bindSendWatcher(self, watcher):

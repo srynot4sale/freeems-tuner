@@ -41,7 +41,7 @@ class app(libs.thread.thread):
         self._debug('Controller class started')
 
         # Setup default comms thread
-        comms.createConnection()
+        comms.createConnection(self)
 
         # Load default hardware interface protocol
         # TODO: comms should load protocol

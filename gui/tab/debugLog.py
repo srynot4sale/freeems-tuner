@@ -52,8 +52,8 @@ class tab(wx.Panel):
         self.Layout()
 
         # Add a logger
-        base = logging.getLogger()
-        base.addHandler(self.loggingHandler(self))
+        #base = logging.getLogger()
+        #base.addHandler(self.loggingHandler(self))
 
 
     def updateDisplay(self, message):
