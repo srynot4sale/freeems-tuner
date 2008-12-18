@@ -50,7 +50,6 @@ class thread(threading.Thread):
         wake the thread and alert the run() method to stop processing
         '''
         self._alive = False
-
         self.wake()
 
 
@@ -73,7 +72,8 @@ class thread(threading.Thread):
         if self._block == None:
             self._block = threading.Event()
         
-        self._block.wait()
+        # Give this a timeout in case of logic error
+        self._block.wait(5) # 5 seconds
         self._block.clear()
 
     
@@ -87,3 +87,9 @@ class thread(threading.Thread):
                 message,
                 data
         )
+
+    def _final(self):
+        '''
+        All threads should run this method last when they terminate
+        '''
+        self._debug('Thread shutdown')

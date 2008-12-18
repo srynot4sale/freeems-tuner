@@ -18,7 +18,7 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import threading, datetime
+import threading, datetime, time
 import libs.thread, comms, protocols
 
 
@@ -37,8 +37,14 @@ class app(libs.thread.thread):
         '''
 
         self._setup('controller.app', self)
+        self._debug('Starting controller thread')
 
-        #self._debug('Controller class started')
+        # Make this thread run as a daemon, which means
+        # it will continue to exist after the parent thread
+        # is closed. This will let the controller wait for the
+        # other threads to gracefully close and continue logging
+        # until they are all shutdown.
+        self.daemon = True
 
         # Setup default comms thread
         comms.createConnection(self)
@@ -64,7 +70,7 @@ class app(libs.thread.thread):
         '''
         Application logging
         '''
-        time = str(datetime.date.today())
+        time = datetime.datetime.now()
 
         self.action('Log', (time, section, severity, message, data))
 
@@ -80,7 +86,9 @@ class app(libs.thread.thread):
         '''
         Perform controller logic
         '''
-        while self._alive:
+        # Continue running until no other threads are left except
+        # this one and the main thread
+        while threading.activeCount() > 2:
 
             # If no actions in queue, block
             if not self._actionQueue:
@@ -96,20 +104,31 @@ class app(libs.thread.thread):
                 action = '_action'+action
                 getattr(self, action)(data)
 
+        # Print one last log message
+        # Instead of _final() like other threads, which would just
+        # create a log action that would never get done
+        self._actionLog( (datetime.datetime.now(), 'controller.app', 'DEBUG', 'Shutting down controller thread', None) )
+
     
     def _actionLog(self, data = None):
         '''
         Prints log to console (for now)
         '''
         (time, section, severity, message, data) = data
-        print '%s %s %s %s %s' % (time, section, severity, message, data)
+
+        time = time.strftime('%H:%M:%S')
+
+        if data == None:
+            data = ''
+
+        print '%s %-15s %s %s %s' % (time, section, severity, message, data)
 
 
     def _actionShutdown(self, data = None):
         '''
         Shutdown all threads in app
         '''
-        self._debug('Shutdown action performed')
+        self._debug('Performing shutdown action')
 
         # Shutdown threads
         for thread in threading.enumerate():

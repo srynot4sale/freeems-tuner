@@ -56,13 +56,11 @@ class connection(comms.interface):
         '''
         "Disconnect" from fake serial connection
         '''
-        print 'disconnecting'
         self._disconnWanted = False
 
         if not self.isConnected():
             return
 
-        print 'overhere'
         self._connected = False
         self._debug('Test comms connection disconnected')
 
@@ -94,7 +92,6 @@ class connection(comms.interface):
 
         while self.isConnected() or self._alive:
 
-            self._debug('loop')
             # If not connected, block until we are ready to
             if not self.isConnected():
 
@@ -105,10 +102,8 @@ class connection(comms.interface):
                     self._checkBlock()
                     continue
 
-            print 'here'
             # If connected, see if we want to disconnect
             if self.isConnected() and self._disconnWanted:
-                print 'disconnect'
                 self.disconnect()
                 continue
 
@@ -134,3 +129,5 @@ class connection(comms.interface):
                     watcher(packet)
 
             time.sleep(1)
+
+        self._final()

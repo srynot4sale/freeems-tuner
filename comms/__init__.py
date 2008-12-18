@@ -117,7 +117,6 @@ class interface(libs.thread.thread):
 
     
     def exit(self):
-        print 'exit'
         self._disconnWanted = True
         libs.thread.thread.exit(self)
 
