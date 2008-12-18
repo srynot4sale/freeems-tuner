@@ -67,6 +67,8 @@ class Frame(wx.Frame):
 
         self._controller = controller
 
+        self._debug('Gui frame initialised')
+
         settings.loadSettings()
 
         self.CreateStatusBar()
@@ -95,6 +97,18 @@ class Frame(wx.Frame):
 
         self.SetSize(size)
         self.Move(pos)
+
+
+    def _debug(self, message, data = None):
+        '''
+        Send debug log message to controller
+        '''
+        self._controller.log(
+            'gui',
+            'DEBUG',
+            message,
+            data
+        )
 
 
     def BuildWindow(self):
@@ -145,8 +159,7 @@ class Frame(wx.Frame):
             # Save any unsaved settings
             settings.saveSettings()
         except Exception, msg:
-            logger.error(msg)
-            logger.error('Error during shutdown')
+            self._debug('Error during shutdown', msg)
 
         self._controller.shutdown()
         self.Destroy()

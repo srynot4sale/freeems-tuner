@@ -38,7 +38,7 @@ class app(libs.thread.thread):
 
         self._setup('controller.app', self)
 
-        self._debug('Controller class started')
+        #self._debug('Controller class started')
 
         # Setup default comms thread
         comms.createConnection(self)
@@ -85,13 +85,13 @@ class app(libs.thread.thread):
             # If no actions in queue, block
             if not self._actionQueue:
                 self._checkBlock()
-
+            
             # Loop through actions
             while self._actionQueue:
-
+                
                 # Grab first action in queue
                 (action, data) = self._actionQueue.pop(0)
-
+                
                 # Run actions internal method
                 action = '_action'+action
                 getattr(self, action)(data)

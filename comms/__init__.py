@@ -77,6 +77,12 @@ class interface(libs.thread.thread):
 
     _connected = False
 
+    # Connection wanted flag
+    _connWanted = False
+
+    # Disconnection wanted flag
+    _disconnWanted = False
+
     _sendBuffer = []
 
     # Watching methods
@@ -102,11 +108,18 @@ class interface(libs.thread.thread):
         '''
         Wakes up this thread and connects
         '''
+        self._connWanted = True
         self.wake()
 
 
     def disconnect(self):
         pass
+
+    
+    def exit(self):
+        print 'exit'
+        self._disconnWanted = True
+        libs.thread.thread.exit(self)
 
 
     def bindSendWatcher(self, watcher):

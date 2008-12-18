@@ -72,8 +72,9 @@ class thread(threading.Thread):
         '''
         if self._block == None:
             self._block = threading.Event()
-
+        
         self._block.wait()
+        self._block.clear()
 
     
     def _debug(self, message, data = None):

@@ -43,6 +43,8 @@ class connection(comms.interface):
         '''
         "Connect" to fake serial connection
         '''
+        self._connWanted = False
+        
         if self.isConnected():
             return
 
@@ -54,16 +56,18 @@ class connection(comms.interface):
         '''
         "Disconnect" from fake serial connection
         '''
+        print 'disconnecting'
+        self._disconnWanted = False
+
         if not self.isConnected():
             return
 
+        print 'overhere'
         self._connected = False
         self._debug('Test comms connection disconnected')
 
 
     def send(self, packet):
-
-
         # Get protocol
         protocol = protocols.getProtocol()
 
@@ -85,38 +89,48 @@ class connection(comms.interface):
     def run(self):
         '''Check for and recieve packets waiting in the connection'''
 
-        if not self.isConnected():
-            self._checkBlock()
-
-        self._connect()
-        
         # Get protocol
         protocol = protocols.getProtocol()
 
-        while self._alive:
+        while self.isConnected() or self._alive:
 
-            # If nothing in buffer
-            if not len(self._buffer):
+            self._debug('loop')
+            # If not connected, block until we are ready to
+            if not self.isConnected():
+
+                # If told to connect
+                if self._connWanted:
+                    self._connect()
+                else:
+                    self._checkBlock()
+                    continue
+
+            print 'here'
+            # If connected, see if we want to disconnect
+            if self.isConnected() and self._disconnWanted:
+                print 'disconnect'
+                self.disconnect()
                 continue
 
-            # Check for any complete packets
-            cache = copy.copy(self._buffer)
+            # If stuff in buffer
+            if len(self._buffer):
 
-            try:
-                packet = protocol.processRecieveBuffer(self._buffer)
-            except Exception, msg:
-                raise
-                logger.error(msg)
-                logger.error('processRecieveBuffer failed to parse packet from buffer: %s' % join(protocols.toHex(cache)))
-                self._buffer = []
-                continue
+                # Check for any complete packets
+                cache = copy.copy(self._buffer)
+
+                try:
+                    packet = protocol.processRecieveBuffer(self._buffer)
+                except Exception, msg:
+                    self._debug('processReceiveBuffer failed to parse packet from buffer: %s' % join(protocols.toHex(cache)), msg)
+                    self._buffer = []
+                    continue
         
-            if not packet:
-                continue
+                if not packet:
+                    continue
 
-            logger.debug('Packet received by test comms connection: %s' % packet.getPacketHex())
+                logger.debug('Packet received by test comms connection: %s' % packet.getPacketHex())
 
-            for watcher in self._receive_watchers:
-                watcher(packet)
+                for watcher in self._receive_watchers:
+                    watcher(packet)
 
             time.sleep(1)
