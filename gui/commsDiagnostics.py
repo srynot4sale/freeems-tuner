@@ -124,7 +124,7 @@ class commsDiagnostics(grid.Grid):
                 # Get offset and pad with 0's
                 offset = hex(i)[2:5].rjust(4, '0')
                 
-                output += offset+':  '
+                output += offset+': '
                 
             i += 1
             output += hex(raw_hex)[2:5].rjust(2, '0')
@@ -132,7 +132,7 @@ class commsDiagnostics(grid.Grid):
             bytes.append(raw_hex)
 
             if i % 8 == 0 and i % 16:
-                output += " "
+                output += "  "
 
         # Pad the end
         while i % 16:
