@@ -52,7 +52,7 @@ class connection(comms.interface):
         self._debug('Test comms connection connected')
 
 
-    def disconnect(self):
+    def _disconnect(self):
         '''
         "Disconnect" from fake serial connection
         '''
@@ -104,7 +104,7 @@ class connection(comms.interface):
 
             # If connected, see if we want to disconnect
             if self.isConnected() and self._disconnWanted:
-                self.disconnect()
+                self._disconnect()
                 continue
 
             # If stuff in buffer

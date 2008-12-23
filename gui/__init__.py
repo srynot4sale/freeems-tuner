@@ -69,7 +69,7 @@ class Frame(wx.Frame):
 
         self._debug('Gui frame initialised')
 
-        settings.loadSettings()
+        settings.loadSettings(controller)
 
         self.CreateStatusBar()
         self.SetStatusText('Version %s' % self.revision)
@@ -277,11 +277,6 @@ class Frame(wx.Frame):
         debugFrame.debugFrame(self)
 
 
-    def ShowMemoryRequestFrame(self, event):
-        '''Show memory request frame'''
-        memoryRequestFrame.memoryRequestFrame(self)
-
-
     def CommsConnect(self, event = None):
         '''Connect comms'''
         if self.CommsIsConnected():
@@ -333,14 +328,6 @@ class Frame(wx.Frame):
             return
 
         comms.getConnection().disconnect()
-
-
-    def CommsReceive(self, event = None):
-        '''Check for any packets in the buffer'''
-        if not self.CommsIsConnected():
-            return
-
-        comms.getConnection().recieve()
 
 
     def CommsIsConnected(self):

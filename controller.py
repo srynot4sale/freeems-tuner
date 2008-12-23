@@ -30,7 +30,17 @@ class app(libs.thread.thread):
     # Queue of actions to perform, use .action() to add an action
     _actionQueue = []
 
-    
+    # Queue of low priority actions to perform, use .actionLowPriority()
+    _actionQueueLowPriority = []
+
+    # Queue of blocking actions to be performed, use .actionBlocking()
+    _actionQueueBlocking = []
+
+    # Blocking action data
+    _actionBlockingLastId = 0
+    _actionBlockingBlocks = {}
+    _actionBlockingData = {}
+
     def __init__(self):
         '''
         Initialisation routine
@@ -60,10 +70,63 @@ class app(libs.thread.thread):
     def action(self, action, data = None):
         '''
         Wakes up this thread and performs an action
+        
+        Action is a string that refers to a method:
+
+        If no "." in the string, its refers to a method
+        in this class and will be prepended with _action
+
+        If the string contains at least one ".", it refers
+        to an actions module or submodule of and a method e.g.
+        config.load = actions.config.load() or
+        serial.receive.translate = actions.receive.translate()
         '''
         self._actionQueue.append((action, data))
-
         self.wake()
+
+
+    def actionLowPriority(self, action, data = None):
+        '''
+        Wakes up this thread and performs a low priority action
+        after all the higher priority actions have finished.
+
+        See self.action() for more details
+        '''
+        self._actionQueueLowPriority.append((action, data))
+        self.wake()
+
+    
+    def actionBlocking(self, action, data = None):
+        '''
+        Wakes up this thread and performs an action and does
+        not return until the action has been completed, effectively
+        blocking the calling thread.
+
+        See self.action() for more details
+        '''
+        # Get unique blocking id
+        self._actionBlockingLastId += 1
+        id = self._actionBlockingLastId
+
+        # Create block
+        block = self._actionBlockingBlocks[id] = threading.Event()
+        
+        # Queue action and wake controller
+        self._actionQueueBlocking.append((action, data, id))
+        self.wake()
+
+        # Wait for block
+        block.wait()
+
+        # Get data
+        data = self._actionBlockingData[id]
+
+        # Remove block and data
+        del self._actionBlockingBlocks[id]
+        del self._actionBlockingData[id]
+
+        # Return data
+        return data
 
 
     def log(self, section, severity, message, data = None):
@@ -72,7 +135,7 @@ class app(libs.thread.thread):
         '''
         time = datetime.datetime.now()
 
-        self.action('Log', (time, section, severity, message, data))
+        self.actionLowPriority('Log', (time, section, severity, message, data))
 
 
     def shutdown(self):
@@ -95,18 +158,51 @@ class app(libs.thread.thread):
                 self._checkBlock()
             
             # Loop through actions
-            while self._actionQueue:
+            while self._actionQueue or self._actionQueueLowPriority or self._actionQueueBlocking:
                 
-                # Grab first action in queue
-                (action, data) = self._actionQueue.pop(0)
+                # Actions in _actionQueueBlocking are top priority so always
+                # get done before low priority actions
+                if self._actionQueueBlocking:
+                    queue = self._actionQueueBlocking
+                elif self._actionQueue:
+                    queue = self._actionQueue
+                else:
+                    queue = self._actionQueueLowPriority
                 
-                # Run actions internal method
-                action = '_action'+action
-                getattr(self, action)(data)
+                # Grab oldest action in queue
+                action = queue.pop(0)
 
-        # Print one last log message
-        # Instead of _final() like other threads, which would just
-        # create a log action that would never get done
+                # Split data into relevant chunks
+                if len(action) == 3:
+                    (action, data, block_id) = action
+                else:
+                    block_id = None
+                    (action, data) = action
+                
+                # Log this action (unless its a log)
+                if action != 'Log':
+                    self.actionLowPriority('Log', 'Running action %s' % action)
+
+                # Check where action is located
+                if '.' in action:
+                    # Run method in action module
+                    loc = action.rfind('.')
+                    module = 'actions.'+action[0:loc]
+                    method = action[loc+1:]
+                    result = getattr(__import__(module, globals(), locals(), 'connection'), method)(data)
+                else:
+                    # Run actions internal method
+                    action = '_action'+action
+                    result = getattr(self, action)(data)
+
+                # Save result and release lock for blocking actions
+                if block_id:
+                    self._actionBlockingData[block_id] = result
+                    self._actionBlockingBlocks[block_id].set()
+
+        # Print one last log message instead of running _final()
+        # like other threads, which would just create a log action
+        # that would never got run
         self._actionLog( (datetime.datetime.now(), 'controller.app', 'DEBUG', 'Shutting down controller thread', None) )
 
     

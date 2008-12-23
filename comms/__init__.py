@@ -113,11 +113,14 @@ class interface(libs.thread.thread):
 
 
     def disconnect(self):
-        pass
+        '''
+        Tells thread to disconnect comms
+        '''
+        self._disconnWanted = True
 
     
     def exit(self):
-        self._disconnWanted = True
+        self.disconnect()
         libs.thread.thread.exit(self)
 
 

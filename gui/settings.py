@@ -17,10 +17,9 @@
 #
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
-import logging
+
 import libs.config as config
 
-logger = logging.getLogger('gui.settings')
 
 # Dictionary of settings (non-recursive)
 _settings = {}
@@ -40,30 +39,28 @@ def set(setting, value):
 
 def get(setting, default):
     '''Get a UI setting value'''
-    global _settings, _save_settings
-    
     try:
         return _settings[setting]
     except KeyError:
         return default
 
 
-def loadSettings():
+def loadSettings(controller):
     '''Load gui settings'''
-    global _settings, _save_settings
+    global _settings
 
-    _settings = config.getItems('UI_Settings')
+    _settings = controller.actionBlocking('config.loadSettings')
 
 
 def saveSettings():
     '''Save gui settings'''
-    global _settings, _save_settings
+    global _save_settings
 
     # If a setting save has not been triggered, dont
     # waste time
     if not _save_settings:
         return
-
+    
     _save_settings = False
 
     config.set('UI_Settings', _settings)
