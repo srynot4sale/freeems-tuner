@@ -1,0 +1,7 @@
+Remove libs/logger
+Remove libs/settings
+Move gui/__init__ CommsUpdateData into controller
+
+and other new unused code
+
+Thread crash handling
