@@ -56,6 +56,9 @@ class app(libs.thread.thread):
         # until they are all shutdown.
         self.daemon = True
 
+        import actions.config
+        actions.config.load()
+
         # Setup default comms thread
         comms.createConnection(self)
 
@@ -149,6 +152,11 @@ class app(libs.thread.thread):
         '''
         Perform controller logic
         '''
+        # Queue sizes (for logging)
+        actionQueueSize = 0
+        actionQueueLowPrioritySize = 0
+        actionQueueBlockingSize = 0
+
         # Continue running until no other threads are left except
         # this one and the main thread
         while threading.activeCount() > 2:
@@ -159,6 +167,17 @@ class app(libs.thread.thread):
             
             # Loop through actions
             while self._actionQueue or self._actionQueueLowPriority or self._actionQueueBlocking:
+                
+                # Log the size of the queues if they have changed
+                actionQueueSize = len(self._actionQueue)
+                actionQueueLowPrioritySize = len(self._actionQueueLowPriority)
+                actionQueueBlockingSize = len(self._actionQueueBlocking)
+
+                
+
+                self._log('DEBUG', 'Size of action queues, blocking: %s, actions: %s, low-priority: %s' %
+                            (actionQueueBlockingSize, actionQueueSize, actionQueueLowPrioritySize))
+
                 
                 # Actions in _actionQueueBlocking are top priority so always
                 # get done before low priority actions
@@ -179,9 +198,9 @@ class app(libs.thread.thread):
                     block_id = None
                     (action, data) = action
                 
-                # Log this action (unless its a log)
+                # Log action
                 if action != 'Log':
-                    self.actionLowPriority('Log', 'Running action %s' % action)
+                    self._debug('Performing %s action' % action)
 
                 # Check where action is located
                 if '.' in action:
@@ -203,9 +222,18 @@ class app(libs.thread.thread):
         # Print one last log message instead of running _final()
         # like other threads, which would just create a log action
         # that would never got run
-        self._actionLog( (datetime.datetime.now(), 'controller.app', 'DEBUG', 'Shutting down controller thread', None) )
+        self._log('DEBUG', 'Shutting down controller thread')
 
     
+    def _log(self, severity, message, data = None):
+        '''
+        Internal controller logging, only to be run from run() method
+        '''
+        time = datetime.datetime.now()
+
+        self._actionLog((time, 'controller.app', severity, message, data))
+
+
     def _actionLog(self, data = None):
         '''
         Prints log to console (for now)
@@ -224,8 +252,6 @@ class app(libs.thread.thread):
         '''
         Shutdown all threads in app
         '''
-        self._debug('Performing shutdown action')
-
         # Shutdown threads
         for thread in threading.enumerate():
             

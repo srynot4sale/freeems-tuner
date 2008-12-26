@@ -19,7 +19,7 @@
 
 
 # Load libraries
-import libs.data, libs.logger, controller, gui
+import libs.data, libs.logger, controller, gui, comms, protocols
 
 # Begin setting up program
 libs.data.createDirectory()

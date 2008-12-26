@@ -52,7 +52,7 @@ def _loadDefault():
     '''
     Load default comms connection type from config
     '''
-    return libs.config.load('Comms', 'default')
+    return libs.config.get('Comms', 'default')
 
 
 class interface(libs.thread.thread):

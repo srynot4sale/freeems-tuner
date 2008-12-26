@@ -20,49 +20,24 @@
 
 import libs.config as config
 
-
-# Dictionary of settings (non-recursive)
-_settings = {}
-
-# Flag that is set when the settings dict is updated
-# This triggers the settings to be written to disc
-# during the next idle event
-_save_settings = False
+_section = 'UI_Settings'
 
 
 def set(setting, value):
     '''Update a UI setting value'''
-    global _settings, _save_settings
-    _settings[setting] = value
-    _save_settings = True
+    return config.set(_section, setting, value)
 
 
 def get(setting, default):
     '''Get a UI setting value'''
-    try:
-        return _settings[setting]
-    except KeyError:
-        return default
+    return config.get(_section, setting, default)
 
 
 def loadSettings(controller):
     '''Load gui settings'''
-    global _settings
-
-    _settings = controller.actionBlocking('config.loadSettings')
+    controller.actionBlocking('config.load')
 
 
-def saveSettings():
+def saveSettings(controller):
     '''Save gui settings'''
-    global _save_settings
-
-    # If a setting save has not been triggered, dont
-    # waste time
-    if not _save_settings:
-        return
-    
-    _save_settings = False
-
-    config.set('UI_Settings', _settings)
-
-
+    controller.actionLowPriority('config.save')

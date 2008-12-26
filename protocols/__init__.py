@@ -51,8 +51,8 @@ def loadDefault():
     '''Load default protocol'''
 
     # Load config
-    def_protocol = libs.config.load('Protocol', 'default')
-    version = libs.config.load('Protocol', 'default_version')
+    def_protocol = libs.config.get('Protocol', 'default')
+    version = libs.config.get('Protocol', 'default_version')
 
     # Should end up in the format:
     #   'protocols.FreeEMS.0_17,

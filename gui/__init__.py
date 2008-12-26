@@ -131,7 +131,7 @@ class Frame(wx.Frame):
     def OnIdle(self, event = None):
         '''Idle UI handler'''
         # Save window settings
-        settings.saveSettings()
+        settings.saveSettings(self._controller)
 
 
     def OnMove(self, event):

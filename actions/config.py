@@ -20,24 +20,11 @@
 import libs.config as config
 
 
-def loadSettings(data = None):
+def load(data = None):
     '''Load gui settings'''
-    global _settings, _save_settings
-
-    _settings = config.getItems('UI_Settings')
+    config.load()
 
 
-def saveSettings(data = None):
+def save(data = None):
     '''Save gui settings'''
-    global _settings, _save_settings
-
-    # If a setting save has not been triggered, dont
-    # waste time
-    if not _save_settings:
-        return
-
-    _save_settings = False
-
-    config.set('UI_Settings', _settings)
-
-
+    config.save()
