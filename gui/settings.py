@@ -33,11 +33,6 @@ def get(setting, default):
     return config.get(_section, setting, default)
 
 
-def loadSettings(controller):
-    '''Load gui settings'''
-    controller.actionBlocking('config.load')
-
-
 def saveSettings(controller):
     '''Save gui settings'''
     controller.actionLowPriority('config.save')

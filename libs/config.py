@@ -28,7 +28,7 @@ _parser = None
 _save_settings = False
 
 
-def load():
+def parser():
     '''
     Get config parser
 
@@ -39,6 +39,8 @@ def load():
     if _parser == None:
         _parser = ConfigParser.RawConfigParser()
         _parser.read(['data/my_config.cached.ini', 'config.default.ini', 'data/my_config.ini'])
+
+    return _parser
 
 
 def save():
@@ -55,7 +57,8 @@ def save():
 
     # Write options to the users config file
     configfile = open('data/my_config.cached.ini', 'wb')
-    _parser.write(configfile)
+
+    parser().write(configfile)
 
 
 def get(section, option, default = None):
@@ -63,6 +66,8 @@ def get(section, option, default = None):
     Get option from config file
     '''
     # Get defaults and user settings
+    _parser = parser()
+
     if not _parser.has_section(section):
         return default
 
@@ -76,6 +81,8 @@ def getBool(section, option, default = None):
     '''
     Get option but return as a boolean value
     '''
+    _parser = parser()
+
     if not _parser.has_section(section):
         return default
 
@@ -89,6 +96,8 @@ def getItems(section):
     '''
     Get all options in a section as a dict
     '''
+    _parser = parser()
+
     if not _parser.has_section(section):
         return {}
 
@@ -110,6 +119,8 @@ def set(section, option, value = None):
     the dict. Otherwise just sets the option
     and value
     '''
+    _parser = parser()
+
     if not _parser.has_section(section):
         _parser.add_section(section)
 

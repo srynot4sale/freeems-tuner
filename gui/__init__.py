@@ -69,8 +69,6 @@ class Frame(wx.Frame):
 
         self._debug('Gui frame initialised')
 
-        settings.loadSettings(controller)
-
         self.CreateStatusBar()
         self.SetStatusText('Version %s' % self.revision)
         self._createMenus()
@@ -131,7 +129,8 @@ class Frame(wx.Frame):
     def OnIdle(self, event = None):
         '''Idle UI handler'''
         # Save window settings
-        settings.saveSettings(self._controller)
+        #settings.saveSettings(self._controller)
+        pass
 
 
     def OnMove(self, event):
@@ -157,7 +156,7 @@ class Frame(wx.Frame):
         '''Event handler for closing.'''
         try:
             # Save any unsaved settings
-            settings.saveSettings()
+            settings.saveSettings(self._controller)
         except Exception, msg:
             self._debug('Error during shutdown', msg)
 
