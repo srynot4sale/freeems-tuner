@@ -35,4 +35,4 @@ def get(setting, default):
 
 def saveSettings(controller):
     '''Save gui settings'''
-    controller.actionLowPriority('config.save')
+    controller.actionLowPriority('libs.config.save')

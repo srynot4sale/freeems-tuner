@@ -97,6 +97,10 @@ class Frame(wx.Frame):
         self.Move(pos)
 
 
+    def getController(self):
+        return self._controller
+
+
     def _debug(self, message, data = None):
         '''
         Send debug log message to controller

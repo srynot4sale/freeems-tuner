@@ -20,6 +20,8 @@
 
 import ConfigParser
 
+import controller
+
 
 # Parser object
 _parser = None
@@ -132,3 +134,17 @@ def set(section, option, value = None):
 
     global _save_settings
     _save_settings = True
+
+
+class actions:
+    '''
+    Modules' actions
+    '''
+
+    class save(controller.action):
+        '''
+        Save config to file
+        '''
+
+        def run(self):
+            save()

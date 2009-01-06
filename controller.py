@@ -167,21 +167,21 @@ class app(libs.thread.thread):
             while self._actionQueue or self._actionQueueLowPriority or self._actionQueueBlocking:
                 
                 # Log the size of the queues if they have changed
-                # if actionQueueSize != len(self._actionQueue) or actionQueueLowPrioritySize != len(self._actionQueueLowPriority) or actionQueueBlockingSize != len(self._actionQueueBlocking):
-                #    log_actions = True
+                if actionQueueSize != len(self._actionQueue) or actionQueueLowPrioritySize != len(self._actionQueueLowPriority) or actionQueueBlockingSize != len(self._actionQueueBlocking):
+                    log_actions = True
 
                 #print actionQueueBlockingSize
                 #print actionQueueSize
                 #print actionQueueLowPrioritySize
 
-                #actionQueueSize = len(self._actionQueue)
-                #actionQueueLowPrioritySize = len(self._actionQueueLowPriority)
-                #actionQueueBlockingSize = len(self._actionQueueBlocking)
+                actionQueueSize = len(self._actionQueue)
+                actionQueueLowPrioritySize = len(self._actionQueueLowPriority)
+                actionQueueBlockingSize = len(self._actionQueueBlocking)
 
-                #if log_actions:
-                #    log_action = False
-                #    self._log('DEBUG', 'Size of action queues, blocking: %s, actions: %s, low-priority: %s' %
-                #                (actionQueueBlockingSize, actionQueueSize, actionQueueLowPrioritySize))
+                if log_actions:
+                    log_actions = False
+                    self._log('DEBUG', 'Size of action queues, blocking: %s, actions: %s, low-priority: %s' %
+                                (actionQueueBlockingSize, actionQueueSize, actionQueueLowPrioritySize))
                 
                 # Actions in _actionQueueBlocking are top priority so always
                 # get done before low priority actions
@@ -207,15 +207,16 @@ class app(libs.thread.thread):
                 
                 # Log action
                 if action != 'Log':
-                    self._debug('Performing %s action' % action)
+                    self._log('DEBUG', 'Performing %s action' % action)
 
                 # Check where action is located
                 if '.' in action:
                     # Run method in action module
                     loc = action.rfind('.')
-                    module = 'actions.'+action[0:loc]
+                    module = action[0:loc]
                     method = action[loc+1:]
-                    result = getattr(__import__(module, globals(), locals(), 'connection'), method)(data)
+                    action_method = getattr(__import__(module, globals(), locals(), 'actions'), 'actions')
+                    result = getattr(action_method, method)(self, data).run()
                 else:
                     # Run actions internal method
                     action = '_action'+action
@@ -264,3 +265,26 @@ class app(libs.thread.thread):
             
             if not isinstance(thread, threading._MainThread):
                 thread.exit()
+
+
+class action():
+    '''
+    Inherited interface for actions
+    '''
+    _controller = None
+    _data = None
+
+    def __init__(self, controller, data):
+        '''
+        Handles property setup and other generic code
+        '''
+        self._controller = controller
+        self._data = data
+
+
+    def run(self):
+        '''
+        Method run by controller, to be overwritten in
+        child classes
+        '''
+        pass

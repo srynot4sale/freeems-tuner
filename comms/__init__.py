@@ -124,14 +124,6 @@ class interface(libs.thread.thread):
         libs.thread.thread.exit(self)
 
 
-    def bindSendWatcher(self, watcher):
-        pass
-
-
-    def bindReceiveWatcher(self, watcher):
-        pass
-
-
     def send(self, packet):
         pass
 

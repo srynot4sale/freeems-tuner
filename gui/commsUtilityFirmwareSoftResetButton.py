@@ -63,4 +63,4 @@ class commsUtilityFirmwareSoftResetButton(wx.BoxSizer):
         if not commsConnectWarning.confirmConnected(gui.frame):
             return
         
-        protocols.getProtocol().sendUtilitySoftResetRequest()
+        self.GetParent().GetParent()._protocols.getProtocol().sendUtilitySoftResetRequest()
