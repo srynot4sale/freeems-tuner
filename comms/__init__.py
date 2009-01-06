@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -18,10 +18,10 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import libs.config, libs.thread
+import libs.config, controller
 
 
-# Tuners comms connections
+# Tuner's comms connections
 _connection = {}
 
 
@@ -55,97 +55,21 @@ def _loadDefault():
     return libs.config.get('Comms', 'default')
 
 
-class interface(libs.thread.thread):
-    '''
-    Base class for all comms plugins
+class actions:
 
-    Serial thread overview:
-    - Send queue, containing raw packets.
+    class sendUtilityRequest(controller.action):
 
-    - run() method will process the oldest packet in the queue,
-      check the receive buffer,
-      send any receive buffer to the receive thread (after waking it),
-      then loop again.
+        def run():
+            '''
+            Create packet and send to correct thread
+            '''
 
-    - The thread must keep the connected flag up-to-date,
-      as other threads will poll this continuously,
-      and cant wait for the run() method to answer.
+            if 'connection' in self._data:
+                comms = getConnection(self._data['connection'])
+            else:
+                comms = getConnection()
 
-    - The thread starts in a blocked condition, waiting to receive a
-      notify from a controller when its to be turned on
-    '''
+            protocol = comms.getProtocol()
 
-    _connected = False
+            comms.send(protocol.getRequestPacket(self._data['type']))
 
-    # Connection wanted flag
-    _connWanted = False
-
-    # Disconnection wanted flag
-    _disconnWanted = False
-
-    _sendBuffer = []
-
-    # Watching methods
-    _send_watchers = []
-    _receive_watchers = []
-
-
-    def __init__(self, name, controller):
-        '''
-        Sets up threading stuff
-        '''
-        self._setup(name, controller)
-
-
-    def isConnected(self):
-        '''
-        Returns bool flag
-        '''
-        return self._connected
-
-
-    def connect(self):
-        '''
-        Wakes up this thread and connects
-        '''
-        self._connWanted = True
-        self.wake()
-
-
-    def disconnect(self):
-        '''
-        Tells thread to disconnect comms
-        '''
-        self._disconnWanted = True
-
-    
-    def exit(self):
-        self.disconnect()
-        libs.thread.thread.exit(self)
-
-
-    def send(self, packet):
-        pass
-
-
-    def bindSendWatcher(self, watcher):
-        self._send_watchers.append(watcher)
-
-
-    def bindReceiveWatcher(self, watcher):
-        self._receive_watchers.append(watcher)
-    
-    
-    def run(self):
-        '''
-        The actual threaded code
-        '''
-        pass
-
-
-class CommsException(Exception):
-    pass
-
-
-class CannotconnectException(CommsException):
-    pass

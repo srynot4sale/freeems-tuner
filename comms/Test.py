@@ -19,13 +19,17 @@
 
 
 import time, copy
-import libs.config as config, comms, protocols
+import libs.config as config, comms.interface, protocols
 
 
-class connection(comms.interface):
+class connection(comms.interface.interface):
     '''
     Fake comms interface for testing
     '''
+
+    # Send/receive threads
+    _sendThread = None
+    _receiveThread = None
 
     # Fake buffer
     _buffer = []
@@ -37,6 +41,15 @@ class connection(comms.interface):
         '''
         comms.interface.__init__(self, name, controller)
         self.start()
+
+
+    def send(self, requestType, data):
+        '''
+        External interface for sending a packet,
+        very high-level
+        '''
+
+        self._sendThread.send(requestType, data)
 
 
     def _connect(self):
@@ -65,7 +78,7 @@ class connection(comms.interface):
         self._debug('Test comms connection disconnected')
 
 
-    def send(self, packet):
+    def _send(self, packet):
         # Get protocol
         protocol = protocols.getProtocol()
 
@@ -84,11 +97,22 @@ class connection(comms.interface):
             watcher(packet)
 
 
+    def _createSendThread(self):
+        '''
+        Create comms send thread
+        '''
+        self._sendThread = protocols.getProtocol().getSendObject()
+
+
     def run(self):
-        '''Check for and recieve packets waiting in the connection'''
+        '''Check for and receive packets waiting in the connection'''
 
         # Get protocol
         protocol = protocols.getProtocol()
+
+        # Create send and receive threads
+        self._createSendThread()
+        #self._createReceiveThread()
 
         while self.isConnected() or self._alive:
 
