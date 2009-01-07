@@ -24,6 +24,8 @@ import comms
 import logging
 import copy
 
+import send
+
 
 HEADER_IS_PROTO     = protocols.BIT0
 HEADER_HAS_ACK      = protocols.BIT1
@@ -83,6 +85,10 @@ STATE_IN_PACKET             = 2
 
 # Load logging interface
 logger = logging.getLogger('serial.FreeEMS_Vanilla')
+
+
+def getSendObject(name, controller):
+    return send.send(name, controller)
 
 
 class protocol:

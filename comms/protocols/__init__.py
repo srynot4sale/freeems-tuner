@@ -66,7 +66,7 @@ def loadDefault():
     logger.info('Loading protocol module: %s' % path)
 
     # Dynamically import
-    return __import__(path, globals(), locals())
+    return __import__(path, globals(), locals(), version)
 
 
 def to8bit(value, length = None):
