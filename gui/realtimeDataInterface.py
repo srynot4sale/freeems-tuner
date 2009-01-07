@@ -20,7 +20,6 @@
 
 import wx
 import comms
-import protocols
 import logging
 import datetime
 import gui

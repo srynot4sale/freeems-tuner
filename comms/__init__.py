@@ -18,7 +18,7 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import libs.config, controller
+import libs.config, action
 
 
 # Tuner's comms connections
@@ -57,7 +57,7 @@ def _loadDefault():
 
 class actions:
 
-    class sendUtilityRequest(controller.action):
+    class sendUtilityRequest(action.action):
 
         def run():
             '''

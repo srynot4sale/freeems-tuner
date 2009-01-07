@@ -34,12 +34,17 @@ class connection(comms.interface.interface):
     # Fake buffer
     _buffer = []
 
+    # Protocol module
+    protocol = None
 
     def __init__(self, name, controller):
         '''
         Initialise comms thread
         '''
-        comms.interface.__init__(self, name, controller)
+        comms.interface.interface.__init__(self, name, controller)
+
+        # Load protocol
+        self.protocol = protocols.getProtocol()
         self.start()
 
 
@@ -79,11 +84,9 @@ class connection(comms.interface.interface):
 
 
     def _send(self, packet):
-        # Get protocol
-        protocol = protocols.getProtocol()
 
         # Get return packet
-        hex = protocol.getTestResponse(packet.getPayloadIdInt())
+        hex = self.protocol.getTestResponse(packet.getPayloadIdInt())
 
         # Append to input buffer
         # In this fake comms plugin, all sent packets

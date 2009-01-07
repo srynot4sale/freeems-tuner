@@ -20,7 +20,7 @@
 
 import ConfigParser
 
-import controller
+import action
 
 
 # Parser object
@@ -136,12 +136,12 @@ def set(section, option, value = None):
     _save_settings = True
 
 
-class actions:
+class actions():
     '''
     Modules' actions
     '''
 
-    class save(controller.action):
+    class save(action.action):
         '''
         Save config to file
         '''

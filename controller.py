@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -19,8 +19,7 @@
 
 
 import threading, datetime, time
-import libs.thread, comms, protocols
-
+import libs.thread, comms
 
 class app(libs.thread.thread):
     '''
@@ -58,10 +57,6 @@ class app(libs.thread.thread):
 
         # Setup default comms thread
         comms.createConnection(self)
-
-        # Load default hardware interface protocol
-        # TODO: comms should load protocol
-        protocols.loadDefault()
 
         # Start threading!
         self.start()
@@ -266,25 +261,3 @@ class app(libs.thread.thread):
             if not isinstance(thread, threading._MainThread):
                 thread.exit()
 
-
-class action():
-    '''
-    Inherited interface for actions
-    '''
-    _controller = None
-    _data = None
-
-    def __init__(self, controller, data):
-        '''
-        Handles property setup and other generic code
-        '''
-        self._controller = controller
-        self._data = data
-
-
-    def run(self):
-        '''
-        Method run by controller, to be overwritten in
-        child classes
-        '''
-        pass

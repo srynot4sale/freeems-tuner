@@ -20,7 +20,6 @@
 
 import os, sys, tarfile, logging
 import json
-import protocols
 
 
 logger = logging.getLogger('lib.data')

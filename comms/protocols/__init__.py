@@ -41,10 +41,7 @@ plugin = None
 
 def getProtocol():
     '''Return protocol, and if none exists - load'''
-    if not protocol:
-        loadDefault()
-
-    return protocol
+    return loadDefault()
 
 
 def loadDefault():
@@ -60,7 +57,7 @@ def loadDefault():
     # Which would refer to the file:
     #   $cwd/protocols/FreeEMS/0_17.py
     #
-    path = 'protocols.'+def_protocol+'.'+version
+    path = 'comms.protocols.'+def_protocol+'.'+version
 
     global plugin
     plugin = def_protocol+'.'+version
@@ -69,8 +66,7 @@ def loadDefault():
     logger.info('Loading protocol module: %s' % path)
 
     # Dynamically import
-    global protocol
-    protocol = __import__(path, globals(), locals(), 'protocol').protocol()
+    return __import__(path, globals(), locals())
 
 
 def to8bit(value, length = None):

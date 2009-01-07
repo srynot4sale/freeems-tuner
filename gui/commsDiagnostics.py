@@ -21,7 +21,6 @@
 import wx
 import wx.grid as grid
 import comms
-import protocols
 import gui
 import logging
 import datetime

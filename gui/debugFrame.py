@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -23,7 +23,6 @@ import logging
 import sys
 
 import comms
-import protocols
 import version
 import libs.data
 

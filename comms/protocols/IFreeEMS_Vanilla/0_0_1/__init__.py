@@ -19,7 +19,7 @@
 
 
 import types
-import protocols
+import comms.protocols as protocols
 import comms
 import logging
 import copy
