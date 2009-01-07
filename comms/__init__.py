@@ -59,7 +59,7 @@ class actions:
 
     class sendUtilityRequest(action.action):
 
-        def run():
+        def run(self):
             '''
             Create packet and send to correct thread
             '''
