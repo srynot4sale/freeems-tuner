@@ -56,7 +56,7 @@ class connection(comms.interface.interface):
         if self._protocol:
             return self._protocol
 
-        self._protocol = protocols.getProtocol()
+        self._protocol = protocols.getProtocol(self._controller)
         return self._protocol
 
 
@@ -65,7 +65,6 @@ class connection(comms.interface.interface):
         External interface for sending a packet,
         very high-level
         '''
-
         self._sendThread.send(packet)
 
 
@@ -123,7 +122,7 @@ class connection(comms.interface.interface):
         '''Check for and receive packets waiting in the connection'''
 
         # Get protocol
-        protocol = protocols.getProtocol()
+        protocol = self.getProtocol()
 
         # Create send and receive threads
         self._createSendThread()

@@ -18,3 +18,7 @@ All methods should include a docblock layed out like so:
     '''
     Comment
     '''
+
+Group standard library and FreeEMS import seperately e.g.
+import types, copy, logging
+import libs.thread, controller

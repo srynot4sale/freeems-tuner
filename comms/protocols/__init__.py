@@ -17,9 +17,9 @@
 #
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
+import types
 
 import libs.config
-import logging, types
 
 
 # Generic protocol constants
@@ -34,36 +34,31 @@ BIT6  = 0x40	# 7th bit	= 64
 BIT7  = 0x80	# 8th bit	= 128	
 
 
-# Currently used protocol
-protocol = None
-plugin = None
+def getProtocol(controller):
+    '''
+    Return protocol, and if none exists - load
+    '''
+    return loadDefault(controller)
 
 
-def getProtocol():
-    '''Return protocol, and if none exists - load'''
-    return loadDefault()
-
-
-def loadDefault():
-    '''Load default protocol'''
+def loadDefault(controller):
+    '''
+    Load default protocol
+    '''
 
     # Load config
     def_protocol = libs.config.get('Protocol', 'default')
     version = libs.config.get('Protocol', 'default_version')
 
     # Should end up in the format:
-    #   'protocols.FreeEMS.0_17,
+    #   'comms.protocols.FreeEMS.0_17,
     #
     # Which would refer to the file:
-    #   $cwd/protocols/FreeEMS/0_17.py
-    #
+    #   $cwd/comms/protocols/FreeEMS/0_17.py
+
     path = 'comms.protocols.'+def_protocol+'.'+version
 
-    global plugin
-    plugin = def_protocol+'.'+version
-
-    logger = logging.getLogger('protocols')
-    logger.info('Loading protocol module: %s' % path)
+    controller.log('comms.protocol', 'DEBUG', 'Loading protocol plugin: %s' % path)
 
     # Dynamically import
     return __import__(path, globals(), locals(), version)
