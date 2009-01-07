@@ -62,5 +62,5 @@ class commsUtilityFirmwareHardResetButton(wx.BoxSizer):
         if not commsConnectWarning.confirmConnected(gui.frame):
             return
 
-        data = {'type': 'HardReset'}
+        data = {'type': 'HardSystemReset'}
         self._controller.action('comms.sendUtilityRequest', data)

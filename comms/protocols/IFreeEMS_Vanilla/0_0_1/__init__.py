@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -18,14 +18,14 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import types
-import comms.protocols as protocols
-import comms
-import logging
-import copy
+import types, copy
 
-import send
+import comms.protocols as protocols, comms, logging, send, requests
 
+
+START_BYTE = 0xAA
+END_BYTE = 0xCC
+ESCAPE_BYTE = 0xBB
 
 HEADER_IS_PROTO     = protocols.BIT0
 HEADER_HAS_ACK      = protocols.BIT1
@@ -33,50 +33,49 @@ HEADER_HAS_FAIL     = protocols.BIT2
 HEADER_HAS_ADDRS    = protocols.BIT3
 HEADER_HAS_LENGTH   = protocols.BIT4
 
-REQUEST_INTERFACE_VERSION   = 0
-REQUEST_FIRMWARE_VERSION    = 2
-REQUEST_MAX_PACKET_SIZE     = 4
-REQUEST_ECHO_PACKET_RETURN  = 6
-REQUEST_SOFT_SYSTEM_RESET   = 8
-REQUEST_HARD_SYSTEM_RESET   = 10
-REQUEST_ASYNC_ERROR_CODE    = 12
-REQUEST_ASYNC_DEBUG_INFO    = 14
+REQUEST_INTERFACE_VERSION       = 0
+REQUEST_FIRMWARE_VERSION        = 2
+REQUEST_MAX_PACKET_SIZE         = 4
+REQUEST_ECHO_PACKET_RETURN      = 6
+REQUEST_SOFT_SYSTEM_RESET       = 8
+REQUEST_HARD_SYSTEM_RESET       = 10
+REQUEST_ASYNC_ERROR_CODE        = 12
+REQUEST_ASYNC_DEBUG_INFO        = 14
 
-RETRIEVE_BLOCK_FROM_RAM     = 4
-RETRIEVE_BLOCK_FROM_FLASH   = 6
-BURN_BLOCK_FROM_RAM_TO_FLASH = 8
+RETRIEVE_BLOCK_FROM_RAM         = 4
+RETRIEVE_BLOCK_FROM_FLASH       = 6
+BURN_BLOCK_FROM_RAM_TO_FLASH    = 8
 
-RESPONSE_INTERFACE_VERSION  = 1
-RESPONSE_FIRMWARE_VERSION   = 3
-RESPONSE_MAX_PACKET_SIZE    = 5
-RESPONSE_ECHO_PACKET_RETURN = 7
-RESPONSE_SOFT_SYSTEM_RESET  = 9
-RESPONSE_HARD_SYSTEM_RESET  = 11
-RESPONSE_ASYNC_ERROR_CODE   = 13
-RESPONSE_ASYNC_DEBUG_INFO   = 15
+RESPONSE_INTERFACE_VERSION      = 1
+RESPONSE_FIRMWARE_VERSION       = 3
+RESPONSE_MAX_PACKET_SIZE        = 5
+RESPONSE_ECHO_PACKET_RETURN     = 7
+RESPONSE_SOFT_SYSTEM_RESET      = 9
+RESPONSE_HARD_SYSTEM_RESET      = 11
+RESPONSE_ASYNC_ERROR_CODE       = 13
+RESPONSE_ASYNC_DEBUG_INFO       = 15
 
-PACKET_IDS = {
+REQUEST_PACKET_TITLES = {
         REQUEST_INTERFACE_VERSION:   "ifVer",
-        RESPONSE_INTERFACE_VERSION:  "ifVer",
         REQUEST_FIRMWARE_VERSION:    "firmVer",
-        RESPONSE_FIRMWARE_VERSION:   "firmVer",
         REQUEST_MAX_PACKET_SIZE:     "maxPktSize",
-        RESPONSE_MAX_PACKET_SIZE:    "maxPktSize",
         REQUEST_ECHO_PACKET_RETURN:  "echoPacket",
-        RESPONSE_ECHO_PACKET_RETURN: "echoPacket",
         REQUEST_SOFT_SYSTEM_RESET:   "softReset",
-        RESPONSE_SOFT_SYSTEM_RESET:  "softReset",
         REQUEST_HARD_SYSTEM_RESET:   "hardReset",
-        RESPONSE_HARD_SYSTEM_RESET:  "hardReset",
         REQUEST_ASYNC_ERROR_CODE:    "asyncError",
-        RESPONSE_ASYNC_ERROR_CODE:   "asyncError",
         REQUEST_ASYNC_DEBUG_INFO:    "asyncDebug",
-        RESPONSE_ASYNC_DEBUG_INFO:   "asyncDebug"
 }
 
-START_BYTE = 0xAA
-END_BYTE = 0xCC
-ESCAPE_BYTE = 0xBB
+RESPONSE_PACKET_TITLES = {
+        RESPONSE_INTERFACE_VERSION:  "ifVer",
+        RESPONSE_FIRMWARE_VERSION:   "firmVer",
+        RESPONSE_MAX_PACKET_SIZE:    "maxPktSize",
+        RESPONSE_ECHO_PACKET_RETURN: "echoPacket",
+        RESPONSE_SOFT_SYSTEM_RESET:  "softReset",
+        RESPONSE_HARD_SYSTEM_RESET:  "hardReset",
+        RESPONSE_ASYNC_ERROR_CODE:   "asyncError",
+        RESPONSE_ASYNC_DEBUG_INFO:   "asyncDebug"
+}
 
 STATE_NOT_PACKET            = 0
 STATE_ESCAPE_BYTE           = 1
@@ -89,6 +88,13 @@ logger = logging.getLogger('serial.FreeEMS_Vanilla')
 
 def getSendObject(name, controller):
     return send.send(name, controller)
+
+
+def getRequestPacket(type):
+    '''
+    Create and return a request packet
+    '''
+    return getattr(requests, 'request'+type)()
 
 
 class protocol:
@@ -150,11 +156,6 @@ class protocol:
         return self._memory_request_payload_ids
 
 
-    def sendUtilityRequest(self, request_type = None):
-        '''Send a utility request'''
-        packet = getattr(self, self._utility_request_packets[request_type])()
-
-        self._sendPacket(packet)
 
 
     def sendMemoryRequest(self, request_type = None, request_type2 = None):
@@ -377,203 +378,6 @@ class protocol:
         response.validate()
 
         return response
-
-
-    class packet:
-        '''Serial packet base definition'''
-
-        # Flags
-        _headerFlags = protocols.ZEROS
-
-        # Payload id
-        _payload_id = 0
-
-        # Parsed payload length
-        _payload_parsed_len = 0
-
-        # Payload
-        _payload = []
-
-
-        def getHeaderFlags(self):
-            '''Returns header flags'''
-            return self._headerFlags
-
-
-        def parseHeaderFlags(self, flags):
-            '''Saves header flags'''
-            self._headerFlags = flags
-
-
-        def setHeaderProtocolFlag(self, bool = True):
-            '''Flag this as a protocol packet'''
-            if bool:
-                self._headerFlags |= HEADER_IS_PROTO
-            else:
-                self._headerFlags &= ~HEADER_IS_PROTO
-            
-
-        def hasHeaderProtocolFlag(self):
-            '''Return if this is a protocol packet'''
-            return self._headerFlags & HEADER_IS_PROTO
-
-
-        def setHeaderAckFlag(self, bool = True):
-            '''Flag this packet as sending/requiring an ack'''
-            if bool:
-                self._headerFlags |= HEADER_HAS_ACK
-            else:
-                self._headerFlags &= ~HEADER_HAS_ACK
-
-
-        def hasHeaderAckFlag(self):
-            '''Return if this packet is sending/requires an ack'''
-            return self._headerFlags & HEADER_HAS_ACK
-
-
-        def setHeaderLengthFlag(self, bool = True):
-            '''Flag this packet as having a payload length'''
-            if bool:
-                self._headerFlags |= HEADER_HAS_LENGTH
-            else:
-                self._headerFlags &= ~HEADER_HAS_LENGTH
-
-
-        def hasHeaderLengthFlag(self):
-            '''Return if this packet has a payload length'''
-            return self._headerFlags & HEADER_HAS_LENGTH
-
-
-        def setPayloadId(self, id):
-            '''Set payload id'''
-            if isinstance(id, list):
-                id = protocols.from8bit(id)
-
-            self._payload_id = id
-
-
-        def getPayloadId(self):
-            '''
-            Return payload id
-            This is padded with a 0 byte for inserting directly into packet
-            '''
-            return protocols.to8bit(self.getPayloadIdInt(), 2)
-
-
-        def getPayloadIdInt(self):
-            '''Return payload id as int'''
-            return self._payload_id
-
-
-        def setPayload(self, payload):
-            '''Save payload as 8bit bytes'''
-            if isinstance(payload, list):
-                self._payload = payload
-            else:
-                self._payload = protocols.to8bit(payload)
-
-
-        def getPayload(self):
-            '''Return payload as string'''
-            return self.__str__(self.getPayloadBytes())
-
-
-        def getPayloadBytes(self):
-            '''Return payload as bytes for inserting directly into packet'''
-            return self._payload
-
-
-        def getPayloadLength(self):
-            '''Return length of payload'''
-            return protocols.to8bit(self.getPayloadLengthInt(), 2)
-
-
-        def getPayloadLengthInt(self):
-            '''Return length of payload as int'''
-            return len(self.getPayloadBytes())
-
-
-        def setPayloadLengthParsed(self, length):
-            '''Save parsed payload length'''
-            if isinstance(length, list):
-                length = protocols.from8bit(length)
-
-            self._payload_parsed_length = length
-
-
-        def getPayloadLengthParsed(self):
-            '''Return parsed payload length'''
-            return self._payload_parsed_length
-
-
-        def __str__(self, bytes = None):
-            '''
-            Generate a raw string.
-            Main use is for sending to serial connections
-            '''
-            if not bytes:
-                bytes = self.getEscaped()
-
-            string = ''.encode('latin-1')
-
-            for byte in bytes:
-                if byte <= 256:
-                    string += chr(byte)
-                else:
-                    raise TypeError, 'Byte too big, what do I do??? %d' % byte
-            
-            return string
-
-
-        def buildPacket(self):
-            '''Generate a packet''' 
-
-            packet = []
-
-            # Ensure the payload length packet header is set if required
-            if self.getPayloadLength():
-                self.setHeaderLengthFlag()
-
-            packet.append   ( self.getHeaderFlags() )
-            packet.extend   ( self.getPayloadId() )
-
-            if self.getPayloadLength():
-                packet.extend   ( self.getPayloadLength() )
-                packet.extend   ( self.getPayloadBytes() )
-
-            packet.append   ( getChecksum(packet) )
-            packet.insert   ( 0, START_BYTE )
-            packet.append   ( END_BYTE )
-            
-            return packet
-
-
-        def getEscaped(self):
-            '''Return an escaped packet'''
-            packet = self.buildPacket()
-            escaped = []
-
-            x = 0
-            length = len(packet)
-
-            for byte in packet:
-                # If first, last or not special - dont escape
-                if x == 0 or x == length - 1 or byte not in (START_BYTE, ESCAPE_BYTE, END_BYTE):
-                    escaped.append(byte)
-                    continue
-
-                # Add escape byte and escaped packet
-                escaped.extend([ESCAPE_BYTE, byte | 0xFF])
-
-            return escaped
-
-
-        def getPacketHex(self):
-            '''Return a packet as hex strings'''
-            packet = self.getEscaped()
-            return protocols.toHex(packet)
-
-
 
 
 def getChecksum(bytes):

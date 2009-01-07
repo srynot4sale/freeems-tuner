@@ -60,13 +60,13 @@ class connection(comms.interface.interface):
         return self._protocol
 
 
-    def send(self, requestType, data):
+    def send(self, packet):
         '''
         External interface for sending a packet,
         very high-level
         '''
 
-        self._sendThread.send(requestType, data)
+        self._sendThread.send(packet)
 
 
     def _connect(self):

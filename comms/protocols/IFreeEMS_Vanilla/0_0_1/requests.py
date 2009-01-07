@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -17,95 +17,99 @@
 #
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
-    # Request
-    class request(packet):
+import packet
+import __init__ as protocol
 
-        def __init__(self):
-            self.setHeaderProtocolFlag()
+# Request
+class request(packet.packet):
 
-
-    # Interface version request
-    class requestInterfaceVersion(request):
-
-        def __init__(self):
-
-            protocol.request.__init__(self)
-            self.setPayloadId(REQUEST_INTERFACE_VERSION)
+    def __init__(self):
+        self.setHeaderProtocolFlag()
 
 
-    # Firmware version request
-    class requestFirmwareVersion(request):
+# Interface version request
+class requestInterfaceVersion(request):
 
-        def __init__(self):
+    def __init__(self):
 
-            protocol.request.__init__(self)
-            self.setPayloadId(REQUEST_FIRMWARE_VERSION)
+        request.__init__(self)
+        self.setPayloadId(protocol.REQUEST_INTERFACE_VERSION)
+
+
+# Firmware version request
+class requestFirmwareVersion(request):
+
+    def __init__(self):
+
+        request.__init__(self)
+        self.setPayloadId(protocol.REQUEST_FIRMWARE_VERSION)
 
     
-    # Firmware max packet size request
-    class requestMaxPacketSize(request):
+# Firmware max packet size request
+class requestMaxPacketSize(request):
 
-        def __init__(self):
+    def __init__(self):
 
-            protocol.request.__init__(self)
-            self.setPayloadId(REQUEST_MAX_PACKET_SIZE)
+        request.__init__(self)
+        self.setPayloadId(protocol.REQUEST_MAX_PACKET_SIZE)
 
 
-    # Firmware echo packet return request
-    class requestEchoPacketReturn(request):
+# Firmware echo packet return request
+class requestEchoPacketReturn(request):
 
-        def __init__(self):
+    def __init__(self):
 
-            protocol.request.__init__(self)
-            self.setPayloadId(REQUEST_ECHO_PACKET_RETURN)
-            self.setPayload('test')
+        request.__init__(self)
+        self.setPayloadId(protocol.REQUEST_ECHO_PACKET_RETURN)
+        self.setPayload('test')
 
+
+# Firmware memory block request
+#class retrieveBlockFromRAM(request):
+#
+#    def __init__(self, block_id):
+#
+#        protocol.request.__init__(self)
+#        self.setHeaderProtocolFlag(False)
+#        self.setPayloadId(RETRIEVE_BLOCK_FROM_RAM)
+#        block_id = protocols.to8bit(block_id, 2)
+#        self.setPayload(block_id)
+
+
+# Firmware memory block request
+#    class retrieveBlockFromFlash(request):
+
+#        def __init__(self, block_id):
+#            protocol.request.__init__(self)
+#            self.setHeaderProtocolFlag(False)
+#            self.setPayloadId(RETRIEVE_BLOCK_FROM_FLASH)
+#            block_id = protocols.to8bit(block_id, 2)
+#            self.setPayload(block_id)
 
     # Firmware memory block request
-    class retrieveBlockFromRAM(request):
-
-        def __init__(self, block_id):
-            protocol.request.__init__(self)
-            self.setHeaderProtocolFlag(False)
-            self.setPayloadId(RETRIEVE_BLOCK_FROM_RAM)
-            block_id = protocols.to8bit(block_id, 2)
-            self.setPayload(block_id)
-
-
-    # Firmware memory block request
-    class retrieveBlockFromFlash(request):
-
-        def __init__(self, block_id):
-            protocol.request.__init__(self)
-            self.setHeaderProtocolFlag(False)
-            self.setPayloadId(RETRIEVE_BLOCK_FROM_FLASH)
-            block_id = protocols.to8bit(block_id, 2)
-            self.setPayload(block_id)
-
-    # Firmware memory block request
-    class burnBlockFromRamToFlash(request):
+#    class burnBlockFromRamToFlash(request):
         
-        def __init__(self, block_id):
-            protocol.request.__init__(self)
-            self.setHeaderProtocolFlag(False)
-            self.setPayloadId(BURN_BLOCK_FROM_RAM_TO_FLASH)
-            block_id = protocols.to8bit(block_id, 2)
-            self.setPayload(block_id)
+#        def __init__(self, block_id):
+#            protocol.request.__init__(self)
+ #           self.setHeaderProtocolFlag(False)
+#            self.setPayloadId(BURN_BLOCK_FROM_RAM_TO_FLASH)
+#            block_id = protocols.to8bit(block_id, 2)
+#            self.setPayload(block_id)
             
 
-    # Firmware system reset request (hard)
-    class requestHardSystemReset(request):
+# Firmware system reset request (hard)
+class requestHardSystemReset(request):
 
-        def __init__(self):
+    def __init__(self):
 
-            protocol.request.__init__(self)
-            self.setPayloadId(REQUEST_HARD_SYSTEM_RESET)
+        request.__init__(self)
+        self.setPayloadId(protocol.REQUEST_HARD_SYSTEM_RESET)
 
 
-    # Firmware system reset request (soft)
-    class requestSoftSystemReset(request):
+# Firmware system reset request (soft)
+class requestSoftSystemReset(request):
 
-        def __init__(self):
+    def __init__(self):
 
-            protocol.request.__init__(self)
-            self.setPayloadId(REQUEST_SOFT_SYSTEM_RESET)
+        request.__init__(self)
+        self.setPayloadId(protocol.REQUEST_SOFT_SYSTEM_RESET)
