@@ -35,7 +35,7 @@ class connection(comms.interface.interface):
     _buffer = []
 
     # Protocol module
-    protocol = None
+    _protocol = None
 
     def __init__(self, name, controller):
         '''
@@ -44,8 +44,20 @@ class connection(comms.interface.interface):
         comms.interface.interface.__init__(self, name, controller)
 
         # Load protocol
-        self.protocol = protocols.getProtocol()
+        self.getProtocol()
+
         self.start()
+
+
+    def getProtocol(self):
+        '''
+        Return (and load if necessary) protocol interface
+        '''
+        if self._protocol:
+            return self._protocol
+
+        self._protocol = protocols.getProtocol()
+        return self._protocol
 
 
     def send(self, requestType, data):
@@ -86,7 +98,7 @@ class connection(comms.interface.interface):
     def _send(self, packet):
 
         # Get return packet
-        hex = self.protocol.getTestResponse(packet.getPayloadIdInt())
+        hex = self.getProtocol().getTestResponse(packet.getPayloadIdInt())
 
         # Append to input buffer
         # In this fake comms plugin, all sent packets
@@ -104,7 +116,7 @@ class connection(comms.interface.interface):
         '''
         Create comms send thread
         '''
-        self._sendThread = protocols.getProtocol().getSendObject(self.name+'.protocol', self._controller)
+        self._sendThread = self.getProtocol().getSendObject(self.name+'.protocol', self._controller)
 
 
     def run(self):

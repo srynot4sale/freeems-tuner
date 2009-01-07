@@ -40,7 +40,7 @@ class commsUtilityRequests(wx.BoxSizer):
 
         self.text = wx.StaticText(parent, -1, 'Data to request', style=wx.ALIGN_CENTER)
 
-        protocol = comms.getConnection().protocol.protocol()
+        protocol = comms.getConnection().getProtocol().protocol()
         self.options = protocol.getUtilityRequestList()
 
         self.input = wx.Choice(parent, -1, choices=self.options)
