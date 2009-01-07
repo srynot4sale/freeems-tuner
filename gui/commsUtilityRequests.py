@@ -18,12 +18,9 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import wx
-import comms
-import logging
-import datetime
-import gui
-import commsConnectWarning
+import wx, logging, datetime
+
+import comms, gui, commsConnectWarning
 
 logger = logging.getLogger('gui.commsUtilityRequests')
 
@@ -43,7 +40,8 @@ class commsUtilityRequests(wx.BoxSizer):
 
         self.text = wx.StaticText(parent, -1, 'Data to request', style=wx.ALIGN_CENTER)
 
-        self.options = protocols.getProtocol().getUtilityRequestList()
+        protocol = comms.getConnection().protocol.protocol()
+        self.options = protocol.getUtilityRequestList()
 
         self.input = wx.Choice(parent, -1, choices=self.options)
         self.send = wx.Button(parent, self.ID_SEND_REQUEST, 'Send Request')
