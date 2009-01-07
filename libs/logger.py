@@ -35,7 +35,7 @@ def setup():
     global LEVELS, LOG_FILENAME
 
     # Get log level from config
-    config_level = config.load('Logging', 'verboseness')
+    config_level = config.get('Logging', 'verboseness')
     level = LEVELS.get(config_level, logging.NOTSET)
 
     # Setup config
@@ -46,12 +46,12 @@ def setup():
     logging._defaultFormatter = formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(name)s - %(message)s')
 
     # Get log types from config
-    if config.loadBool('Logging', 'to_file'):
+    if config.getBool('Logging', 'to_file'):
         handler = logging.FileHandler(LOG_FILENAME, 'w')
         handler.setFormatter(formatter)
         base.addHandler(handler)
 
-    if config.loadBool('Logging', 'to_terminal'):
+    if config.getBool('Logging', 'to_terminal'):
         handler = logging.StreamHandler()
         handler.setFormatter(formatter)
         base.addHandler(handler)
