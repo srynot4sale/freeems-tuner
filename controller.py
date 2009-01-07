@@ -248,7 +248,7 @@ class app(libs.thread.thread):
         if data == None:
             data = ''
 
-        print '%s %-15s %s %s %s' % (time, section, severity, message, data)
+        print '%s %-25s %s %s %s' % (time, section, severity, message, data)
 
 
     def _actionShutdown(self, data = None):

@@ -35,6 +35,7 @@ class send(libs.thread.thread):
         Sets up threading stuff
         '''
         self._setup(name, controller)
+        self._debug('Send thread created')
 
     
     def send(self, packet):
@@ -49,7 +50,6 @@ class send(libs.thread.thread):
         '''
         Loop through buffer and process into raw packets
         '''
-
         while self._alive:
 
             # If buffer non-empty, process
