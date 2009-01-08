@@ -128,7 +128,7 @@ class connection(comms.interface.interface):
         '''
         Create comms send thread
         '''
-        self._sendThread = self.getProtocol().getSendObject(self.name+'.protocol', self._controller, self)
+        self._sendThread = self.getProtocol().getSendObject(self.name+'.send', self._controller, self)
 
 
     def run(self):
