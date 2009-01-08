@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -19,11 +19,7 @@
 
 
 import wx
-import comms
-import logging
-import datetime
-import gui
-import commsConnectWarning
+import gui, commsConnectWarning
 
 
 class commsUtilityFirmwareHardResetButton(wx.BoxSizer):
