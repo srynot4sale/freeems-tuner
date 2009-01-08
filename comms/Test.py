@@ -27,18 +27,9 @@ class connection(comms.interface.interface):
     Fake comms interface for testing
     '''
 
-    # Send/receive threads
-    _sendThread = None
-    _receiveThread = None
-
     # Fake receive buffer
     _buffer = []
 
-    # Send queue
-    _queue = []
-
-    # Protocol module
-    _protocol = None
 
     def __init__(self, name, controller):
         '''
@@ -50,34 +41,6 @@ class connection(comms.interface.interface):
         self.getProtocol()
 
         self.start()
-
-
-    def getProtocol(self):
-        '''
-        Return (and load if necessary) protocol interface
-        '''
-        if self._protocol:
-            return self._protocol
-
-        self._protocol = protocols.getProtocol(self._controller)
-        return self._protocol
-
-
-    def send(self, packet):
-        '''
-        External interface for sending a packet,
-        very high-level
-        '''
-        self._sendThread.send(packet)
-
-
-    def queuePacket(self, packet):
-        '''
-        Adds a raw packet to the send queue
-        To be called from send thread
-        '''
-        self._queue.append(packet)
-        self.wake()
 
 
     def _connect(self):
@@ -122,13 +85,6 @@ class connection(comms.interface.interface):
         return
         for watcher in self._send_watchers:
             watcher(packet)
-
-
-    def _createSendThread(self):
-        '''
-        Create comms send thread
-        '''
-        self._sendThread = self.getProtocol().getSendObject(self.name+'.send', self._controller, self)
 
 
     def run(self):

@@ -19,7 +19,7 @@
 
 import threading
 
-import libs.thread
+import libs.thread, protocols
 
 
 class interface(libs.thread.thread):
@@ -29,9 +29,11 @@ class interface(libs.thread.thread):
     Serial thread overview:
     - Send queue, containing raw packets.
 
-    - run() method will process the oldest packet in the queue,
-      check the receive buffer,
+    - run() will check the receive buffer,
       send any receive buffer to the receive thread (after waking it),
+      process any packets n the send queue (starting with oldest),
+      it will then sleep for no more than 1/2 second unless woken by another thread
+      attempting to send/receive/connect/disconnect,
       then loop again.
 
     - The thread must keep the connected flag up-to-date,
@@ -42,6 +44,11 @@ class interface(libs.thread.thread):
       notify from a controller when its to be turned on
     '''
 
+    # Send/receive threads
+    _sendThread = None
+    _receiveThread = None
+
+    # Connected flag
     _connected = False
 
     # Connection wanted flag
@@ -50,11 +57,15 @@ class interface(libs.thread.thread):
     # Disconnection wanted flag
     _disconnWanted = False
 
-    _sendBuffer = []
-
     # Watching methods
     _send_watchers = []
     _receive_watchers = []
+
+    # Send queue
+    _queue = []
+
+    # Protocol module
+    _protocol = None
 
 
     def __init__(self, name, controller):
@@ -84,8 +95,44 @@ class interface(libs.thread.thread):
         Tells thread to disconnect comms
         '''
         self._disconnWanted = True
+        self.wake()
 
     
+    def getProtocol(self):
+        '''
+        Return (and load if necessary) protocol interface
+        '''
+        if self._protocol:
+            return self._protocol
+
+        self._protocol = protocols.getProtocol(self._controller)
+        return self._protocol
+
+
+    def send(self, packet):
+        '''
+        External interface for sending a packet,
+        very high-level
+        '''
+        self._sendThread.send(packet)
+
+
+    def queuePacket(self, packet):
+        '''
+        Adds a raw packet to the send queue
+        To be called from send thread
+        '''
+        self._queue.append(packet)
+        self.wake()
+
+    
+    def _createSendThread(self):
+        '''
+        Create comms send thread
+        '''
+        self._sendThread = self.getProtocol().getSendObject(self.name+'.send', self._controller, self)
+
+
     def _checkBlock(self):
         '''
         Overrides parent block function to use
@@ -107,10 +154,6 @@ class interface(libs.thread.thread):
     def exit(self):
         self.disconnect()
         libs.thread.thread.exit(self)
-
-
-    def send(self, packet):
-        pass
 
 
     def bindSendWatcher(self, watcher):
