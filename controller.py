@@ -19,7 +19,7 @@
 
 
 import threading, datetime, time
-import libs.thread, comms
+import libs.thread, comms, libs.config as config
 
 class app(libs.thread.thread):
     '''
@@ -144,11 +144,16 @@ class app(libs.thread.thread):
         '''
         Perform controller logic
         '''
+
+        # Check config regarding logging queue sizes
+        log_actions = False
+        if config.getBool('Logging', 'log_queues'):
+            log_actions = True
+
         # Queue sizes (for logging)
         actionQueueSize = 0
         actionQueueLowPrioritySize = 0
         actionQueueBlockingSize = 0
-        log_actions = False
 
         # Continue running until no other threads are left except
         # this one and the main thread
@@ -162,29 +167,29 @@ class app(libs.thread.thread):
             while self._actionQueue or self._actionQueueLowPriority or self._actionQueueBlocking:
                 
                 # Log the size of the queues if they have changed
-                if actionQueueSize != len(self._actionQueue) or actionQueueLowPrioritySize != len(self._actionQueueLowPriority) or actionQueueBlockingSize != len(self._actionQueueBlocking):
-                    log_actions = True
-
-                actionQueueSize = len(self._actionQueue)
-                actionQueueLowPrioritySize = len(self._actionQueueLowPriority)
-                actionQueueBlockingSize = len(self._actionQueueBlocking)
-
                 if log_actions:
-                    log_actions = False
-                    self._log('DEBUG', 'Size of action queues, blocking: %s, actions: %s, low-priority: %s' %
-                                (actionQueueBlockingSize, actionQueueSize, actionQueueLowPrioritySize))
+                    if actionQueueSize != len(self._actionQueue) or actionQueueLowPrioritySize != len(self._actionQueueLowPriority) or actionQueueBlockingSize != len(self._actionQueueBlocking):
+                        self._log('DEBUG', 'Size of action queues, blocking: %s, actions: %s, low-priority: %s' %
+                                    (len(self._actionQueueBlocking), len(self._actionQueue), len(self._actionQueueLowPriority)))
+
+                        actionQueueSize = len(self._actionQueue)
+                        actionQueueLowPrioritySize = len(self._actionQueueLowPriority)
+                        actionQueueBlockingSize = len(self._actionQueueBlocking)
                 
                 # Actions in _actionQueueBlocking are top priority so always
                 # get done before low priority actions
                 if self._actionQueueBlocking:
                     queue = self._actionQueueBlocking
-                    actionQueueBlockingSize -= 1
+                    if log_actions:
+                        actionQueueBlockingSize -= 1
                 elif self._actionQueue:
                     queue = self._actionQueue
-                    actionQueueSize -= 1
+                    if log_actions:
+                        actionQueueSize -= 1
                 else:
                     queue = self._actionQueueLowPriority
-                    actionQueueLowPrioritySize -= 1
+                    if log_actions:
+                        actionQueueLowPrioritySize -= 1
                 
                 # Grab oldest action in queue
                 action = queue.pop(0)
