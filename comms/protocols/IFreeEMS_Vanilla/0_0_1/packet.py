@@ -17,8 +17,8 @@
 #
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
-import comms.protocols as protocols
-import __init__ as protocol
+import comms.protocols as protocols, __init__ as protocol
+
 
 class packet:
     '''Serial packet base definition'''
@@ -166,8 +166,10 @@ class packet:
         return string
 
 
-    def buildPacket(self):
-        '''Generate a packet''' 
+    def _buildPacket(self):
+        '''
+        Generate a packet
+        ''' 
 
         packet = []
 
@@ -182,6 +184,8 @@ class packet:
             packet.extend   ( self.getPayloadLength() )
             packet.extend   ( self.getPayloadBytes() )
 
+        packet = escape(packet)
+
         packet.append   ( getChecksum(packet) )
         packet.insert   ( 0, protocol.START_BYTE )
         packet.append   ( protocol.END_BYTE )
@@ -189,27 +193,50 @@ class packet:
         return packet
 
 
-    def getEscaped(self):
-        '''Return an escaped packet'''
-        packet = self.buildPacket()
-        escaped = []
-
-        x = 0
-        length = len(packet)
-
-        for byte in packet:
-            # If first, last or not special - dont escape
-            if x == 0 or x == length - 1 or byte not in (protocol.START_BYTE, protocol.ESCAPE_BYTE, protocol.END_BYTE):
-                escaped.append(byte)
-                continue
-
-            # Add escape byte and escaped packet
-            escaped.extend([protocol.ESCAPE_BYTE, byte | 0xFF])
-
-        return escaped
+    def getPacketRawBytes(self):
+        '''
+        Return a packet as raw bytes
+        '''
+        return self._buildPacket()
 
 
     def getPacketHex(self):
         '''Return a packet as hex strings'''
-        packet = self.getEscaped()
+        packet = self._buildPacket()
         return protocols.toHex(packet)
+
+
+def escape(packet):
+    '''
+    Escape a raw packet
+    '''
+    escaped = []
+
+    x = 0
+    length = len(packet)
+
+    for byte in packet:
+        # If first, last or not special - dont escape
+        if x == 0 or x == length - 1 or byte not in (protocol.START_BYTE, protocol.ESCAPE_BYTE, protocol.END_BYTE):
+            escaped.append(byte)
+            continue
+
+        # Add escape byte and escaped packet
+        escaped.extend([protocol.ESCAPE_BYTE, byte | 0xFF])
+
+    return escaped
+
+
+def getChecksum(bytes):
+    '''
+    Generate checksum of bytes
+    '''
+    checksum = 0
+    for byte in bytes:
+        checksum += byte
+
+    if checksum <= 256:
+        return checksum
+
+    checksum = checksum % 256
+    return checksum 

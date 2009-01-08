@@ -86,8 +86,8 @@ STATE_IN_PACKET             = 2
 logger = logging.getLogger('serial.FreeEMS_Vanilla')
 
 
-def getSendObject(name, controller):
-    return send.send(name, controller)
+def getSendObject(name, controller, comms):
+    return send.send(name, controller, comms)
 
 
 def getRequestPacket(type):
@@ -144,65 +144,6 @@ class protocol:
     def getUtilityRequestList(self):
         '''Return a list of this protocols utility requests'''
         return self._utility_requests
-
-
-    def getMemoryRequestBlockIdList(self):
-        '''Return a list of this protocols memory request block IDs'''
-        return self._memory_request_block_ids
-
-
-    def getMemoryRequestPayloadIdList(self):
-        '''Return a list of this protocols memory request payload IDs'''
-        return self._memory_request_payload_ids
-
-
-
-
-    def sendMemoryRequest(self, request_type = None, request_type2 = None):
-        '''Send a memory request'''
-        packet = getattr(self, self._memory_request_payload_ids[request_type])(request_type2)
-        
-        self._sendPacket(packet)
-
-
-    def sendUtilityHardResetRequest(self):
-        '''Send a hardware reset utility request'''
-        packet = self.requestHardSystemReset()
-        
-        self._sendPacket(packet)
-
-
-    def sendUtilitySoftResetRequest(self):
-        '''Send a hardware reset utility request'''
-        packet = self.requestSoftSystemReset()
-        
-        self._sendPacket(packet)
-
-
-    def getTestResponse(self, response_to):
-        '''Return hardcoded correct raw response packet'''
-        if response_to in TEST_RESPONSES:
-            return TEST_RESPONSES[response_to]
-
-        else:
-            return []
-
-    
-    def _getComms(self):
-        '''Return the protocols comm connection'''
-        if not self._connection:
-            self._connection = comms.getConnection()
-
-        #if not self._connection.isConnected():
-        #    raise Exception, 'Serial comms not connected!'
-
-        return self._connection 
-
-
-    def _sendPacket(self, packet):
-        '''Send a packet'''
-        self._getComms().send(packet)
-
 
     def _unEscape(self, packet):
         '''Unescape a raw packet'''
@@ -378,16 +319,3 @@ class protocol:
         response.validate()
 
         return response
-
-
-def getChecksum(bytes):
-    '''Generate checksum of bytes'''
-    checksum = 0
-    for byte in bytes:
-        checksum += byte
-
-    if checksum <= 256:
-        return checksum
-
-    checksum = checksum % 256
-    return checksum 

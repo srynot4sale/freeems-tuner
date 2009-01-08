@@ -20,7 +20,7 @@
 import packet
 import __init__ as protocol
 
-# Request
+# Base request object
 class request(packet.packet):
 
     def __init__(self):

@@ -31,8 +31,11 @@ class connection(comms.interface.interface):
     _sendThread = None
     _receiveThread = None
 
-    # Fake buffer
+    # Fake receive buffer
     _buffer = []
+
+    # Send queue
+    _queue = []
 
     # Protocol module
     _protocol = None
@@ -68,6 +71,15 @@ class connection(comms.interface.interface):
         self._sendThread.send(packet)
 
 
+    def queuePacket(self, packet):
+        '''
+        Adds a raw packet to the send queue
+        To be called from send thread
+        '''
+        self._queue.append(packet)
+        self.wake()
+
+
     def _connect(self):
         '''
         "Connect" to fake serial connection
@@ -97,16 +109,17 @@ class connection(comms.interface.interface):
     def _send(self, packet):
 
         # Get return packet
-        hex = self.getProtocol().getTestResponse(packet.getPayloadIdInt())
+        #hex = self.getProtocol().getTestResponse(packet.getPayloadIdInt())
 
         # Append to input buffer
         # In this fake comms plugin, all sent packets
         # are reflected back at the moment
-        self._buffer.extend(hex)
+        #self._buffer.extend(hex)
 
         # Log packet hex
-        self._debug('Packet sent to test comms connection: %s' % packet.getPacketHex())
+        self._debug('Packet sent to test comms connection: %s' % protocols.toHex(packet))
         
+        return
         for watcher in self._send_watchers:
             watcher(packet)
 
@@ -115,7 +128,7 @@ class connection(comms.interface.interface):
         '''
         Create comms send thread
         '''
-        self._sendThread = self.getProtocol().getSendObject(self.name+'.protocol', self._controller)
+        self._sendThread = self.getProtocol().getSendObject(self.name+'.protocol', self._controller, self)
 
 
     def run(self):
@@ -145,7 +158,7 @@ class connection(comms.interface.interface):
                 self._disconnect()
                 continue
 
-            # If stuff in buffer
+            # If stuff in receive buffer
             if len(self._buffer):
 
                 # Check for any complete packets
@@ -166,6 +179,10 @@ class connection(comms.interface.interface):
                 for watcher in self._receive_watchers:
                     watcher(packet)
 
-            time.sleep(1)
+            # If stuff in send buffer
+            while len(self._queue):
+                self._send(self._queue.pop(0))
+
+            self._checkBlock()
 
         self._final()

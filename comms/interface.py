@@ -17,6 +17,7 @@
 #
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
+import threading
 
 import libs.thread
 
@@ -85,6 +86,24 @@ class interface(libs.thread.thread):
         self._disconnWanted = True
 
     
+    def _checkBlock(self):
+        '''
+        Overrides parent block function to use
+        a smaller timeout
+
+        Starts blocking using self._block
+        The thread will remained blocked (halted)
+        until another thread runs the wake() method
+        '''
+        if self._block == None:
+            self._block = threading.Event()
+        
+        # Give this a short time out so we can gather
+        # any incoming packets quickly
+        self._block.wait(0.5) # 1/2 second
+        self._block.clear()
+    
+
     def exit(self):
         self.disconnect()
         libs.thread.thread.exit(self)

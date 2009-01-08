@@ -26,15 +26,20 @@ class send(libs.thread.thread):
     abstract -> raw packet processing
     '''
 
+    # Comms plugin that created this thread
+    comms = None
+
     # Buffer of packet request to process into raw bytes
     _buffer = []
 
 
-    def __init__(self, name, controller):
+    def __init__(self, name, controller, comms):
         '''
         Sets up threading stuff
         '''
         self._setup(name, controller)
+        self.comms = comms
+
         self._debug('Send thread created')
         self.start()
 
@@ -69,4 +74,5 @@ class send(libs.thread.thread):
         Processes packet to raw bytes and sends to
         comms thread
         '''
-        pass
+        self._debug('Processing packet')
+        self.comms.queuePacket(packet.getPacketRawBytes())

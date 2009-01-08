@@ -4,4 +4,4 @@ Move gui/__init__ CommsUpdateData into controller
 
 and other new unused code
 
-Thread crash handling
+Thread crash handling, check in controller if shutting down when checking for # of threads. If not shutting down, attempt to restart thread
