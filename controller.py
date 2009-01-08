@@ -165,10 +165,6 @@ class app(libs.thread.thread):
                 if actionQueueSize != len(self._actionQueue) or actionQueueLowPrioritySize != len(self._actionQueueLowPriority) or actionQueueBlockingSize != len(self._actionQueueBlocking):
                     log_actions = True
 
-                #print actionQueueBlockingSize
-                #print actionQueueSize
-                #print actionQueueLowPrioritySize
-
                 actionQueueSize = len(self._actionQueue)
                 actionQueueLowPrioritySize = len(self._actionQueueLowPriority)
                 actionQueueBlockingSize = len(self._actionQueueBlocking)
