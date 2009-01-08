@@ -36,6 +36,7 @@ class send(libs.thread.thread):
         '''
         self._setup(name, controller)
         self._debug('Send thread created')
+        self.start()
 
     
     def send(self, packet):
@@ -43,6 +44,7 @@ class send(libs.thread.thread):
         Add packet object to buffer and wake thread
         '''
         self._buffer.append(packet)
+        self._debug('Sending packet')
         self.wake()
 
 
@@ -51,7 +53,6 @@ class send(libs.thread.thread):
         Loop through buffer and process into raw packets
         '''
         while self._alive:
-
             # If buffer non-empty, process
             if len(self._buffer):
                 self._process(self._buffer.pop(0))
@@ -59,6 +60,8 @@ class send(libs.thread.thread):
             # Otherwise wait to be awoken
             else:
                 self._checkBlock()
+
+        self._final()
 
 
     def _process(self, packet):
