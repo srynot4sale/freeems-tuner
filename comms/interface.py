@@ -124,6 +124,13 @@ class interface(libs.thread.thread):
         '''
         self._queue.append(packet)
         self.wake()
+    
+    
+    def _receive(self, buffer):
+        '''
+        Sending a raw buffer to the receive thread
+        '''
+        self._receiveThread.received(buffer)
 
     
     def _createSendThread(self):
@@ -131,6 +138,13 @@ class interface(libs.thread.thread):
         Create comms send thread
         '''
         self._sendThread = self.getProtocol().getSendObject(self.name+'.send', self._controller, self)
+
+
+    def _createReceiveThread(self):
+        '''
+        Create comms receive thread
+        '''
+        self._receiveThread = self.getProtocol().getReceiveObject(self.name+'.receive', self._controller, self)
 
 
     def _checkBlock(self):

@@ -20,7 +20,7 @@
 import libs.thread
 
 
-class send(libs.thread.thread):
+class thread(libs.thread.thread):
     '''
     Thread for handling the send queue and
     abstract -> raw packet processing

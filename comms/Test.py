@@ -77,10 +77,10 @@ class connection(comms.interface.interface):
         # Append to input buffer
         # In this fake comms plugin, all sent packets
         # are reflected back at the moment
-        #self._buffer.extend(hex)
+        self._buffer.extend(packet)
 
         # Log packet hex
-        self._debug('Packet sent to test comms connection: %s' % protocols.toHex(packet))
+        self._debug('Packet sent to test comms connection: %s' % ','.join(protocols.toHex(packet)))
         
         return
         for watcher in self._send_watchers:
@@ -95,7 +95,7 @@ class connection(comms.interface.interface):
 
         # Create send and receive threads
         self._createSendThread()
-        #self._createReceiveThread()
+        self._createReceiveThread()
 
         while self.isConnected() or self._alive:
 
@@ -116,24 +116,8 @@ class connection(comms.interface.interface):
 
             # If stuff in receive buffer
             if len(self._buffer):
-
-                # Check for any complete packets
-                cache = copy.copy(self._buffer)
-
-                try:
-                    packet = protocol.processRecieveBuffer(self._buffer)
-                except Exception, msg:
-                    self._debug('processReceiveBuffer failed to parse packet from buffer: %s' % join(protocols.toHex(cache)), msg)
-                    self._buffer = []
-                    continue
-        
-                if not packet:
-                    continue
-
-                logger.debug('Packet received by test comms connection: %s' % packet.getPacketHex())
-
-                for watcher in self._receive_watchers:
-                    watcher(packet)
+                self._receive(self._buffer)
+                self._buffer = []
 
             # If stuff in send buffer
             while len(self._queue):

@@ -20,7 +20,7 @@
 
 import types, copy
 
-import comms.protocols as protocols, comms, logging, send, requests
+import comms.protocols as protocols, comms, logging, send, receive, requests
 
 
 START_BYTE = 0xAA
@@ -87,7 +87,11 @@ logger = logging.getLogger('serial.FreeEMS_Vanilla')
 
 
 def getSendObject(name, controller, comms):
-    return send.send(name, controller, comms)
+    return send.thread(name, controller, comms)
+
+
+def getReceiveObject(name, controller, comms):
+    return receive.thread(name, controller, comms)
 
 
 def getRequestPacket(type):
