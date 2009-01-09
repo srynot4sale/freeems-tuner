@@ -18,19 +18,16 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import logging, threading, copy
-import libs.serial as serial
-import libs.serial.serialutil as serialutil
-import libs.config as config
-import comms
-import protocols
+import time, copy
+import libs.config as config, libs.serial as serial, libs.serial.serialutil as serialutil, comms.interface, protocols
 
 
-class connection(comms.interface):
+class connection(comms.interface.interface):
     '''
     Serial comms connection thread
     '''
 
+    # Serial connection
     _connection = None
 
     class _settings:
@@ -44,36 +41,39 @@ class connection(comms.interface):
         rtscts      = 0
 
 
-    # Watching objects
-    _send_watchers = []
-    _receive_watchers = []
-
-
     # Unprocessed buffer contents
     _buffer = []
 
 
-    def __init__(self, name):
+    def __init__(self, name, controller):
         '''
-        Setup serial stuff
+        Initialise comms thread and setup serial
         '''
-        comms.interface.__init__(self, name)
+        comms.interface.interface.__init__(self, name, controller)
 
         section     = 'Comms_Serial'
         s           = self._settings
-        s.port      = config.load(section, 'port')
-        s.baudrate  = int(config.load(section, 'baudrate'))
-        s.bytesize  = int(config.load(section, 'bytesize'))
-        s.parity    = config.load(section, 'parity')
-        s.stopbits  = int(config.load(section, 'stopbits'))
-        s.timeout   = int(config.load(section, 'timeout'))
-        s.xonxoff   = config.loadBool(section, 'xonxoff')
-        s.rtscts    = config.loadBool(section, 'rtscts')
+        s.port      = config.get(section, 'port')
+        s.baudrate  = int(config.get(section, 'baudrate'))
+        s.bytesize  = int(config.get(section, 'bytesize'))
+        s.parity    = config.get(section, 'parity')
+        s.stopbits  = int(config.get(section, 'stopbits'))
+        s.timeout   = int(config.get(section, 'timeout'))
+        s.xonxoff   = config.getBool(section, 'xonxoff')
+        s.rtscts    = config.getBool(section, 'rtscts')
 
         s.parity    = s.parity[0:1]
 
+        # Load protocol
+        self.getProtocol()
+
+        self.start()
+
 
     def _getConnection(self):
+        '''
+        Return connection
+        '''
 
         if not self.isConnected():
             raise Exception, 'Not connected'
@@ -82,7 +82,11 @@ class connection(comms.interface):
 
 
     def _connect(self):
-
+        '''
+        Connect serial connection
+        '''
+        self._connWanted = False
+        
         if self.isConnected():
             return
 
@@ -101,43 +105,43 @@ class connection(comms.interface):
             )
 
         except serialutil.SerialException, msg:
-            raise comms.CannotconnectException, msg
+            raise comms.interface.CannotconnectException, msg
 
-        
-        logger.info('Serial connection established to %s' % s.port)
-        
+        self._connected = True
+        self._debug('Serial comms connection established to %s' % self._settings.port)
+
         conn.setRTS(1)
         conn.setDTR(1)
         conn.flushInput()
         conn.flushOutput()
 
 
-    def disconnect(self):
-        
+    def _disconnect(self):
+        '''
+        "Disconnect" from fake serial connection
+        '''
+        self._disconnWanted = False
+
         if not self.isConnected():
             return
 
         self._connection.close()
         self._connection = None
 
-        logger.info('Serial connection to %s closed' % self._settings.port)
+        self._connected = False
+        self._debug('Serial comms connection to %s closed' % self._settings.port)
 
-
-    def bindSendWatcher(self, watcher):
-        self._send_watchers.append(watcher)
-
-
-    def bindReceiveWatcher(self, watcher):
-        self._receive_watchers.append(watcher)
-
-
-    def send(self, packet):
-        '''Send a packet over the connection'''
-        self.getConnection().write(packet.__str__())
+    
+    def _send(self, packet):
+        '''
+        Send a packet over the connection
+        '''
+        self.getConnection().write(''.join(packet))
         self.getConnection().flushOutput()
         
-        logger.debug('Packet sent over Serial connection: %s' % packet.getPacketHex())
-
+        # Log packet hex
+        self._debug('Packet sent to test comms connection: %s' % ','.join(protocols.toHex(packet)))
+        return
         for watcher in self._send_watchers:
             watcher(packet)
 
@@ -145,44 +149,45 @@ class connection(comms.interface):
     def run(self):
         '''Check for and receive packets waiting in the connection'''
 
-        if not self.isConnected():
-            self._startConnectBlock()
-
-        self._connect()
-
-        conn = self.getConnection()
-        buffer_size = conn.inWaiting()
-
-        # If nothing in serial buffer, and nothing unprocessed
-        # don't hold up the UI any longer than we have to
-        if not buffer_size and not len(self._buffer):
-            return
-
-        # If anything new in the buffer, convert to bytes and
-        # append to what we have left unprocessed
-        if buffer_size:
-            buffer = conn.read(buffer_size)
-
-            for char in buffer:
-                self._buffer.append(ord(char))
-
         # Get protocol
-        protocol = protocols.getProtocol()
+        protocol = self.getProtocol()
 
-        # Check for any complete packets
-        try:
-            cache = copy.copy(self._buffer)
-            packet = protocol.processRecieveBuffer(self._buffer)
-        except Exception, msg:
-            logger.error(msg)
-            logger.error('processRecieveBuffer failed to parse packet from buffer: %s' % join(protocols.toHex(cache)))
-            self._buffer = []
-            return
+        # Create send and receive threads
+        self._createSendThread()
+        self._createReceiveThread()
 
-        if not packet:
-            return
+        while self.isConnected() or self._alive:
 
-        logger.debug('Packet received by Serial connection: %s' % packet.getPacketHex())
+            # If not connected, block until we are ready to
+            if not self.isConnected():
 
-        for watcher in self._receive_watchers:
-            watcher(packet)
+                # If told to connect
+                if self._connWanted:
+                    self._connect()
+                else:
+                    self._checkBlock()
+                    continue
+
+            # If connected, see if we want to disconnect
+            if self.isConnected() and self._disconnWanted:
+                self._disconnect()
+                continue
+
+            # If stuff in receive buffer
+            conn = self.getConnection()
+            if conn.inWaiting():
+                buffer = conn.read(buffer_size)
+
+                for char in buffer:
+                    self._buffer.append(ord(char))
+
+                self._receive(self._buffer)
+                self._buffer = []
+
+            # If stuff in send buffer
+            while len(self._queue):
+                self._send(self._queue.pop(0))
+
+            self._checkBlock()
+
+        self._final()
