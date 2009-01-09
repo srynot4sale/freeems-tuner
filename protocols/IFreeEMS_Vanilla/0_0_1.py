@@ -754,16 +754,6 @@ class protocol:
                     state = STATE_IN_PACKET
                     packet.append(START_BYTE)
 
-            # We are in a packet, save byte unless we find an end byte
-            elif state == STATE_IN_PACKET:
-                if byte == END_BYTE:
-                    state = STATE_NOT_PACKET
-                    packet.append(END_BYTE)
-                elif byte == ESCAPE_BYTE:
-                    state = STATE_ESCAPE_BYTE
-                else:
-                    packet.append(byte)
-
             # If we are in escape mode (previous byte was an escape), escape byte
             elif state == STATE_ESCAPE_BYTE:
                 esc_byte = byte ^ 0xFF
@@ -774,6 +764,16 @@ class protocol:
                     state = STATE_IN_PACKET
                 else:
                     logger.error('Wrongly escaped byte found in buffer: %X' % byte)
+
+            # We are in a packet, save byte unless we find an end byte
+            elif state == STATE_IN_PACKET:
+                if byte == END_BYTE:
+                    state = STATE_NOT_PACKET
+                    packet.append(END_BYTE)
+                elif byte == ESCAPE_BYTE:
+                    state = STATE_ESCAPE_BYTE
+                else:
+                    packet.append(byte)
 
             # Remove this byte from buffer as it has been processed
             del buffer[0]
