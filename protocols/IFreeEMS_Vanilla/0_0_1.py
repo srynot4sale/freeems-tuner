@@ -1037,17 +1037,18 @@ class protocol:
             packet = self.buildPacket()
             escaped = []
 
-            x = 0
+            x = -1
             length = len(packet)
 
             for byte in packet:
+                x += 1
                 # If first, last or not special - dont escape
                 if x == 0 or x == length - 1 or byte not in (START_BYTE, ESCAPE_BYTE, END_BYTE):
                     escaped.append(byte)
                     continue
 
                 # Add escape byte and escaped packet
-                escaped.extend([ESCAPE_BYTE, byte | 0xFF])
+                escaped.extend([ESCAPE_BYTE, byte ^ 0xFF])
 
             return escaped
 
