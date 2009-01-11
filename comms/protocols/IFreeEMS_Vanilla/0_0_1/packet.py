@@ -212,17 +212,19 @@ def escape(packet):
     '''
     escaped = []
 
-    x = 0
+    x = -1
     length = len(packet)
 
     for byte in packet:
+        x += 1
+
         # If first, last or not special - dont escape
         if x == 0 or x == length - 1 or byte not in (protocol.START_BYTE, protocol.ESCAPE_BYTE, protocol.END_BYTE):
             escaped.append(byte)
             continue
 
         # Add escape byte and escaped packet
-        escaped.extend([protocol.ESCAPE_BYTE, byte | 0xFF])
+        escaped.extend([protocol.ESCAPE_BYTE, byte ^ 0xFF])
 
     return escaped
 
