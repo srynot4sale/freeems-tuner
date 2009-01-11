@@ -687,24 +687,6 @@ class protocol:
         self._getComms().send(packet)
 
 
-    def _unEscape(self, packet):
-        '''Unescape a raw packet'''
-        i = 0
-        while i < len(packet):
-
-            if packet[i] == ESCAPE_BYTE:
-
-                del packet[i]
-                packet[i] ^= 0xFF
-
-                if packet[i] not in (START_BYTE, ESCAPE_BYTE, END_BYTE):
-                    logger.error('Wrongly escaped byte found in packet: %X' % packet[i])
-
-            i += 1
-
-        return packet
-
-
     def processRecieveBuffer(self, buffer):
         '''Check for any incoming packets and return if found'''
                 
@@ -801,8 +783,6 @@ class protocol:
 
         if packet[0] != START_BYTE or packet[-1] != END_BYTE:
             raise Exception, 'Start and/or end byte missing'
-
-        packet = self._unEscape(packet)
 
         contents = {}
         contents['flags'] = None
