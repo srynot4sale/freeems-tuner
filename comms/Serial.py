@@ -136,11 +136,12 @@ class connection(comms.interface.interface):
         '''
         Send a packet over the connection
         '''
-        self.getConnection().write(''.join(packet))
-        self.getConnection().flushOutput()
+        self._getConnection().write(''.join(packet))
+        self._getConnection().flushOutput()
         
         # Log packet hex
         self._debug('Packet sent to test comms connection: %s' % ','.join(protocols.toHex(packet)))
+
         return
         for watcher in self._send_watchers:
             watcher(packet)
@@ -174,7 +175,7 @@ class connection(comms.interface.interface):
                 continue
 
             # If stuff in receive buffer
-            conn = self.getConnection()
+            conn = self._getConnection()
             if conn.inWaiting():
                 buffer = conn.read(buffer_size)
 
