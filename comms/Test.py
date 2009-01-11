@@ -88,7 +88,7 @@ class connection(comms.interface):
         self._buffer.extend(hex)
 
         # Log packet hex
-        logger.debug('Packet sent to test comms connection: %s' % packet.getPacketHex())
+        logger.debug('Packet sent to test comms connection: %s' % ','.join(packet.getPacketHex()))
         
         for watcher in self._send_watchers:
             watcher(packet)
