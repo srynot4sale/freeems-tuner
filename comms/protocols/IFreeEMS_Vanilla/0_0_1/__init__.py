@@ -96,3 +96,15 @@ def getRequestPacket(type):
     Create and return a request packet
     '''
     return getattr(requests, 'request'+type)()
+
+
+def getPacketName(id):
+    '''
+    Return human readable packet type
+    '''
+    if id in REQUEST_PACKET_TITLES:
+        return REQUEST_PACKET_TITLES[id]
+    elif id in RESPONSE_PACKET_TITLES:
+        return RESPONSE_PACKET_TITLES[id]
+    else:
+        return 'Unknown'

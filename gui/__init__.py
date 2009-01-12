@@ -190,7 +190,7 @@ class Frame(wx.Frame):
         m.Append(ID_COMMS_CONNECT, '&Connect', 'Connect To Comms Port')
         m.Append(ID_COMMS_DISCONNECT, '&Disconnect', 'Disconnect From Comms Port')
         m.AppendSeparator()
-        m.Append(ID_COMMS_DATA_UPDATE, '&Update Comms Data Settings...', 'Update Comms Data Settings')
+        #m.Append(ID_COMMS_DATA_UPDATE, '&Update Comms Data Settings...', 'Update Comms Data Settings')
         m.Append(ID_COMMS_TESTS, 'Interface Protocol &Test...', 'Run interface tests on firmware')
 
         # Help
@@ -217,7 +217,7 @@ class Frame(wx.Frame):
 
         self.Bind(wx.EVT_MENU, self.CommsConnect, id=ID_COMMS_CONNECT)
         self.Bind(wx.EVT_MENU, self.CommsDisconnect, id=ID_COMMS_DISCONNECT)
-        self.Bind(wx.EVT_MENU, self.CommsUpdateData, id=ID_COMMS_DATA_UPDATE)
+        #self.Bind(wx.EVT_MENU, self.CommsUpdateData, id=ID_COMMS_DATA_UPDATE)
         self.Bind(wx.EVT_MENU, self.CommsTests, id=ID_COMMS_TESTS)
 
         self.Bind(wx.EVT_MENU, self.OnAbout, id=ID_ABOUT)

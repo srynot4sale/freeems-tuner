@@ -18,16 +18,10 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import wx
-import wx.grid as grid
-import comms
-import gui
-import logging
-import datetime
-import settings
+import wx, wx.grid as grid
 
+import comms, gui, datetime, settings, action, comms.protocols as protocols
 
-logger = logging.getLogger('gui.commsDiagnostics')
 
 class commsDiagnostics(grid.Grid):
     
@@ -62,8 +56,8 @@ class commsDiagnostics(grid.Grid):
 
         # Bind to connection
         self.conn = comms.getConnection()
-        self.conn.bindSendWatcher(self.printSentPacket)
-        self.conn.bindReceiveWatcher(self.printRecievedPacket)
+        self.conn.bindSendWatcher('gui.commsDiagnostics.printPacket')
+        #self.conn.bindReceiveWatcher(self.printRecievedPacket)
 
 
     def onResize(self, event):
@@ -75,7 +69,7 @@ class commsDiagnostics(grid.Grid):
             r += 1
 
 
-    def printSentPacket(self, request):
+    def printPacket(self, request):
         '''Print sent packet to grid'''
         self.insertRow(request)
 
@@ -86,14 +80,16 @@ class commsDiagnostics(grid.Grid):
 
 
     def insertRow(self, packet):
-        '''Insert row into grid'''
+        '''
+        Insert row into grid
+        '''
         time = datetime.datetime.time(datetime.datetime.now())
         header = self.getHeaderFlags(packet)
         payload_hex = packet.getPayloadBytes()
         
         #Format stuff before printing
         payload_id = packet.getPayloadIdInt()
-        payload_id_hum = protocols.getProtocol().getPacketType(payload_id)
+        payload_id_hum = comms.getConnection().getProtocol().getPacketName(payload_id)
         payload_hex_hum = self.formatPayloadHex(payload_hex)
 
         self.AppendRows()
@@ -167,7 +163,9 @@ class commsDiagnostics(grid.Grid):
 
 
     def getHeaderFlags(self, packet):
-        '''Retrieve noterised version of flag bits'''
+        '''
+        Retrieve noterised version of flag bits
+        '''
         ascii = str()
 
         if packet.hasHeaderProtocolFlag():
@@ -182,3 +180,20 @@ class commsDiagnostics(grid.Grid):
             ascii += 'A'
 
         return ascii
+
+
+class actions():
+    '''
+    Modules' actions
+    '''
+
+    class printPacket(action.action):
+        '''
+        Save config to file
+        '''
+
+        def run(self):
+            '''
+            Print packet to diagnostics gui
+            '''
+            gui.frame.windows['main'].comms.printPacket(self._data)
