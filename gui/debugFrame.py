@@ -1,4 +1,4 @@
-#   Copyright 2009 Aaron Barnes
+#   Copyright 2008, 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -18,25 +18,22 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import wx
-import logging
-import sys
+import wx, sys
 
-import comms
-import version
-import libs.data
-
-
-logger = logging.getLogger('gui.debugFrame')
+import comms, version, libs.data
 
 
 class debugFrame(wx.Frame):
-    """Debug info fFrame"""
+    '''
+    Debug info fFrame
+    '''
 
     display = None
 
     def __init__(self, parent):
-        """Create a frame instance."""
+        '''
+        Create a frame instance.
+        '''
         wx.Frame.__init__(self, parent, id=-1, title='Debug Info', pos=wx.DefaultPosition, size=(500,300))
 
         self.BuildWindow()
@@ -45,7 +42,9 @@ class debugFrame(wx.Frame):
 
 
     def BuildWindow(self):
-        '''Build / position window elements'''
+        '''
+        Build / position window elements
+        '''
         self.window = window = wx.Panel(parent=self, id=-1)
 
         self.display = display = self.CreateDisplay(window) 
@@ -65,9 +64,12 @@ class debugFrame(wx.Frame):
        
 
     def CreateDisplay(self, parent):
-        '''Create info display box'''
+        '''
+        Create info display box'''
         display = wx.TextCtrl(parent, -1, style=wx.SUNKEN_BORDER | wx.VSCROLL | wx.HSCROLL | wx.TE_MULTILINE)
         display.SetEditable(False)
+
+        comm = comms.getConnection()
 
         data  = 'System:\n'
         data += '--------------------\n'
@@ -79,8 +81,8 @@ class debugFrame(wx.Frame):
         data += 'FreeEMS:\n'
         data += '--------------------\n'
         data += 'Tuner version: %s\n' % version.__revision__
-        data += 'Comms plugin: %s\n' % comms.plugin
-        data += 'Protocol plugin: %s\n' % protocols.plugin
+        data += 'Comms plugin: %s\n' % type(comm)
+        data += 'Protocol plugin: %s\n' % type(comm.getProtocol())
         data += 'Data directory: %s\n' % libs.data.getPath()
 
         display.SetValue(data)
