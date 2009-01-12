@@ -38,7 +38,7 @@ def createConnection(controller, name = 'default', type = None):
     controller.log('comms', 'DEBUG', 'Loading comms module: %s' % type)
 
     # Dynamically import
-    _connection[name] = __import__(type, globals(), locals(), 'connection').connection(type, controller)
+    _connection[name] = __import__(type, globals(), locals(), 'connection').connection(name, controller)
 
 
 def getConnection(name = 'default'):

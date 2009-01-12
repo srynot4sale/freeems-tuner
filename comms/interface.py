@@ -72,6 +72,7 @@ class interface(libs.thread.thread):
         '''
         Sets up threading stuff
         '''
+        name = 'comms.'+name
         self._setup(name, controller)
 
 
