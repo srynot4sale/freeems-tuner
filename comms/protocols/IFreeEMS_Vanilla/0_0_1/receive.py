@@ -17,7 +17,14 @@
 #
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
-import libs.thread, comms.protocols as protocols
+import copy, types
+
+import libs.thread, comms.protocols as protocols, __init__ as protocol, packet as packetlib, responses
+
+
+STATE_NOT_PACKET            = 0
+STATE_ESCAPE_BYTE           = 1
+STATE_IN_PACKET             = 2
 
 
 class thread(libs.thread.thread):
@@ -74,23 +81,173 @@ class thread(libs.thread.thread):
         Processes buffer into packets
         '''
         self._debug('Processing buffer')
-        self._buffer = []
-        return
-#        self.comms.queuePacket(packet.getPacketRawBytes())
-        # Check for any complete packets
-#        cache = copy.copy(self._buffer)
-
-#        try:
-#            packet = protocol.processRecieveBuffer(self._buffer)
-#        except Exception, msg:
-#            self._debug('processReceiveBuffer failed to parse packet from buffer: %s' % join(protocols.toHex(cache)), msg)
-#            self._buffer = []
-#            continue
         
-#        if not packet:
-#            continue
+        # Check for any complete packets
+        cache = copy.copy(self._buffer)
 
-#                logger.debug('Packet received by test comms connection: %s' % packet.getPacketHex())
+        while self._buffer:
+            try:
+                packet = self._processReceiveBuffer(self._buffer)
+            except Exception, msg:
+                self._debug('processReceiveBuffer failed to parse packet from buffer: %s' % ','.join(protocols.toHex(cache)), msg)
+                self._buffer = []
+                continue
+        
+            if not packet:
+                return
 
-#                for watcher in self._receive_watchers:
-#                    watcher(packet)
+            self._debug('Packet of payload id %d received and processed' % packet.getPayloadIdInt())
+
+        return
+
+        for watcher in self._receive_watchers:
+            watcher(packet)
+   
+
+    def _processReceiveBuffer(self, buffer):
+        '''
+        Check for any incoming packets and return if found
+        '''
+        # Remove any buffer before the first start byte        
+        if buffer[0] != protocol.START_BYTE:
+            start = buffer.index(protocol.START_BYTE)
+            self._debug('Bad/incomplete packet found in buffer before start byte: %s' % ','.join(protocols.toHex(buffer[0:start])))
+            del buffer[0:start]
+
+        # Find the last start byte before the first end byte
+        # Keep looping until there are no start byte after the first and
+        # before the first stop byte
+        try:
+            while buffer.index(protocol.START_BYTE, 1, buffer.index(protocol.END_BYTE)):
+                # Remove everything before second start byte
+                start = buffer.index(protocol.START_BYTE, 1, buffer.index(protocol.END_BYTE))
+                self._debug('Bad/incomplete packet found in buffer before start byte: %s' % ','.join(protocols.toHex(buffer[0:start])))
+                del buffer[0:start]
+        except ValueError:
+            # If we have pruned so much there is no longer a complete packet,
+            # try again later
+            if protocol.START_BYTE not in buffer or protocol.END_BYTE not in buffer:
+                return
+        
+        # Begin state control machine :-)
+        state = STATE_NOT_PACKET
+        index = 0
+        packet = []
+        bad_bytes = []
+        complete = False
+
+        # Loop through buffer_copy, delete from buffer
+        buffer_copy = copy.copy(buffer)
+
+        for byte in buffer_copy:
+
+            # If have not started a packet yet check for start_byte
+            if state == STATE_NOT_PACKET:
+                # If not a start byte, we should never have got here
+                if byte != protocol.START_BYTE:
+                    raise Exception, 'Should never have got here, expecting a start byte %s' % str(byte)
+                # Otherwise, start packet
+                else:
+                    state = STATE_IN_PACKET
+                    packet.append(protocol.START_BYTE)
+
+            # We are in a packet, save byte unless we find an end byte
+            elif state == STATE_IN_PACKET:
+                if byte == protocol.END_BYTE:
+                    state = STATE_NOT_PACKET
+                    packet.append(protocol.END_BYTE)
+                elif byte == protocol.ESCAPE_BYTE:
+                    state = STATE_ESCAPE_BYTE
+                else:
+                    packet.append(byte)
+
+            # If we are in escape mode (previous byte was an escape), escape byte
+            elif state == STATE_ESCAPE_BYTE:
+                esc_byte = byte ^ 0xFF
+                
+                # Check it is a legitimately escaped byte
+                if esc_byte in (protocol.START_BYTE, protocol.ESCAPE_BYTE, protocol.END_BYTE):
+                    packet.append(esc_byte)
+                    state = STATE_IN_PACKET
+                else:
+                    self._debug('Wrongly escaped byte found in buffer: %X' % byte)
+                    return complete
+
+            # Remove this byte from buffer as it has been processed
+            del buffer[0]
+
+            index += 1
+
+            # Check if we have a complete packet
+            if len(packet) and state == STATE_NOT_PACKET:
+                complete = self._processIncomingPacket(packet)
+                break
+
+        # Process bad_bytes buffer
+        if len(bad_bytes):
+            self._debug('Bad/incomplete data found in buffer before start byte: %s' % ','.join(protocols.toHex(bad_bytes)))
+
+        return complete        
+
+
+    def _processIncomingPacket(self, packet):
+        '''
+        Takes a raw packet, checks it and returns the correct packet class
+        '''
+
+        # Quick checks to make sure this is a legitimate packet
+        if not isinstance(packet, list):
+            raise TypeError, 'Expected a list'
+
+        if packet[0] != protocol.START_BYTE or packet[-1] != protocol.END_BYTE:
+            raise Exception, 'Start and/or end byte missing'
+
+        contents = {}
+        contents['flags'] = None
+        contents['payload_id'] = None
+        contents['payload'] = []
+        contents['checksum'] = None
+
+        index = 1
+
+        # Grab flags
+        contents['flags'] = flags = packet[index]
+        index += 1
+
+        # Grab payload id
+        contents['payload_id'] = protocols.from8bit(packet[index:index+2])
+        index += 2
+
+        # Grab payload
+        contents['payload'] = payload = packet[index:(len(packet) - 2)]
+        index += len(payload)
+
+        # Grab checksum
+        contents['checksum'] = checksum = packet[index]
+        index += 1
+
+        # Check checksum
+        gen_checksum = packetlib.getChecksum(packet[1:index-1])
+
+        if checksum != gen_checksum:
+            self._debug('Checksum is incorrect! Provided: %d, generated: %d' % (checksum, gen_checksum))
+            return False
+
+        # Just double check we only have one byte left
+        if index != (len(packet) - 1):
+            self._debug('Packet incorrectly processed, %d bytes left' % (len(packet) - 1 - index))
+            return False
+
+        # Create response packet object
+        if contents['flags'] & protocol.HEADER_IS_PROTO:
+            response = responses.getProtocolPacket(contents['payload_id'])
+        else:
+            response = responses.getFirmwarePacket(contents['payload_id'])
+
+        # Populate data
+        response.parseHeaderFlags(contents['flags'])
+        response.setPayloadId(contents['payload_id'])
+        response.parsePayload(contents['payload'])
+        response.validate()
+
+        return response

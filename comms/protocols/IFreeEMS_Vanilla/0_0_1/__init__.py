@@ -18,8 +18,6 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import types, copy
-
 import comms.protocols as protocols, comms, logging, send, receive, requests
 
 
@@ -77,10 +75,6 @@ RESPONSE_PACKET_TITLES = {
         RESPONSE_ASYNC_DEBUG_INFO:   "asyncDebug"
 }
 
-STATE_NOT_PACKET            = 0
-STATE_ESCAPE_BYTE           = 1
-STATE_IN_PACKET             = 2
-
 
 # Load logging interface
 logger = logging.getLogger('serial.FreeEMS_Vanilla')
@@ -103,9 +97,6 @@ def getRequestPacket(type):
 
 class protocol:
 
-    # Comms connection
-    _connection = None
-
     # Utility requests
     _utility_requests = [
             'Interface Version',
@@ -120,15 +111,6 @@ class protocol:
             'requestMaxPacketSize',
             'requestEchoPacketReturn',
     ]
-
-    _response_protocol_packets = {
-        1: 'responseInterfaceVersion',
-        3: 'responseFirmwareVersion',
-        5: 'responseMaxPacketSize',
-        7: 'responseEchoPacketReturn',
-    }
-
-    _response_firmware_packets = {}
 
     _memory_request_payload_ids = {
         0: 'retrieveBlockFromRAM',
@@ -149,158 +131,3 @@ class protocol:
         '''Return a list of this protocols utility requests'''
         return self._utility_requests
 
-    
-    def processRecieveBuffer(self, buffer):
-        '''Check for any incoming packets and return if found'''
-                
-        # If no start or end byte, try again later when the rest of the packet has arrived
-        if START_BYTE not in buffer or END_BYTE not in buffer:
-            return
-        
-        # Find the last start byte before the first end byte
-        # Keep looping until there are no start byte after the first and
-        # before the first stop byte
-        if buffer[0] != START_BYTE:
-            start = buffer.index(START_BYTE)
-            logger.debug('Bad/incomplete packet found in buffer before start byte: %s' % ','.join(protocols.toHex(buffer[0:start])))
-            del buffer[0:start]
-
-        try:
-            while buffer.index(START_BYTE, 1, buffer.index(END_BYTE)):
-                # Remove everything before second start byte
-                start = buffer.index(START_BYTE, 1, buffer.index(END_BYTE))
-                logger.debug('Bad/incomplete packet found in buffer before start byte: %s' % ','.join(protocols.toHex(buffer[0:start])))
-                del buffer[0:start]
-        except ValueError:
-            # If we have pruned so much there is no longer a complete packet,
-            # try again later
-            if START_BYTE not in buffer or END_BYTE not in buffer:
-                return
-        
-        # Begin state control machine :-)
-        state = STATE_NOT_PACKET
-        index = 0
-        packet = []
-        bad_bytes = []
-        complete = False
-
-        # Loop through buffer_copy, delete from buffer
-        buffer_copy = copy.copy(buffer)
-
-        for byte in buffer_copy:
-
-            # If have not started a packet yet check for start_byte
-            if state == STATE_NOT_PACKET:
-                # If not a start byte, we should never have got here
-                if byte != START_BYTE:
-                    raise Exception, 'Should never have got here, expecting a start byte %s' % str(byte)
-                # Otherwise, start packet
-                else:
-                    state = STATE_IN_PACKET
-                    packet.append(START_BYTE)
-
-            # We are in a packet, save byte unless we find an end byte
-            elif state == STATE_IN_PACKET:
-                if byte == END_BYTE:
-                    state = STATE_NOT_PACKET
-                    packet.append(END_BYTE)
-                elif byte == ESCAPE_BYTE:
-                    state = STATE_ESCAPE_BYTE
-                else:
-                    packet.append(byte)
-
-            # If we are in escape mode (previous byte was an escape), escape byte
-            elif state == STATE_ESCAPE_BYTE:
-                esc_byte = byte ^ 0xFF
-                
-                # Check it is a legitimately escaped byte
-                if esc_byte in (START_BYTE, ESCAPE_BYTE, END_BYTE):
-                    packet.append(esc_byte)
-                    state = STATE_IN_PACKET
-                else:
-                    logger.error('Wrongly escaped byte found in buffer: %X' % byte)
-
-            # Remove this byte from buffer as it has been processed
-            del buffer[0]
-
-            index += 1
-
-            # Check if we have a complete packet
-            if len(packet) and state == STATE_NOT_PACKET:
-                complete = self.processIncomingPacket(packet)
-                break
-
-        # Process bad_bytes buffer
-        if len(bad_bytes):
-            logger.debug('Bad/incomplete data found in buffer before start byte: %s' % ','.join(protocols.toHex(bad_bytes)))
-
-        return complete        
-
-
-    def processIncomingPacket(self, packet):
-        '''Takes a raw packet, checks it and returns the correct packet class'''
-
-        # Quick checks to make sure this is a legitimate packet
-        if not isinstance(packet, list):
-            raise TypeError, 'Expected a list'
-
-        if packet[0] != START_BYTE or packet[-1] != END_BYTE:
-            raise Exception, 'Start and/or end byte missing'
-
-        contents = {}
-        contents['flags'] = None
-        contents['payload_id'] = None
-        contents['payload'] = []
-        contents['checksum'] = None
-
-        index = 1
-
-        # Grab flags
-        contents['flags'] = flags = packet[index]
-        index += 1
-
-        # Grab payload id
-        contents['payload_id'] = protocols.from8bit(packet[index:index+2])
-        index += 2
-
-        # Grab payload
-        contents['payload'] = payload = packet[index:(len(packet) - 2)]
-        index += len(payload)
-
-        # Grab checksum
-        contents['checksum'] = checksum = packet[index]
-        index += 1
-
-        # Check checksum
-        gen_checksum = getChecksum(packet[1:index-1])
-
-        if checksum != gen_checksum:
-            raise Exception, 'Checksum is incorrect! Provided: %d, generated: %d' % (checksum, gen_checksum)
-
-        # Just double check we only have one byte left
-        if index != (len(packet) - 1):
-            raise Exception, 'Packet incorrectly processed, %d bytes left' % (len(packet) - 1 - index)
-
-        # Create response packet object
-        if contents['flags'] & HEADER_IS_PROTO:
-            packet_types = self._response_protocol_packets
-        else:
-            packet_types = self._response_firmware_packets
-
-        try:
-            type = packet_types[contents['payload_id']]
-        except KeyError:
-            type = 'responseGeneric'
-
-        if not hasattr(self, type):
-            type = 'responseGeneric'
-
-        response = getattr(self, type)()
-
-        # Populate data
-        response.parseHeaderFlags(contents['flags'])
-        response.setPayloadId(contents['payload_id'])
-        response.parsePayload(contents['payload'])
-        response.validate()
-
-        return response
