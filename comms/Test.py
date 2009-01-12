@@ -81,10 +81,6 @@ class connection(comms.interface.interface):
 
         # Log packet hex
         self._debug('Packet sent to test comms connection: %s' % ','.join(protocols.toHex(packet)))
-        
-        return
-        for watcher in self._send_watchers:
-            watcher(packet)
 
 
     def run(self):

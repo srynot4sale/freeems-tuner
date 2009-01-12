@@ -167,16 +167,41 @@ class interface(libs.thread.thread):
     
 
     def exit(self):
+        '''
+        Disconnect and exit thread
+        '''
         self.disconnect()
         libs.thread.thread.exit(self)
 
 
     def bindSendWatcher(self, watcher):
+        '''
+        Bind an action to be run when packets are sent
+        '''
         self._send_watchers.append(watcher)
 
 
     def bindReceiveWatcher(self, watcher):
+        '''
+        Bind an action to be run when packets are received
+        '''
         self._receive_watchers.append(watcher)
+
+
+    def runSendWatchers(self, packet):
+        '''
+        Run actions bound to sent packets
+        '''
+        for action in self._send_watchers:
+            self._controller.action(action, packet)
+
+
+    def runReceiveWatchers(self, packet):
+        '''
+        Run actions bound to received packets
+        '''
+        for action in self._receive_watchers:
+            self._controller.action(action, packet)
     
     
     def run(self):
