@@ -1,4 +1,4 @@
-#   Copyright 2009 Aaron Barnes
+#   Copyright 2008, 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -18,7 +18,7 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import comms.protocols as protocols, comms, logging, send, receive, requests
+import comms.protocols as protocols, send, receive, requests
 
 
 START_BYTE = 0xAA
@@ -75,9 +75,12 @@ RESPONSE_PACKET_TITLES = {
         RESPONSE_ASYNC_DEBUG_INFO:   "asyncDebug"
 }
 
-
-# Load logging interface
-logger = logging.getLogger('serial.FreeEMS_Vanilla')
+UTILITY_REQUEST_PACKETS = {
+        'Interface Version':        'InterfaceVersion',
+        'Firmware Version':         'FirmwareVersion',
+        'Max Packet Size':          'MaxPacketSize',
+        'Echo Packet Return':       'EchoPacketReturn'
+}
 
 
 def getSendObject(name, controller, comms):
@@ -93,41 +96,3 @@ def getRequestPacket(type):
     Create and return a request packet
     '''
     return getattr(requests, 'request'+type)()
-
-
-class protocol:
-
-    # Utility requests
-    _utility_requests = [
-            'Interface Version',
-            'Firmware Version',
-            'Max Packet Size',
-            'Echo Packet Return'
-    ]
-
-    _utility_request_packets = [
-            'requestInterfaceVersion',
-            'requestFirmwareVersion',
-            'requestMaxPacketSize',
-            'requestEchoPacketReturn',
-    ]
-
-    _memory_request_payload_ids = {
-        0: 'retrieveBlockFromRAM',
-        1: 'retrieveBlockFromFlash',
-        2: 'burnBlockFromRamToFlash',
-    }
-
-
-    def getPacketType(self, id):
-        '''Returns human readable packet type'''
-        try:
-            return PACKET_IDS[id]
-        except KeyError:
-            return 'unknown'
-
-
-    def getUtilityRequestList(self):
-        '''Return a list of this protocols utility requests'''
-        return self._utility_requests
-

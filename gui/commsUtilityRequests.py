@@ -1,4 +1,4 @@
-#   Copyright 2009 Aaron Barnes
+#   Copyright 2008, 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -18,15 +18,14 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import wx, logging, datetime
+import wx
+import gui, commsConnectWarning, comms
 
-import comms, gui, commsConnectWarning
-
-logger = logging.getLogger('gui.commsUtilityRequests')
 
 class commsUtilityRequests(wx.BoxSizer):
 
     options = {}
+    choices = []
     text = None
     input = None
     send = None
@@ -37,13 +36,15 @@ class commsUtilityRequests(wx.BoxSizer):
     def __init__(self, parent):
         '''Setup UI elements'''
         wx.BoxSizer.__init__(self, wx.VERTICAL)
+        
+        self._controller = parent.controller
 
         self.text = wx.StaticText(parent, -1, 'Data to request', style=wx.ALIGN_CENTER)
 
-        protocol = comms.getConnection().getProtocol().protocol()
-        self.options = protocol.getUtilityRequestList()
+        self.options = comms.getConnection().getProtocol().UTILITY_REQUEST_PACKETS
+        self.choices = self.options.keys()
 
-        self.input = wx.Choice(parent, -1, choices=self.options)
+        self.input = wx.Choice(parent, -1, choices=self.choices)
         self.send = wx.Button(parent, self.ID_SEND_REQUEST, 'Send Request')
 
         self.Add((0,0), 1)
@@ -71,4 +72,5 @@ class commsUtilityRequests(wx.BoxSizer):
         if selection < 0:
             selection = 0
 
-        protocols.getProtocol().sendUtilityRequest(selection)
+        data = {'type': self.options[self.choices[selection]]}
+        self._controller.action('comms.sendUtilityRequest', data)
