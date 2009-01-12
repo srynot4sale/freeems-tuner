@@ -250,4 +250,6 @@ class thread(libs.thread.thread):
         response.parsePayload(contents['payload'])
         response.validate()
 
+        self.comms.runReceiveWatchers(response)
+
         return response
