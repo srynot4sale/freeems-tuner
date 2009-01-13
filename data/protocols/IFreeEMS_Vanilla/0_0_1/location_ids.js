@@ -33,6 +33,7 @@
 		/* Flash ONLY lookup tables blocks */
 		"300":    "IATTransferTable", /* 2k */
 		"301":    "CHTTransferTable", /* 2k */
-		"302":    "MAFTransferTable"  /* 2k */
+		"302":    "MAFTransferTable", /* 2k */
+        "303":    "TestTransferTable"
     }
 }
