@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2008, 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -19,21 +19,16 @@
 
 
 import wx
-import comms
-import logging
-import datetime
-import libs.data as data
-import gui
-import commsConnectWarning
 
-
-logger = logging.getLogger('gui.memoryRequestInterface')
+import comms, libs.data as data, gui, commsConnectWarning
 
 
 blank = (0,0)
 
 
 class memoryRequestInterface(wx.BoxSizer):
+
+    _options = {}
 
     _p_text = None
     _p_input = None
@@ -51,12 +46,15 @@ class memoryRequestInterface(wx.BoxSizer):
 
 
     def __init__(self, parent):
-        '''Setup UI elements'''
-
+        '''
+        Setup UI elements
+        '''
         wx.BoxSizer.__init__(self, wx.VERTICAL)
 
+        self.controller = parent.GetParent().GetParent().getController()
+
         # Get payload id's
-        options = protocols.getProtocol().getMemoryRequestPayloadIdList()
+        self._options = options = comms.getConnection().getProtocol().getMemoryRequestPayloadIdList()
         for id in options.keys():
             self._p_options.append('%s (%d)' % (options[id], id))
             self._p_ids.append(id)
@@ -122,8 +120,9 @@ class memoryRequestInterface(wx.BoxSizer):
         
 
     def sendRequest(self, event):
-        '''Send memory request'''
-        
+        '''
+        Send memory request
+        '''
         # Check connected
         if not commsConnectWarning.confirmConnected(gui.frame):
             return
@@ -141,4 +140,9 @@ class memoryRequestInterface(wx.BoxSizer):
         payload_id = self._p_ids[payload_id]
         block_id = self._b_ids[block_id]
 
-        protocols.getProtocol().sendMemoryRequest(payload_id, block_id)
+        data = {
+            'type': self._options[payload_id],
+            'block_id': block_id
+        }
+        
+        self.controller.action('comms.sendMemoryRequest', data)

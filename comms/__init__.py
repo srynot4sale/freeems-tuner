@@ -73,3 +73,22 @@ class actions:
 
             comms.send(protocol.getRequestPacket(self._data['type']))
 
+
+    class sendMemoryRequest(action.action):
+
+        def run(self):
+            '''
+            Create memory request packet and send to correct thread
+            '''
+
+            if 'connection' in self._data:
+                comms = getConnection(self._data['connection'])
+            else:
+                comms = getConnection()
+
+            protocol = comms.getProtocol()
+            packet = protocol.getRequestPacket(self._data['type'])
+            packet.setPayload(self._data['block_id'])
+
+            comms.send(packet)
+

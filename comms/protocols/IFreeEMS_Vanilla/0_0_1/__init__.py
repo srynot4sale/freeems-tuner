@@ -108,3 +108,15 @@ def getPacketName(id):
         return RESPONSE_PACKET_TITLES[id]
     else:
         return 'Unknown'
+
+
+def getMemoryRequestPayloadIdList():
+    '''
+    Return list of memory request payload ids
+    '''
+
+    return {
+        0: 'RetrieveBlockFromRAM',
+        1: 'RetrieveBlockFromFlash',
+        2: 'BurnBlockFromRamToFlash',
+    }

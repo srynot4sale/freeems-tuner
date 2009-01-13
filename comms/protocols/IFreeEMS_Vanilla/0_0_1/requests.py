@@ -64,37 +64,42 @@ class requestEchoPacketReturn(request):
         self.setPayload('test')
 
 
-# Firmware memory block request
-#class retrieveBlockFromRAM(request):
-#
-#    def __init__(self, block_id):
-#
-#        protocol.request.__init__(self)
-#        self.setHeaderProtocolFlag(False)
-#        self.setPayloadId(RETRIEVE_BLOCK_FROM_RAM)
-#        block_id = protocols.to8bit(block_id, 2)
-#        self.setPayload(block_id)
+# Memory request parent class
+class _requestMemory(request):
+
+    def __init__(self):
+
+        request.__init__(self)
+        self.setHeaderProtocolFlag(False)
+
+
+    def setBlockId(self, id):
+        block_id = protocols.to8bit(id, 2)
+        self.setPayload(block_id)
 
 
 # Firmware memory block request
-#    class retrieveBlockFromFlash(request):
+class requestRetrieveBlockFromRAM(_requestMemory):
 
-#        def __init__(self, block_id):
-#            protocol.request.__init__(self)
-#            self.setHeaderProtocolFlag(False)
-#            self.setPayloadId(RETRIEVE_BLOCK_FROM_FLASH)
-#            block_id = protocols.to8bit(block_id, 2)
-#            self.setPayload(block_id)
+    def __init__(self):
+        _requestMemory.__init__(self)
+        self.setPayloadId(protocol.RETRIEVE_BLOCK_FROM_RAM)
 
-    # Firmware memory block request
-#    class burnBlockFromRamToFlash(request):
+
+# Firmware memory block request
+class requestRetrieveBlockFromFlash(_requestMemory):
+
+    def __init__(self):
+        _requestMemory.__init__(self)
+        self.setPayloadId(protocol.RETRIEVE_BLOCK_FROM_FLASH)
+
+
+# Firmware memory block request
+class requestBurnBlockFromRamToFlash(_requestMemory):
         
-#        def __init__(self, block_id):
-#            protocol.request.__init__(self)
- #           self.setHeaderProtocolFlag(False)
-#            self.setPayloadId(BURN_BLOCK_FROM_RAM_TO_FLASH)
-#            block_id = protocols.to8bit(block_id, 2)
-#            self.setPayload(block_id)
+    def __init__(self):
+        _requestMemory.__init__(self)
+        self.setPayloadId(protocol.BURN_BLOCK_FROM_RAM_TO_FLASH)
             
 
 # Firmware system reset request (hard)

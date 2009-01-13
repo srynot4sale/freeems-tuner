@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2008, 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -19,24 +19,25 @@
 
 
 import wx
-import logging
 
 import gui.memoryRequestInterface
 
-logger = logging.getLogger('gui.tabs.memoryUtils')
 
 # Helper value for inserting spacing into sizers
 blank = (0,0)
 
 class tab(wx.Panel):
-    '''Memory utilities tab'''
+    '''
+    Memory utilities tab
+    '''
 
     def __init__(self, parent):
-        '''Setup interface elements'''
+        '''
+        Setup interface elements
+        '''
         wx.Panel.__init__(self, parent)
 
         self.interface = gui.memoryRequestInterface.memoryRequestInterface(self)
 
         self.SetSizer(self.interface)
         self.Layout()
-
