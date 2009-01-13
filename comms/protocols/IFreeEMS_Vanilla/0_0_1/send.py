@@ -76,6 +76,7 @@ class thread(libs.thread.thread):
         '''
         self._debug('Processing packet')
     
-        self.comms.runSendWatchers(packet)
+        self.comms.triggerSendWatchers(packet)
+        packet.prepare()
 
-        self.comms.queuePacket(packet.getPacketRawBytes())
+        self.comms.queuePacket(packet)

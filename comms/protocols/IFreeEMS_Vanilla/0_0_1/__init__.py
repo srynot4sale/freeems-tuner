@@ -18,7 +18,7 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import comms.protocols as protocols, send, receive, requests
+import comms.protocols as protocols, send, receive, requests, responses, test
 
 
 START_BYTE = 0xAA
@@ -40,10 +40,6 @@ REQUEST_HARD_SYSTEM_RESET       = 10
 REQUEST_ASYNC_ERROR_CODE        = 12
 REQUEST_ASYNC_DEBUG_INFO        = 14
 
-RETRIEVE_BLOCK_FROM_RAM         = 4
-RETRIEVE_BLOCK_FROM_FLASH       = 6
-BURN_BLOCK_FROM_RAM_TO_FLASH    = 8
-
 RESPONSE_INTERFACE_VERSION      = 1
 RESPONSE_FIRMWARE_VERSION       = 3
 RESPONSE_MAX_PACKET_SIZE        = 5
@@ -53,27 +49,36 @@ RESPONSE_HARD_SYSTEM_RESET      = 11
 RESPONSE_ASYNC_ERROR_CODE       = 13
 RESPONSE_ASYNC_DEBUG_INFO       = 15
 
+RETRIEVE_BLOCK_FROM_RAM         = 4
+RETRIEVE_BLOCK_FROM_FLASH       = 6
+BURN_BLOCK_FROM_RAM_TO_FLASH    = 8
+
 REQUEST_PACKET_TITLES = {
-        REQUEST_INTERFACE_VERSION:   "ifVer",
-        REQUEST_FIRMWARE_VERSION:    "firmVer",
-        REQUEST_MAX_PACKET_SIZE:     "maxPktSize",
-        REQUEST_ECHO_PACKET_RETURN:  "echoPacket",
-        REQUEST_SOFT_SYSTEM_RESET:   "softReset",
-        REQUEST_HARD_SYSTEM_RESET:   "hardReset",
-        REQUEST_ASYNC_ERROR_CODE:    "asyncError",
-        REQUEST_ASYNC_DEBUG_INFO:    "asyncDebug",
+        REQUEST_INTERFACE_VERSION:   "InterfaceVersion",
+        REQUEST_FIRMWARE_VERSION:    "FirmwareVersion",
+        REQUEST_MAX_PACKET_SIZE:     "MaxPacketSize",
+        REQUEST_ECHO_PACKET_RETURN:  "EchoPacket",
+        REQUEST_SOFT_SYSTEM_RESET:   "SoftReset",
+        REQUEST_HARD_SYSTEM_RESET:   "HardReset",
+        REQUEST_ASYNC_ERROR_CODE:    "AsyncError",
+        REQUEST_ASYNC_DEBUG_INFO:    "AsyncDebug",
 }
 
 RESPONSE_PACKET_TITLES = {
-        RESPONSE_INTERFACE_VERSION:  "ifVer",
-        RESPONSE_FIRMWARE_VERSION:   "firmVer",
-        RESPONSE_MAX_PACKET_SIZE:    "maxPktSize",
-        RESPONSE_ECHO_PACKET_RETURN: "echoPacket",
-        RESPONSE_SOFT_SYSTEM_RESET:  "softReset",
-        RESPONSE_HARD_SYSTEM_RESET:  "hardReset",
-        RESPONSE_ASYNC_ERROR_CODE:   "asyncError",
-        RESPONSE_ASYNC_DEBUG_INFO:   "asyncDebug"
+        RESPONSE_INTERFACE_VERSION:  "InterfaceVersion",
+        RESPONSE_FIRMWARE_VERSION:   "FirmwareVersion",
+        RESPONSE_MAX_PACKET_SIZE:    "MaxPacketSize",
+        RESPONSE_ECHO_PACKET_RETURN: "EchoPacket",
+        RESPONSE_ASYNC_ERROR_CODE:   "AsyncError",
+        RESPONSE_ASYNC_DEBUG_INFO:   "AsyncDebug"
 }
+        
+MEMORY_PACKET_TITLES = {
+        RETRIEVE_BLOCK_FROM_RAM:     "RetrieveBlockFromRAM",
+        RETRIEVE_BLOCK_FROM_FLASH:   "RetrieveBlockFromFlash",
+        BURN_BLOCK_FROM_RAM_TO_FLASH:"BurnBlockFromRamToFlash"
+}
+
 
 UTILITY_REQUEST_PACKETS = {
         'Interface Version':        'InterfaceVersion',
@@ -98,6 +103,13 @@ def getRequestPacket(type):
     return getattr(requests, 'request'+type)()
 
 
+def getResponsePacket(type):
+    '''
+    Create and return a response packet
+    '''
+    return getattr(responses, 'response'+type)()
+
+
 def getPacketName(id):
     '''
     Return human readable packet type
@@ -114,9 +126,11 @@ def getMemoryRequestPayloadIdList():
     '''
     Return list of memory request payload ids
     '''
+    return MEMORY_PACKET_TITLES
 
-    return {
-        0: 'RetrieveBlockFromRAM',
-        1: 'RetrieveBlockFromFlash',
-        2: 'BurnBlockFromRamToFlash',
-    }
+
+def getTestResponse(packet):
+    '''
+    Generate and return the correct response to apacket
+    '''
+    return test.getResponse(packet)

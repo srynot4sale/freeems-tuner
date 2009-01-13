@@ -35,6 +35,9 @@ class packet:
     # Payload
     _payload = []
 
+    # Processed packet
+    _processed = []
+
 
     def getHeaderFlags(self):
         '''Returns header flags'''
@@ -147,23 +150,11 @@ class packet:
         return self._payload_parsed_length
 
 
-    def __str__(self, bytes = None):
+    def createTestResponse(self, request):
         '''
-        Generate a raw string.
-        Main use is for sending to serial connections
+        Run any code on response to make an acurate test response
         '''
-        if not bytes:
-            bytes = self.getEscaped()
-
-        string = ''.encode('latin-1')
-
-        for byte in bytes:
-            if byte <= 256:
-                string += chr(byte)
-            else:
-                raise TypeError, 'Byte too big, what do I do??? %d' % byte
-        
-        return string
+        pass
 
 
     def _buildPacket(self):
@@ -184,20 +175,31 @@ class packet:
             packet.extend   ( self.getPayloadLength() )
             packet.extend   ( self.getPayloadBytes() )
 
+        checksum = getChecksum(packet)
         packet = escape(packet)
 
-        packet.append   ( getChecksum(packet) )
+        packet.append   ( checksum )
         packet.insert   ( 0, protocol.START_BYTE )
         packet.append   ( protocol.END_BYTE )
         
         return packet
 
 
+    def prepare(self):
+        '''
+        Process a packet into raw bytes for sending
+        '''
+        self._processed = self._buildPacket()
+
+
     def getPacketRawBytes(self):
         '''
         Return a packet as raw bytes
         '''
-        return self._buildPacket()
+        if not self._processed:
+            self.prepare()
+
+        return self._processed
 
 
     def getPacketHex(self):
@@ -212,14 +214,10 @@ def escape(packet):
     '''
     escaped = []
 
-    x = -1
-    length = len(packet)
-
     for byte in packet:
-        x += 1
 
-        # If first, last or not special - dont escape
-        if x == 0 or x == length - 1 or byte not in (protocol.START_BYTE, protocol.ESCAPE_BYTE, protocol.END_BYTE):
+        # If not special - dont escape
+        if byte not in (protocol.START_BYTE, protocol.ESCAPE_BYTE, protocol.END_BYTE):
             escaped.append(byte)
             continue
 

@@ -63,7 +63,6 @@ class actions:
             '''
             Create packet and send to correct thread
             '''
-
             if 'connection' in self._data:
                 comms = getConnection(self._data['connection'])
             else:
@@ -80,7 +79,6 @@ class actions:
             '''
             Create memory request packet and send to correct thread
             '''
-
             if 'connection' in self._data:
                 comms = getConnection(self._data['connection'])
             else:

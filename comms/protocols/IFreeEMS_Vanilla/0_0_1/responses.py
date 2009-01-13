@@ -20,20 +20,12 @@
 import comms.protocols as protocols, packet, __init__ as protocol
 
 
-_RESPONSE_PROTOCOL_PACKETS = {
-    1: 'responseInterfaceVersion',
-    3: 'responseFirmwareVersion',
-    5: 'responseMaxPacketSize',
-    7: 'responseEchoPacketReturn',
-}
-
-
 def getProtocolPacket(id):
     '''
     Return instance of requested protocol packet
     '''
-    if id in _RESPONSE_PROTOCOL_PACKETS:
-        return getattr(self, _RESPONSE_PROTOCOL_PACKETS[id])()
+    if id in protocol.RESPONSE_PACKET_TITLES:
+        return globals()['response'+protocol.RESPONSE_PACKET_TITLES[id]]()
     else:
         return responseGeneric()
 
@@ -93,6 +85,9 @@ class response(packet.packet):
             # Check firmware type flag is set
             if self.hasHeaderProtocolFlag():
                 raise Exception, 'Packet type %s requires the firmware flag is set' % pid
+        else:
+            if not self.hasHeaderProtocolFlag():
+                raise Exception, 'Packet type %s requires the protocol flag is set' % pid
 
 
     def parsePayload(self, payload):
@@ -128,6 +123,15 @@ class responseInterfaceVersion(response):
         rules = self._validation_rules
         rules['requires_length'] = True
 
+    
+    def createTestResponse(self, request):
+        '''
+        Run code to make an acurate test response
+        '''
+        self.setHeaderProtocolFlag()
+        self.setPayloadId(protocol.RESPONSE_INTERFACE_VERSION)
+        self.setPayload('IFreeEMS_Vanilla001')
+
 
 class responseFirmwareVersion(response):
     '''
@@ -140,6 +144,15 @@ class responseFirmwareVersion(response):
         rules['requires_length'] = True
 
 
+    def createTestResponse(self, request):
+        '''
+        Run code to make an acurate test response
+        '''
+        self.setHeaderProtocolFlag()
+        self.setPayloadId(protocol.RESPONSE_FIRMWARE_VERSION)
+        self.setPayload('FreeEMS_Vanilla_Test')
+
+
 class responseMaxPacketSize(response):
     '''
     EMS response to max packet length request
@@ -149,3 +162,32 @@ class responseMaxPacketSize(response):
         response.__init__(self)
         rules = self._validation_rules
         rules['preset_payload_length'] = 2
+    
+    
+    def createTestResponse(self, request):
+        '''
+        Run code to make an acurate test response
+        '''
+        self.setHeaderProtocolFlag()
+        self.setPayloadId(protocol.RESPONSE_MAX_PACKET_SIZE)
+        self.setPayload([0, 255])
+
+
+class responseEchoPacket(response):
+    '''
+    EMS response to echo packet request
+    '''
+
+    def __init__(self):
+        response.__init__(self)
+        rules = self._validation_rules
+        rules['requires_length'] = 2
+
+
+    def createTestResponse(self, request):
+        '''
+        Run code to make an acurate test response
+        '''
+        self.setHeaderProtocolFlag()
+        self.setPayloadId(protocol.RESPONSE_ECHO_PACKET_RETURN)
+        self.setPayload(request.getPacketRawBytes())

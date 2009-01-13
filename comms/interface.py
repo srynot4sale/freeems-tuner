@@ -17,9 +17,13 @@
 #
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
-import threading
+import threading, wx, wx.lib.newevent
 
 import libs.thread, protocols
+
+
+sendEvent, EVT_SEND = wx.lib.newevent.NewEvent()
+receiveEvent, EVT_RECEIVE = wx.lib.newevent.NewEvent()
 
 
 class interface(libs.thread.thread):
@@ -188,20 +192,28 @@ class interface(libs.thread.thread):
         self._receive_watchers.append(watcher)
 
 
-    def runSendWatchers(self, packet):
+    def triggerSendWatchers(self, packet):
         '''
-        Run actions bound to sent packets
+        Trigger actions bound to sent packets
         '''
-        for action in self._send_watchers:
-            self._controller.action(action, packet)
+        # Create event
+        send_event = sendEvent(packet=packet)
+
+        # Post the event
+        for watcher in self._send_watchers:
+            wx.PostEvent(watcher, send_event)
 
 
-    def runReceiveWatchers(self, packet):
+    def triggerReceiveWatchers(self, packet):
         '''
-        Run actions bound to received packets
+        Trigger actions bound to received packets
         '''
-        for action in self._receive_watchers:
-            self._controller.action(action, packet)
+        # Create event
+        receive_event = receiveEvent(packet=packet)
+
+        # Post the event
+        for watcher in self._receive_watchers:
+            wx.PostEvent(watcher, receive_event)
     
     
     def run(self):

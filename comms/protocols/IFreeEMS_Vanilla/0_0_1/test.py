@@ -1,20 +1,28 @@
+#   Copyright 2008, 2009 Aaron Barnes
+#
+#   This file is part of the FreeEMS project.
+#
+#   FreeEMS software is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   FreeEMS software is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with any FreeEMS software.  If not, see <http://www.gnu.org/licenses/>.
+#
+#   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
-TEST_RESPONSES = {
-    REQUEST_INTERFACE_VERSION:      [0xAA, 0x11, 0x00, 0x01, 0x00, 0x14, 0x00, 0x00,
-                                     0x02, 0x49, 0x46, 0x72, 0x65, 0x65, 0x45, 0x4D,
-                                     0x53, 0x20, 0x56, 0x61, 0x6E, 0x69, 0x6C, 0x6C,
-                                     0x61, 0x00, 0xBF, 0xCC],
-    REQUEST_FIRMWARE_VERSION:       [0xAA, 0x11, 0x00, 0x03, 0x00, 0x22, 0x46, 0x72,
-                                     0x65, 0x65, 0x45, 0x4D, 0x53, 0x20, 0x56, 0x61,
-                                     0x6E, 0x69, 0x6C, 0x6C, 0x61, 0x20, 0x76, 0x30,
-                                     0x2E, 0x30, 0x2E, 0x31, 0x37, 0x20, 0x70, 0x72,
-                                     0x65, 0x2D, 0x61, 0x6C, 0x70, 0x68, 0x61, 0x00,
-                                     0xD8, 0xCC],
-    REQUEST_MAX_PACKET_SIZE:        [0xAA, 0x01, 0x00, 0x05, 0x04, 0x10, 0x1A, 0xCC],
-    REQUEST_ECHO_PACKET_RETURN:     [0xAA, 0x01, 0x00, 0x20, 0x04, 0x10, 0x35, 0xCC],
-    REQUEST_SOFT_SYSTEM_RESET: [],
+import __init__ as protocol
+
+
+STRESS_TESTS = {
     # This will return lots of logging data in an attempt to break the parser
-    REQUEST_HARD_SYSTEM_RESET: [128, 97, 128, 53, 34, 53, 34,
+    'Lots of log data': [128, 97, 128, 53, 34, 53, 34,
         115, 48, 115, 48, 3, 220, 3, 220, 0, 0, 0, 0, 0, 0, 0, 0, 115, 48,
         115, 48, 119, 12, 119, 12, 160, 204, 16, 1, 45, 0, 108, 101, 2, 100,
         246, 98, 36, 98, 36, 156, 64, 155, 70, 65, 64, 65, 64, 101, 144, 101,
@@ -488,3 +496,21 @@ TEST_RESPONSES = {
     144, 20, 118, 20, 118, 67, 211, 67, 211, 110, 98, 110, 107, 97, 72,
     98, 104, 28, 135, 29, 150, 4]
 }
+
+def getResponse(packet):
+    '''
+    Generate and return the correct response to apacket
+    '''
+    payload_id = packet.getPayloadIdInt()
+
+    # If we recognise a request and response packet, create one
+    if payload_id in protocol.REQUEST_PACKET_TITLES and (payload_id + 1) in protocol.RESPONSE_PACKET_TITLES:
+        response_title = protocol.RESPONSE_PACKET_TITLES[payload_id + 1]
+        response = protocol.getResponsePacket(response_title)
+    else:
+        # Otherwise return nothing
+        return
+
+    # Run any test code on packet
+    response.createTestResponse(packet)
+    return response

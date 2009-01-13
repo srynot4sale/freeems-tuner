@@ -1,4 +1,4 @@
-#   Copyright 2009 Aaron Barnes
+#   Copyright 2008, 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -18,32 +18,56 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import wx
-import comms
-import logging
-import datetime
+import wx, datetime
 
-logger = logging.getLogger('gui.commsTestFrame')
+import comms, settings
+
+
+ID_START_TESTS = wx.NewId()
+ID_CLOSE = wx.NewId()
+
+
+window = None
+
 
 class commsTestFrame(wx.Frame):
-    """Comms Testing Frame"""
+    '''
+    Comms Testing Frame
+    '''
 
     def __init__(self, parent):
-        """Create a Frame instance."""
-        wx.Frame.__init__(self, parent, id=-1, title='Comms Test', pos=wx.DefaultPosition, size=(300,500))
+        '''
+        Create a Frame instance.
+        '''
+        wx.Frame.__init__(self, parent, id=-1, title='Comms Test', pos=wx.DefaultPosition, size=(600,350))
+
+        self.Bind(wx.EVT_MOVE, self.OnMove)
 
         self.BuildWindow()
+
+        # Load saved location/size settings
+        x = settings.get('win.commstest.pos.x', -1)
+        y = settings.get('win.commstest.pos.y', -1)
+        pos  = wx.Point(int(x), int(y))
+        self.Move(pos)
+
         self.Show()
+
+        global window
+        window = self
 
 
     def BuildWindow(self):
+        '''
+        Biuld window gui elements
+        '''
 
         self.window = window = wx.Panel(parent=self, id=-1)
 
-        textbox = wx.StaticText(window, -1, 'To be implemented...')
-        start_button = wx.Button(window, -1, 'Start Tests')
+        self.textbox = textbox = wx.TextCtrl(window, -1)
+        start_button = wx.Button(window, ID_START_TESTS, 'Start Tests')
         stop_button = wx.Button(window, -1, 'Stop Tests')
-        close_button = wx.Button(window, -1, 'Close')
+        close_button = wx.Button(window, ID_CLOSE, 'Close')
 
         sizer3 = wx.BoxSizer(wx.VERTICAL)
         sizer3.Add(start_button, 2)
@@ -65,5 +89,40 @@ class commsTestFrame(wx.Frame):
         sizer1.Add((0,0), 1)
 
         window.SetSizer(sizer1)
+        
+        # Bind events to buttons
+        self.Bind(wx.EVT_BUTTON, self.exit, id=ID_CLOSE)
+        self.Bind(wx.EVT_BUTTON, self.startTests, id=ID_START_TESTS)
+
         window.Layout()
+
+
+    def OnMove(self, event):
+        '''
+        Event handler for moving window
+        '''
+        x, y = self.GetPosition()
+        settings.set('win.commstest.pos.x', x)
+        settings.set('win.commstest.pos.y', y)
+
+
+    def exit(self, event):
+        '''
+        Close test window
+        '''
+        self.Close()
+
+
+    def startTests(self, event = None):
+        '''
+        Run comms tests
+        '''
+        self.logAppend('Starting comms tests')
+        self.controller.action('comms.runTest', {'window': self})
        
+
+    def logAppend(self, message):
+        '''
+        Append to log
+        '''
+        self.textbox.AppendText(message)

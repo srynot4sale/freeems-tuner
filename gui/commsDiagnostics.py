@@ -20,7 +20,7 @@
 
 import wx, wx.grid as grid
 
-import comms, gui, datetime, settings, action, comms.protocols as protocols
+import comms, gui, datetime, settings, action, comms.interface, comms.protocols as protocols
 
 
 class commsDiagnostics(grid.Grid):
@@ -56,8 +56,11 @@ class commsDiagnostics(grid.Grid):
 
         # Bind to connection
         self.conn = comms.getConnection()
-        self.conn.bindSendWatcher('gui.commsDiagnostics.printPacket')
-        self.conn.bindReceiveWatcher('gui.commsDiagnostics.printPacket')
+        self.conn.bindSendWatcher(self)
+        self.conn.bindReceiveWatcher(self)
+
+        self.Bind(comms.interface.EVT_SEND, self.printPacket)
+        self.Bind(comms.interface.EVT_RECEIVE, self.printPacket)
 
 
     def onResize(self, event):
@@ -69,14 +72,9 @@ class commsDiagnostics(grid.Grid):
             r += 1
 
 
-    def printPacket(self, request):
+    def printPacket(self, event):
         '''Print sent packet to grid'''
-        self.insertRow(request)
-
-    
-    def printRecievedPacket(self, response):
-        '''Print received packet to grid'''
-        self.insertRow(response)
+        self.insertRow(event.packet)
 
 
     def insertRow(self, packet):

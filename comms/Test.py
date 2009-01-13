@@ -70,21 +70,34 @@ class connection(comms.interface.interface):
 
 
     def _send(self, packet):
+        '''
+        "Sends" a packet over the fake serial connection
+        and generates a suitable reply
 
-        # Get return packet
-        #hex = self.getProtocol().getTestResponse(packet.getPayloadIdInt())
+        In the interest of testing the packet parsers, this
+        comms plugin also parses the sent raw packets back
+        into abstract packets.
+        '''
+        # Reparse packet to check all is ok
+        #self.getProtocol().checkPacket(packet)
 
-        # Append to input buffer
-        # In this fake comms plugin, all sent packets
-        # are reflected back at the moment
-        self._buffer.extend(packet)
+        # Get preset return packet
+        response = self.getProtocol().getTestResponse(packet)
+        if response:
+            # Append to input buffer
+            # In this fake comms plugin, all sent packets
+            # are reflected back at the moment
+            response.prepare()
+            self._buffer.extend(response.getPacketRawBytes())
 
         # Log packet hex
-        self._debug('Packet sent to test comms connection: %s' % ','.join(protocols.toHex(packet)))
+        self._debug('Packet sent to test comms connection: %s' % ','.join(protocols.toHex(packet.getPacketRawBytes())))
 
 
     def run(self):
-        '''Check for and receive packets waiting in the connection'''
+        '''
+        Check for and receive packets waiting in the connection
+        '''
 
         # Get protocol
         protocol = self.getProtocol()
