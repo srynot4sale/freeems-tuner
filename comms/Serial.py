@@ -136,7 +136,7 @@ class connection(comms.interface.interface):
         '''
         Send a packet over the connection
         '''
-        self._getConnection().write(''.join(packet))
+        self._getConnection().write(''.join(packet.getPacketRawBytes()))
         self._getConnection().flushOutput()
         
         # Log packet hex
