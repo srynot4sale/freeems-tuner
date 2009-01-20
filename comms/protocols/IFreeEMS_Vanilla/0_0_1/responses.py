@@ -85,7 +85,7 @@ class response(packet.packet):
             # Check firmware type flag is set
             if self.hasHeaderProtocolFlag():
                 raise Exception, 'Packet type %s requires the firmware flag is set' % pid
-        else:
+        elif rules['firmware_type'] == False:
             if not self.hasHeaderProtocolFlag():
                 raise Exception, 'Packet type %s requires the protocol flag is set' % pid
 
@@ -111,6 +111,8 @@ class responseGeneric(response):
 
     def __init__(self):
         response.__init__(self)
+        rules = self._validation_rules
+        rules['firmware_type'] = None
 
 
 class responseInterfaceVersion(response):
