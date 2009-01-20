@@ -136,11 +136,12 @@ class connection(comms.interface.interface):
         '''
         Send a packet over the connection
         '''
-        self._getConnection().write(''.join(packet.getPacketRawBytes()))
+        raw = protocols.to8bit( packet.getPacketRawBytes() )
+        self._getConnection().write(''.join(raw))
         self._getConnection().flushOutput()
         
         # Log packet hex
-        self._debug('Packet sent to test comms connection: %s' % ','.join(protocols.toHex(packet)))
+        self._debug('Packet sent to test comms connection: %s' % ','.join(protocols.toHex(raw)))
 
         self.runSendWatchers(packet)
 
