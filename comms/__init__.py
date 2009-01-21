@@ -90,3 +90,28 @@ class actions:
 
             comms.send(packet)
 
+    
+    class handleReceivedPackets(action.action):
+
+        def run(self):
+            '''
+            Trigger events in gui or anything else required
+            '''
+            comms = self._data['comms']
+            protocol = comms.getProtocol()
+
+            while self._data['queue']:
+
+                response = self._data['queue'].pop(0)
+
+                # If generic response (unknown packet type), trigger watchers
+                if isinstance(response, protocol.responses.responseGeneric):
+                    comms.triggerReceiveWatchers(response)
+
+                self._controller.log(
+                        'comms.handleReceivedPackets',
+                        'DEBUG',
+                        '%s packet received and processed' % protocol.getPacketName(response.getPayloadIdInt())
+                )
+
+

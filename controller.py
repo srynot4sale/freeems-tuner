@@ -202,8 +202,8 @@ class app(libs.thread.thread):
                     (action, data) = action
                 
                 # Log action
-                if action != 'Log':
-                    self._log('DEBUG', 'Performing %s action' % action)
+                #if action != 'Log':
+                #    self._log('DEBUG', 'Performing %s action' % action)
 
                 # Check where action is located
                 if '.' in action:
@@ -249,7 +249,7 @@ class app(libs.thread.thread):
         if data == None:
             data = ''
 
-        print '%s %-25s %s %s %s' % (time, section, severity, message, data)
+        print '%s %-30s %s %s %s' % (time, section, severity, message, data)
 
 
     def _actionShutdown(self, data = None):

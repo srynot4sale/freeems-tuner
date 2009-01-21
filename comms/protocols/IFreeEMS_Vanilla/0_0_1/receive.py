@@ -39,6 +39,9 @@ class thread(libs.thread.thread):
     # Buffer of packet request to process into packet classes
     _buffer = []
 
+    # Queue of processed packets ready to be handled by the controller
+    queue = []
+
 
     def __init__(self, name, controller, comms):
         '''
@@ -87,14 +90,18 @@ class thread(libs.thread.thread):
             try:
                 packet = self._processReceiveBuffer(self._buffer)
             except Exception, msg:
-                self._debug('processReceiveBuffer failed to parse packet from buffer: %s' % protocols.toHexString(cache), msg)
+                self._debug('processReceiveBuffer threw exception (%s) while trying to parse packet from buffer so resetting buffer' % protocols.toHexString(cache), msg)
                 self._buffer = []
                 continue
         
             if not packet:
                 continue
 
-            self._debug('%s packet received and processed' % protocol.getPacketName(packet.getPayloadIdInt()))
+            # Tell controller to handle newly received packets
+            self.queue.append(packet)
+    
+            data = { 'comms': self.comms, 'queue': self.queue }
+            self._controller.action('comms.handleReceivedPackets', data)
 
         return
    
@@ -174,7 +181,6 @@ class thread(libs.thread.thread):
                     self._debug('Wrongly escaped byte found in buffer: 0x%X' % byte)
                     continue
         
-
         # Check if we have a complete packet
         if len(packet) and state == STATE_NOT_PACKET:
 
@@ -187,14 +193,6 @@ class thread(libs.thread.thread):
         '''
         Takes a raw packet, checks it and returns the correct packet class
         '''
-
-        # Quick checks to make sure this is a legitimate packet
-        if not isinstance(packet, list):
-            raise TypeError, 'Expected a list'
-
-        if packet[0] != protocol.START_BYTE or packet[-1] != protocol.END_BYTE:
-            raise Exception, 'Start and/or end byte missing'
-
         contents = {}
         contents['flags'] = None
         contents['payload_id'] = None
@@ -208,7 +206,7 @@ class thread(libs.thread.thread):
         index += 1
 
         # Grab payload id
-        contents['payload_id'] = protocols.from8bit(packet[index:index+2])
+        contents['payload_id'] = payload_id = protocols.from8bit(packet[index:index+2])
         index += 2
 
         # Grab payload
@@ -233,17 +231,14 @@ class thread(libs.thread.thread):
 
         # Create response packet object
         if flags & protocol.HEADER_IS_PROTO:
-            response = responses.getProtocolPacket(contents['payload_id'])
+            response = responses.getProtocolPacket(payload_id)
         else:
-            response = responses.getFirmwarePacket(contents['payload_id'])
+            response = responses.getFirmwarePacket(payload_id)
 
         # Populate data
         response.parseHeaderFlags(contents['flags'])
         response.setPayloadId(contents['payload_id'])
         response.parsePayload(contents['payload'])
         response.validate()
-
-        if isinstance(response, responses.responseGeneric):
-            self.comms.triggerReceiveWatchers(response)
 
         return response
