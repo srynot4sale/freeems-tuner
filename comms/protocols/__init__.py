@@ -136,6 +136,13 @@ def toHex(bytes):
     return raw_hex
 
 
+def toHexString(bytes):
+    '''
+    Convert a list of bytes to a string of hex
+    '''
+    return ','.join(toHex(bytes))
+
+
 def toBinaryString(bytes):
     '''
     Convert a list of bytes to a binary write safe string
