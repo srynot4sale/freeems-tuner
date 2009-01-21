@@ -49,7 +49,6 @@ class thread(libs.thread.thread):
         Add packet object to buffer and wake thread
         '''
         self._buffer.append(packet)
-        self._debug('Sending packet')
         self.wake()
 
 
@@ -74,8 +73,6 @@ class thread(libs.thread.thread):
         Processes packet to raw bytes and sends to
         comms thread
         '''
-        self._debug('Processing packet')
-    
         self.comms.triggerSendWatchers(packet)
         packet.prepare()
 

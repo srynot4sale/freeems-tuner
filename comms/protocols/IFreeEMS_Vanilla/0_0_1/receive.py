@@ -56,7 +56,7 @@ class thread(libs.thread.thread):
         Add to buffer and wake thread
         '''
         self._buffer.extend(buffer)
-        self._debug('Received buffer: %s' % ','.join(protocols.toHex(buffer)))
+        self._debug('Received %d bytes of buffer' % len(buffer))
         self.wake()
 
 
@@ -80,8 +80,6 @@ class thread(libs.thread.thread):
         '''
         Processes buffer into packets
         '''
-        self._debug('Processing buffer')
-        
         # Check for any complete packets
         cache = copy.copy(self._buffer)
 
@@ -96,7 +94,7 @@ class thread(libs.thread.thread):
             if not packet:
                 return
 
-            self._debug('Packet of payload id %d received and processed' % packet.getPayloadIdInt())
+            self._debug('%s packet received and processed' % protocol.getPacketName(packet.getPayloadIdInt()))
 
         return
    
@@ -182,65 +180,6 @@ class thread(libs.thread.thread):
             self._debug('Bad/incomplete data found in buffer before start byte: %s' % ','.join(protocols.toHex(bad_bytes)))
 
         return complete        
-
-
-    def unEscapePacket(self, buffer):
-        '''
-        Un-escapes (imprisons?) raw packet
-        '''
-        # Begin state control machine :-)
-        state = STATE_NOT_PACKET
-        complete = None
-        packet = []
-        index = -1
-
-        for byte in buffer:
-
-            # Keep track of how far through the buffer we are
-            index += 1
-
-            # If have not started a packet yet check for start_byte
-            if state == STATE_NOT_PACKET:
-                # If not a start byte, we should never have got here
-                if byte != protocol.START_BYTE:
-                    raise Exception, 'Should never have got here, expecting a start byte %s' % str(byte)
-                # Otherwise, start packet
-                else:
-                    state = STATE_IN_PACKET
-                    packet.append(protocol.START_BYTE)
-
-            # We are in a packet, save byte unless we find an end byte
-            elif state == STATE_IN_PACKET:
-                if byte == protocol.END_BYTE:
-                    state = STATE_NOT_PACKET
-                    packet.append(protocol.END_BYTE)
-                    break
-                elif byte == protocol.ESCAPE_BYTE:
-                    state = STATE_ESCAPE_BYTE
-                else:
-                    packet.append(byte)
-
-            # If we are in escape mode (previous byte was an escape), escape byte
-            elif state == STATE_ESCAPE_BYTE:
-                esc_byte = byte ^ 0xFF
-                
-                # Check it is a legitimately escaped byte
-                if esc_byte in (protocol.START_BYTE, protocol.ESCAPE_BYTE, protocol.END_BYTE):
-                    packet.append(esc_byte)
-                    state = STATE_IN_PACKET
-                else:
-                    self._debug('Wrongly escaped byte found in buffer: %X' % byte)
-                    break
-
-        # Check if we have a complete packet
-        if len(packet) and state == STATE_NOT_PACKET:
-            complete = self._processIncomingPacket(packet)
-
-        # Check nothing left
-        if index != len(buffer):
-            raise Exception, 'Buffer contained multiple packets'
-
-        return complete
 
 
     def _processIncomingPacket(self, packet):
