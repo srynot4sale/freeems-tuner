@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2008, 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -74,7 +74,6 @@ class connection(comms.interface.interface):
         '''
         Return connection
         '''
-
         if not self.isConnected():
             raise Exception, 'Not connected'
         
@@ -118,7 +117,7 @@ class connection(comms.interface.interface):
 
     def _disconnect(self):
         '''
-        "Disconnect" from fake serial connection
+        Disconnect from serial connection
         '''
         self._disconnWanted = False
 
@@ -137,7 +136,7 @@ class connection(comms.interface.interface):
         Send a packet over the connection
         '''
         raw = protocols.to8bit( packet.getPacketRawBytes() )
-        self._getConnection().write(''.join(raw))
+        self._getConnection().write(protocols.toBinaryString(raw))
         self._getConnection().flushOutput()
         
         # Log packet hex

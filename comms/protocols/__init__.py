@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2008, 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -65,7 +65,9 @@ def loadDefault(controller):
 
 
 def to8bit(value, length = None):
-    '''Convert a var to an 8 bit list'''
+    '''
+    Convert a var to an 8 bit list
+    '''
     converted = []
 
     if not isinstance(value, list):
@@ -98,7 +100,9 @@ def to8bit(value, length = None):
 
 
 def from8bit(value):
-    '''Convert an 8 bit list to a var'''
+    '''
+    Convert an 8 bit list to a var
+    '''
     converted = 0
     i = 0
 
@@ -110,13 +114,15 @@ def from8bit(value):
             converted += num
         else:
             converted += num * (i * 256)
-        i += 1               #No i++ in Python? Really?
+        i += 1
         
     return converted
 
 
 def toHex(bytes):
-    '''Convert a list of bytes to a list of hex strings'''
+    '''
+    Convert a list of bytes to a list of hex strings
+    '''
     raw_hex = []
     
     for byte in bytes:
@@ -130,9 +136,13 @@ def toHex(bytes):
     return raw_hex
 
 
-class interface:
-    '''Base class for all protocol plugins'''
+def toBinaryString(bytes):
+    '''
+    Convert a list of bytes to a binary write safe string
+    '''
+    string = ''
 
-    def isConnected(self):
-        pass
+    for byte in bytes:
+        string += chr(byte)
 
+    return string
