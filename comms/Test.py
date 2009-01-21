@@ -91,7 +91,7 @@ class connection(comms.interface.interface):
             self._buffer.extend(response.getPacketRawBytes())
 
         # Log packet hex
-        self._debug('Packet sent to test comms connection: %s' % ','.join(protocols.toHex(packet.getPacketRawBytes())))
+        self._debug('Packet sent to test comms connection: %s' % protocols.toHexString(packet.getPacketRawBytes()))
 
 
     def run(self):

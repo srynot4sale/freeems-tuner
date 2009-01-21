@@ -87,12 +87,12 @@ class thread(libs.thread.thread):
             try:
                 packet = self._processReceiveBuffer(self._buffer)
             except Exception, msg:
-                self._debug('processReceiveBuffer failed to parse packet from buffer: %s' % ','.join(protocols.toHex(cache)), msg)
+                self._debug('processReceiveBuffer failed to parse packet from buffer: %s' % protocols.toHexString(cache), msg)
                 self._buffer = []
                 continue
         
             if not packet:
-                return
+                continue
 
             self._debug('%s packet received and processed' % protocol.getPacketName(packet.getPayloadIdInt()))
 
@@ -102,58 +102,64 @@ class thread(libs.thread.thread):
     def _processReceiveBuffer(self, buffer):
         '''
         Check for any incoming packets and return if found
-        '''
-        # Remove any buffer before the first start byte        
-        if buffer[0] != protocol.START_BYTE:
-            start = buffer.index(protocol.START_BYTE)
-            self._debug('Bad/incomplete packet found in buffer before start byte: %s' % ','.join(protocols.toHex(buffer[0:start])))
-            del buffer[0:start]
 
-        # Find the last start byte before the first end byte
-        # Keep looping until there are no start byte after the first and
-        # before the first stop byte
-        try:
-            while buffer.index(protocol.START_BYTE, 1, buffer.index(protocol.END_BYTE)):
-                # Remove everything before second start byte
-                start = buffer.index(protocol.START_BYTE, 1, buffer.index(protocol.END_BYTE))
-                self._debug('Bad/incomplete packet found in buffer before start byte: %s' % ','.join(protocols.toHex(buffer[0:start])))
-                del buffer[0:start]
-        except ValueError:
-            # If we have pruned so much there is no longer a complete packet,
-            # try again later
-            if protocol.START_BYTE not in buffer or protocol.END_BYTE not in buffer:
-                return
-        
+        - Keep removing bytes until START_BYTE found
+        - Check for END_BYTE
+        - Loop though buffer copy
+            - If complete packet found, remove length from buffer
+            - If incomplete packet, leave buffer and try again later
+        '''
+        # Remove any buffer before the first start byte
+        bad_bytes = []
+        while len(buffer) and buffer[0] != protocol.START_BYTE:
+            # Remove byte and append to bad_buffer
+            bad_bytes.append(buffer.pop(0))
+
+        if len(bad_bytes):
+            self._debug('Bad/incomplete packet found in buffer before start byte: %s' % protocols.toHexString(bad_bytes))
+            bad_bytes = []
+
+        # If no buffer left or no end byte in buffer, return
+        if not len(buffer) or protocol.END_BYTE not in buffer:
+            return
+
         # Begin state control machine :-)
         state = STATE_NOT_PACKET
         packet = []
-        bad_bytes = []
-        complete = False
+        index = 0
 
-        # Loop through buffer_copy, delete from buffer
+        # Loop through buffer_copy
         buffer_copy = copy.copy(buffer)
 
         for byte in buffer_copy:
+
+            # Keep track of how many bytes we have processed
+            index += 1
 
             # If have not started a packet yet check for start_byte
             if state == STATE_NOT_PACKET:
                 # If not a start byte, we should never have got here
                 if byte != protocol.START_BYTE:
-                    raise Exception, 'Should never have got here, expecting a start byte %s' % str(byte)
+                    self._debug('Should never have got here, expecting a start byte 0x%X' % byte)
+                    continue
                 # Otherwise, start packet
                 else:
                     state = STATE_IN_PACKET
                     packet.append(protocol.START_BYTE)
+                    continue
 
             # We are in a packet, save byte unless we find an end byte
             elif state == STATE_IN_PACKET:
                 if byte == protocol.END_BYTE:
                     state = STATE_NOT_PACKET
                     packet.append(protocol.END_BYTE)
+                    break
                 elif byte == protocol.ESCAPE_BYTE:
                     state = STATE_ESCAPE_BYTE
+                    continue
                 else:
                     packet.append(byte)
+                    continue
 
             # If we are in escape mode (previous byte was an escape), escape byte
             elif state == STATE_ESCAPE_BYTE:
@@ -163,23 +169,18 @@ class thread(libs.thread.thread):
                 if esc_byte in (protocol.START_BYTE, protocol.ESCAPE_BYTE, protocol.END_BYTE):
                     packet.append(esc_byte)
                     state = STATE_IN_PACKET
+                    continue
                 else:
-                    self._debug('Wrongly escaped byte found in buffer: %X' % byte)
-                    return complete
+                    self._debug('Wrongly escaped byte found in buffer: 0x%X' % byte)
+                    continue
+        
+
+        # Check if we have a complete packet
+        if len(packet) and state == STATE_NOT_PACKET:
 
             # Remove this byte from buffer as it has been processed
-            del buffer[0]
-
-            # Check if we have a complete packet
-            if len(packet) and state == STATE_NOT_PACKET:
-                complete = self._processIncomingPacket(packet)
-                break
-
-        # Process bad_bytes buffer
-        if len(bad_bytes):
-            self._debug('Bad/incomplete data found in buffer before start byte: %s' % ','.join(protocols.toHex(bad_bytes)))
-
-        return complete        
+            del buffer[0:index]
+            return self._processIncomingPacket(packet)
 
 
     def _processIncomingPacket(self, packet):
