@@ -24,8 +24,15 @@ def getProtocolPacket(id):
     '''
     Return instance of requested protocol packet
     '''
+    packetname = None
+
+    # Check if we have a packet title for this id
     if id in protocol.RESPONSE_PACKET_TITLES:
-        return globals()['response'+protocol.RESPONSE_PACKET_TITLES[id]]()
+        packetname = 'response'+protocol.RESPONSE_PACKET_TITLES[id]
+
+    # Check if we have a class definition for this packet title
+    if packetname and packetname in globals():
+        return globals()[packetname]()
     else:
         return responseGeneric()
 
@@ -179,7 +186,6 @@ class responseEchoPacket(response):
     '''
     EMS response to echo packet request
     '''
-
     def __init__(self):
         response.__init__(self)
         rules = self._validation_rules
@@ -193,3 +199,14 @@ class responseEchoPacket(response):
         self.setHeaderProtocolFlag()
         self.setPayloadId(protocol.RESPONSE_ECHO_PACKET_RETURN)
         self.setPayload(request.getPacketRawBytes())
+
+
+class responseBasicDatalog(response):
+    '''
+    EMS basic datalog packet
+    '''
+    def __init__(self):
+        response.__init__(self)
+        rules = self._validation_rules
+        rules['firmware_type'] = True
+        rules['requires_length'] = True
