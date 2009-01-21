@@ -140,7 +140,7 @@ class connection(comms.interface.interface):
         self._getConnection().flushOutput()
         
         # Log packet hex
-        self._debug('Packet sent to test comms connection: %s' % ','.join(protocols.toHex(raw)))
+        self._debug('Packet sent to Serial comms connection: %s' % ','.join(protocols.toHex(raw)))
 
         self.runSendWatchers(packet)
 
