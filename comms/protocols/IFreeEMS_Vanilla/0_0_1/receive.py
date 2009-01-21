@@ -59,7 +59,7 @@ class thread(libs.thread.thread):
         Add to buffer and wake thread
         '''
         self._buffer.extend(buffer)
-        self._debug('Received %d bytes of buffer' % len(buffer))
+        #self._debug('Received %d bytes of buffer' % len(buffer))
         self.wake()
 
 
