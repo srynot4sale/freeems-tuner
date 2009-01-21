@@ -166,7 +166,7 @@ class interface(libs.thread.thread):
         
         # Give this a short time out so we can gather
         # any incoming packets quickly
-        self._block.wait(0.5) # 1/2 second
+        self._block.wait(0.1) # 1/10 second
         self._block.clear()
     
 
