@@ -87,6 +87,19 @@ class thread(threading.Thread):
                 message,
                 data
         )
+    
+        
+    def _error(self, message, data = None):
+        '''
+        Sends a debug log message to the controller
+        '''
+        self._controller.log(
+                self.name,
+                'ERROR',
+                message,
+                data
+        )
+
 
     def _final(self):
         '''
