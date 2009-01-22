@@ -239,4 +239,4 @@ def getChecksum(bytes):
         return checksum
 
     checksum = checksum % 256
-    return checksum 
+    return checksum

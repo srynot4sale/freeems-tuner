@@ -89,8 +89,14 @@ class thread(libs.thread.thread):
         while self._buffer:
             try:
                 packet = self._processReceiveBuffer(self._buffer)
+            except ParsingException, msg:
+                # Get bad buffer (what has been removed from buffer already)
+                bad_buffer = cache[0:(len(cache) - len(self._buffer))]
+                self._error('processReceiveBuffer could not parse buffer. %s' % msg, protocols.toHexString(bad_buffer))
+                continue
             except Exception, msg:
-                self._debug('processReceiveBuffer threw exception (%s) while trying to parse packet from buffer so resetting buffer' % protocols.toHexString(cache), msg)
+                # Program error, wipe buffer
+                self._error('processReceiveBuffer threw exception, wiping buffer: %s' % msg, cache)
                 self._buffer = []
                 continue
         
@@ -102,8 +108,6 @@ class thread(libs.thread.thread):
     
             data = { 'comms': self.comms, 'queue': self.queue }
             self._controller.action('comms.handleReceivedPackets', data)
-
-        return
    
 
     def _processReceiveBuffer(self, buffer):
@@ -117,14 +121,14 @@ class thread(libs.thread.thread):
             - If incomplete packet, leave buffer and try again later
         '''
         # Remove any buffer before the first start byte
-        bad_bytes = []
+        bad_bytes = False
         while len(buffer) and buffer[0] != protocol.START_BYTE:
             # Remove byte and append to bad_buffer
-            bad_bytes.append(buffer.pop(0))
+            buffer.pop(0)
+            bad_bytes = True
 
-        if len(bad_bytes):
-            self._debug('Bad/incomplete packet found in buffer before start byte: %s' % protocols.toHexString(bad_bytes))
-            bad_bytes = []
+        if bad_bytes:
+            raise ParsingException, 'Bad/incomplete packet found in buffer before start byte'
 
         # If no buffer left or no end byte in buffer, return
         if not len(buffer) or protocol.END_BYTE not in buffer:
@@ -147,8 +151,8 @@ class thread(libs.thread.thread):
             if state == STATE_NOT_PACKET:
                 # If not a start byte, we should never have got here
                 if byte != protocol.START_BYTE:
-                    self._debug('Should never have got here, expecting a start byte 0x%X' % byte)
-                    continue
+                    del buffer[0:index]
+                    raise ParsingException, 'Should never have got here, expecting a start byte'
                 # Otherwise, start packet
                 else:
                     state = STATE_IN_PACKET
@@ -178,8 +182,8 @@ class thread(libs.thread.thread):
                     state = STATE_IN_PACKET
                     continue
                 else:
-                    self._debug('Wrongly escaped byte found in buffer: 0x%X' % byte)
-                    continue
+                    del buffer[0:index]
+                    raise ParsingException, 'Wrongly escaped byte found in buffer: 0x%X' % esc_byte
         
         # Check if we have a complete packet
         if len(packet) and state == STATE_NOT_PACKET:
@@ -221,13 +225,11 @@ class thread(libs.thread.thread):
         gen_checksum = packetlib.getChecksum(packet[1:index-1])
 
         if checksum != gen_checksum:
-            self._debug('Checksum is incorrect! Provided: %d, generated: %d' % (checksum, gen_checksum))
-            return False
+            raise ParsingException, 'Checksum is incorrect! Provided: %d, generated: %d' % (checksum, gen_checksum)
 
         # Just double check we only have one byte left
         if index != (len(packet) - 1):
-            self._debug('Packet incorrectly processed, %d bytes left' % (len(packet) - 1 - index))
-            return False
+            raise ParsingException, 'Packet incorrectly processed, %d bytes left' % (len(packet) - 1 - index)
 
         # Create response packet object
         if flags & protocol.HEADER_IS_PROTO:
@@ -242,3 +244,7 @@ class thread(libs.thread.thread):
         response.validate()
 
         return response
+
+
+class ParsingException(Exception):
+    pass
