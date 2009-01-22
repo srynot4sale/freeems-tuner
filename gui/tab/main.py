@@ -27,9 +27,6 @@ from gui.commsUtilityFirmwareSoftResetButton import commsUtilityFirmwareSoftRese
 from gui.commsUtilityFirmwareHardResetButton import commsUtilityFirmwareHardResetButton
 
 
-logger = logging.getLogger('gui.tabs.main')
-
-
 # Helper value for inserting spacing into sizers
 blank = (0,0)
 
@@ -40,6 +37,8 @@ class tab(wx.Panel):
     def __init__(self, parent):
         '''Setup interface elements'''
         wx.Panel.__init__(self, parent)
+
+        self.controller = parent.GetParent().getController()
 
         self.requests       = commsUtilityRequests(self)
         self.button_red     = commsUtilityFirmwareHardResetButton(self)

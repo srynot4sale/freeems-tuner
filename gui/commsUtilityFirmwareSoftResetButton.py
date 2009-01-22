@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -19,14 +19,8 @@
 
 
 import wx
-import comms
-import protocols
-import logging
-import datetime
-import gui
-import commsConnectWarning
+import gui, commsConnectWarning
 
-logger = logging.getLogger('gui.commsUtilityFirmwareSoftResetButton')
 
 class commsUtilityFirmwareSoftResetButton(wx.BoxSizer):
 
@@ -39,6 +33,8 @@ class commsUtilityFirmwareSoftResetButton(wx.BoxSizer):
     def __init__(self, parent):
 
         wx.BoxSizer.__init__(self, wx.VERTICAL)
+
+        self._controller = parent.controller
 
         button_text  = 'The Big Orange Button\n'
         button_text += '    (Soft EMS Reset)'
@@ -63,4 +59,5 @@ class commsUtilityFirmwareSoftResetButton(wx.BoxSizer):
         if not commsConnectWarning.confirmConnected(gui.frame):
             return
         
-        protocols.getProtocol().sendUtilitySoftResetRequest()
+        data = {'type': 'SoftSystemReset'}
+        self._controller.action('comms.sendUtilityRequest', data)

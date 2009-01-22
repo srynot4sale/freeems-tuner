@@ -18,108 +18,120 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import libs.config as config
-import logging
-import copy
-import comms
-import protocols
+import time, copy
+import libs.config as config, comms.interface, protocols
 
-logger = logging.getLogger('comms.Test')
 
-class connection(comms.interface):
+class connection(comms.interface.interface):
     '''
-    Fake comms interface for testings
+    Fake comms interface for testing
     '''
 
-    # Connected flag
-    _connected = False
-
-    # Watching objects
-    _send_watchers = []
-    _recieve_watchers = []
-
-    # Fake buffer
+    # Fake receive buffer
     _buffer = []
 
-    def isConnected(self):
 
-        return self._connected
+    def __init__(self, name, controller):
+        '''
+        Initialise comms thread
+        '''
+        comms.interface.interface.__init__(self, name, controller)
 
-    
-    def connect(self):
+        # Load protocol
+        self.getProtocol()
 
+        self.start()
+
+
+    def _connect(self):
+        '''
+        "Connect" to fake serial connection
+        '''
+        self._connWanted = False
+        
         if self.isConnected():
             return
 
         self._connected = True
-        
-        logger.info('Test comms connection connected')
+        self._debug('Test comms connection connected')
 
 
-    def disconnect(self):
-        
+    def _disconnect(self):
+        '''
+        "Disconnect" from fake serial connection
+        '''
+        self._disconnWanted = False
+
         if not self.isConnected():
             return
 
         self._connected = False
-
-        logger.info('Test comms connection disconnected')
-
-
-    def bindSendWatcher(self, watcher):
-        self._send_watchers.append(watcher)
+        self._debug('Test comms connection disconnected')
 
 
-    def bindRecieveWatcher(self, watcher):
-        self._recieve_watchers.append(watcher)
+    def _send(self, packet):
+        '''
+        "Sends" a packet over the fake serial connection
+        and generates a suitable reply
 
+        In the interest of testing the packet parsers, this
+        comms plugin also parses the sent raw packets back
+        into abstract packets.
+        '''
+        # Reparse packet to check all is ok
+        #self.getProtocol().checkPacket(packet)
 
-    def send(self, packet):
-
-        # Get protocol
-        protocol = protocols.getProtocol()
-
-        # Get return packet
-        hex = protocol.getTestResponse(packet.getPayloadIdInt())
-
-        # Append to input buffer
-        # In this fake comms plugin, all sent packets
-        # are reflected back at the moment
-        self._buffer.extend(hex)
+        # Get preset return packet
+        response = self.getProtocol().getTestResponse(packet)
+        if response:
+            # Append to input buffer
+            # In this fake comms plugin, all sent packets
+            # are reflected back at the moment
+            response.prepare()
+            self._buffer.extend(response.getPacketRawBytes())
 
         # Log packet hex
-        logger.debug('Packet sent to test comms connection: %s' % ','.join(packet.getPacketHex()))
-        
-        for watcher in self._send_watchers:
-            watcher(packet)
+        self._debug('Packet sent to test comms connection: %s' % protocols.toHexString(packet.getPacketRawBytes()))
 
 
-    def recieve(self):
-        '''Check for and recieve packets waiting in the connection'''
-        
-        # If nothing in buffer
-        if not len(self._buffer):
-            return
+    def run(self):
+        '''
+        Check for and receive packets waiting in the connection
+        '''
 
         # Get protocol
-        protocol = protocols.getProtocol()
+        protocol = self.getProtocol()
 
-        # Check for any complete packets
-        cache = copy.copy(self._buffer)
+        # Create send and receive threads
+        self._createSendThread()
+        self._createReceiveThread()
 
-        try:
-            packet = protocol.processRecieveBuffer(self._buffer)
-        except Exception, msg:
-            raise
-            logger.error(msg)
-            logger.error('processRecieveBuffer failed to parse packet from buffer: %s' % join(protocols.toHex(cache)))
-            self._buffer = []
-            return
-        
-        if not packet:
-            return
+        while self.isConnected() or self._alive:
 
-        logger.debug('Packet received by test comms connection: %s' % packet.getPacketHex())
+            # If not connected, block until we are ready to
+            if not self.isConnected():
 
-        for watcher in self._recieve_watchers:
-            watcher(packet)
+                # If told to connect
+                if self._connWanted:
+                    self._connect()
+                else:
+                    self._checkBlock()
+                    continue
+
+            # If connected, see if we want to disconnect
+            if self.isConnected() and self._disconnWanted:
+                self._disconnect()
+                continue
+
+            # If stuff in receive buffer
+            if len(self._buffer):
+                self._receive(self._buffer)
+                self._buffer = []
+
+            # If stuff in send buffer
+            while len(self._queue):
+                self._send(self._queue.pop(0))
+
+            self._checkBlock()
+
+        self._final()

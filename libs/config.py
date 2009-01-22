@@ -17,59 +17,93 @@
 #
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
-# Handle configuration saving/loading
+
 import ConfigParser
 
-
-# Get config parser
-# Defaults are stored in config.ini (in same directory as code)
-# User overrided settings are found in data/my_config.ini
-def getParser():
-
-    config = ConfigParser.RawConfigParser()
-    config.read(['data/my_config.cached.ini', 'config.default.ini', 'data/my_config.ini'])
-    
-    return config
+import action
 
 
-# Load option from config file
-def load(section, option, default = None):
+# Parser object
+_parser = None
 
+# Save settings trigger
+_save_settings = False
+
+
+def parser():
+    '''
+    Get config parser
+
+    Defaults are stored in config.ini (in same directory as code)
+    User overrided settings are found in data/my_config.ini
+    '''
+    global _parser
+    if _parser == None:
+        _parser = ConfigParser.RawConfigParser()
+        _parser.read(['data/my_config.cached.ini', 'config.default.ini', 'data/my_config.ini'])
+
+    return _parser
+
+
+def save():
+    '''
+    Save settings to file if they have changed
+    '''
+    # If a setting save has not been triggered, dont
+    # waste time
+    global _save_settings
+    if not _save_settings:
+        return
+
+    _save_settings = False
+
+    # Write options to the users config file
+    configfile = open('data/my_config.cached.ini', 'wb')
+
+    parser().write(configfile)
+
+
+def get(section, option, default = None):
+    '''
+    Get option from config file
+    '''
     # Get defaults and user settings
-    parser = getParser()
+    _parser = parser()
 
-    if not parser.has_section(section):
+    if not _parser.has_section(section):
         return default
 
-    if not parser.has_option(section, option):
-        return default
-    
-    return parser.get(section, option)
-
-
-# Load option but return as a boolean value
-def loadBool(section, option, default = None):
-
-    parser = getParser()
-
-    if not parser.has_section(section):
-        return default
-
-    if not parser.has_option(section, option):
+    if not _parser.has_option(section, option):
         return default
     
-    return parser.getboolean(section, option)
+    return _parser.get(section, option)
 
 
-# Get all options in a section as a dict
+def getBool(section, option, default = None):
+    '''
+    Get option but return as a boolean value
+    '''
+    _parser = parser()
+
+    if not _parser.has_section(section):
+        return default
+
+    if not _parser.has_option(section, option):
+        return default
+    
+    return _parser.getboolean(section, option)
+
+
 def getItems(section):
+    '''
+    Get all options in a section as a dict
+    '''
+    _parser = parser()
 
-    parser = getParser()
-
-    if not parser.has_section(section):
+    if not _parser.has_section(section):
         return {}
 
-    items = parser.items(section)
+    items = _parser.items(section)
     dict = {}
 
     for (item, value) in items:
@@ -78,18 +112,39 @@ def getItems(section):
     return dict
 
 
-# Set option
-def set(section, options):
+def set(section, option, value = None):
+    '''
+    Set options
 
-    parser = getParser()
-    if not parser.has_section(section):
-        parser.add_section(section)
+    Called two ways, if option is a dict
+    and value is not set, it loops through
+    the dict. Otherwise just sets the option
+    and value
+    '''
+    _parser = parser()
 
-    for option in options.keys():
-        parser.set(section, option, options[option])
+    if not _parser.has_section(section):
+        _parser.add_section(section)
 
-    # Write options to the users config file
-    configfile = open('data/my_config.cached.ini', 'wb')
-    parser.write(configfile)
+    if not isinstance(option, dict):
+        option = {option: value}
+
+    for key in option.keys():
+        _parser.set(section, key, option[key])
+
+    global _save_settings
+    _save_settings = True
 
 
+class actions():
+    '''
+    Modules' actions
+    '''
+
+    class save(action.action):
+        '''
+        Save config to file
+        '''
+
+        def run(self):
+            save()

@@ -18,16 +18,14 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import os, sys, tarfile, logging
+import os, sys, tarfile
 import json
-import protocols
-
-
-logger = logging.getLogger('lib.data')
 
 
 def createDirectory():
-
+    '''
+    Create data directory if it does not exist
+    '''
     # Create path
     path = getPath()
 
@@ -40,7 +38,9 @@ def createDirectory():
 
 
 def getPath():
-
+    '''
+    Get path to data directory
+    '''
     cwd = sys.path[0]
     if not len(cwd):
         cwd = os.getcwd()
@@ -53,11 +53,9 @@ def loadProtocolDataFile(filename):
     Loads a json data file from the protocols
     data directory and returns its contents as python
     '''
-    
     protocol = 'protocols/IFreeEMS_Vanilla/0_0_1/'
 
     path = getPath()+protocol+filename+'.js'
-    logger.debug('Loading %s data file' % path)
 
     if not os.path.exists(path) or not os.path.isfile(path):
         return None
@@ -74,11 +72,7 @@ def installProtocolDataFiles(archive_path):
     '''
     Unpacks a specially made tgz file into the protocol data directory
     '''
-
-    logger.debug('Installing archive %s' % archive_path)
-
     if not tarfile.is_tarfile(archive_path):
-        logger.error('Protocol Data package not a tar file!')
         return False
 
     archive = tarfile.open(archive_path, 'r:gz') 
@@ -86,7 +80,6 @@ def installProtocolDataFiles(archive_path):
     # Check files will be extracted into the correct directory
     for path in archive.getnames():
         if not path.startswith('protocols/'):
-            logger.error('Protocol Data package paths are incorrect')
             return False
 
     # Extract

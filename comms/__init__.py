@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -18,76 +18,100 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import libs.config, logging
+import libs.config, action
 
 
-# Tuners comms connection
-connection = None
-plugin = None
+# Tuner's comms connections
+_connection = {}
 
 
-def createConnection():
-    '''Create comms connection'''
-    loadDefault()
+def createConnection(controller, name = 'default', type = None):
+    '''
+    Create new comms connection, with an optional name
+    '''
+    if type == None:
+        type = _loadDefault()
+    
+    type = 'comms.'+type
 
-
-def getConnection():
-    '''Get comms connection'''
-    return connection
-
-
-def loadDefault():
-    '''Load default comms conenction'''
-
-    # Fetch config data
-    comms = libs.config.load('Comms', 'default')
-    path = 'comms.'+comms
-
-    global plugin
-    plugin = comms
-
-    logger = logging.getLogger('comms')
-    logger.info('Loading comms module: %s' % path)
+    # Logger
+    controller.log('comms', 'DEBUG', 'Loading comms module: %s' % type)
 
     # Dynamically import
-    global connection
-    connection = __import__(path, globals(), locals(), 'connection').connection()
+    _connection[name] = __import__(type, globals(), locals(), 'connection').connection(name, controller)
 
 
-class interface:
-    '''Base class for all comms plugins'''
+def getConnection(name = 'default'):
+    '''
+    Get comms connection
+    '''
+    return _connection[name]
 
-    def isConnected(self):
-        pass
+
+def _loadDefault():
+    '''
+    Load default comms connection type from config
+    '''
+    return libs.config.get('Comms', 'default')
+
+
+class actions:
+
+    class sendUtilityRequest(action.action):
+
+        def run(self):
+            '''
+            Create packet and send to correct thread
+            '''
+            if 'connection' in self._data:
+                comms = getConnection(self._data['connection'])
+            else:
+                comms = getConnection()
+
+            protocol = comms.getProtocol()
+
+            comms.send(protocol.getRequestPacket(self._data['type']))
+
+
+    class sendMemoryRequest(action.action):
+
+        def run(self):
+            '''
+            Create memory request packet and send to correct thread
+            '''
+            if 'connection' in self._data:
+                comms = getConnection(self._data['connection'])
+            else:
+                comms = getConnection()
+
+            protocol = comms.getProtocol()
+            packet = protocol.getRequestPacket(self._data['type'])
+            packet.setPayload(self._data['block_id'])
+
+            comms.send(packet)
 
     
-    def connect(self):
-        pass
+    class handleReceivedPackets(action.action):
+
+        def run(self):
+            '''
+            Trigger events in gui or anything else required
+            '''
+            comms = self._data['comms']
+            protocol = comms.getProtocol()
+
+            while self._data['queue']:
+
+                response = self._data['queue'].pop(0)
+
+                # If generic response (unknown packet type), trigger watchers
+                if isinstance(response, protocol.responses.responseGeneric):
+                    comms.triggerReceiveWatchers(response)
+
+                self._controller.log(
+                        'comms.handleReceivedPackets',
+                        'DEBUG',
+                        '%s packet received and processed' % protocol.getPacketName(response.getPayloadIdInt())
+                )
 
 
-    def disconnect(self):
-        pass
-
-
-    def bindSendWatcher(self, watcher):
-        pass
-
-
-    def bindRecieveWatcher(self, watcher):
-        pass
-
-
-    def send(self, packet):
-        pass
-
-
-    def recieve(self):
-        pass
-
-
-class CommsException(Exception):
-    pass
-
-
-class CannotconnectException(CommsException):
-    pass

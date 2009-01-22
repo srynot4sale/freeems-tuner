@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2008, 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -19,14 +19,8 @@
 
 
 import wx
-import comms
-import protocols
-import logging
-import datetime
-import gui
-import commsConnectWarning
+import gui, commsConnectWarning
 
-logger = logging.getLogger('gui.commsUtilityFirmwareHardResetButton')
 
 class commsUtilityFirmwareHardResetButton(wx.BoxSizer):
 
@@ -40,6 +34,8 @@ class commsUtilityFirmwareHardResetButton(wx.BoxSizer):
 
         wx.BoxSizer.__init__(self, wx.VERTICAL)
 
+        self._controller = parent.controller
+
         button_text  = 'The Big Red Button\n'
         button_text += '  (Hard EMS Reset)'
         self.button = wx.Button(parent, self.ID_SEND_FIRMWARE_RESET, button_text)
@@ -47,7 +43,6 @@ class commsUtilityFirmwareHardResetButton(wx.BoxSizer):
         self.button.SetForegroundColour(wx.WHITE)
 
         font = wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
-
         self.button.SetFont(font)
 
         self.Add((0,0), 1)
@@ -63,4 +58,5 @@ class commsUtilityFirmwareHardResetButton(wx.BoxSizer):
         if not commsConnectWarning.confirmConnected(gui.frame):
             return
 
-        protocols.getProtocol().sendUtilityHardResetRequest()
+        data = {'type': 'HardSystemReset'}
+        self._controller.action('comms.sendUtilityRequest', data)

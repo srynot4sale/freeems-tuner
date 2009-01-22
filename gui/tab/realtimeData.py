@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2008, 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -19,20 +19,23 @@
 
 
 import wx
-import logging
 
 import gui.realtimeDataInterface
 
-logger = logging.getLogger('gui.tabs.realtimeData')
 
 # Helper value for inserting spacing into sizers
 blank = (0,0)
 
+
 class tab(wx.Panel):
-    '''Real-time data stream display tab'''
+    '''
+    Real-time data stream display tab
+    '''
 
     def __init__(self, parent):
-        '''Setup interface elements'''
+        '''
+        Setup interface elements
+        '''
         wx.Panel.__init__(self, parent)
 
         self.interface = gui.realtimeDataInterface.realtimeDataInterface(self)

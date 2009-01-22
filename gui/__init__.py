@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2008, 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -18,25 +18,11 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import wx
-import os
-import version
-import comms
-import protocols
-import logging
-import libs.config as config
-import libs.data as data
-import settings
+import wx, os
+import version, comms, settings
+import libs.config as config, libs.data as data
 
-import debugFrame
-import commsTestFrame
-import tab.main
-import tab.debugLog
-import tab.realtimeData
-import tab.memoryUtils
-
-
-logger = logging.getLogger('gui')
+import debugFrame, commsTestFrame, tab.main, tab.realtimeData, tab.memoryUtils
 
 
 # Create event id's
@@ -65,6 +51,8 @@ frame = None
 class Frame(wx.Frame):
     """Frame with standard menu items."""
 
+    _controller = None
+
     revision = version.__revision__
     menus = {}
     tabctrl = None
@@ -73,13 +61,13 @@ class Frame(wx.Frame):
     # Iconized state (minimized)
     iconized = None
 
-    def __init__(self, parent=None, id=-1, title=version.__title__,
-                 pos=wx.DefaultPosition, size=(800,600), 
-                 style=wx.DEFAULT_FRAME_STYLE):
+    def __init__(self, controller):
         """Create a Frame instance."""
-        wx.Frame.__init__(self, parent, id, title, pos, size, style)
+        wx.Frame.__init__(self, parent = None, id = -1, title = version.__title__, size = (800,600))
 
-        settings.loadSettings()
+        self._controller = controller
+
+        self._debug('Gui frame initialised')
 
         self.CreateStatusBar()
         self.SetStatusText('Version %s' % self.revision)
@@ -109,6 +97,22 @@ class Frame(wx.Frame):
         self.Move(pos)
 
 
+    def getController(self):
+        return self._controller
+
+
+    def _debug(self, message, data = None):
+        '''
+        Send debug log message to controller
+        '''
+        self._controller.log(
+            'gui',
+            'DEBUG',
+            message,
+            data
+        )
+
+
     def BuildWindow(self):
         '''Build and place widgets'''
 
@@ -119,20 +123,16 @@ class Frame(wx.Frame):
         self.windows['main'] = window_main = tab.main.tab(self.tabctrl)
         self.windows['memory_utils'] = window_memory_utils = tab.memoryUtils.tab(self.tabctrl)
         self.windows['realtime_data'] = window_realtime_data = tab.realtimeData.tab(self.tabctrl)
-        self.windows['debug'] = window_debug = tab.debugLog.tab(self.tabctrl)
         tabctrl.AddPage(window_main, 'Main')
         tabctrl.AddPage(window_memory_utils, 'Memory Utils')
         tabctrl.AddPage(window_realtime_data, 'Real-Time Data')
-        tabctrl.AddPage(window_debug, 'Debug Log')
 
 
     def OnIdle(self, event = None):
         '''Idle UI handler'''
         # Save window settings
-        settings.saveSettings()
-
-        # Handle comms receive logic
-        self.CommsReceive()
+        #settings.saveSettings(self._controller)
+        pass
 
 
     def OnMove(self, event):
@@ -158,11 +158,11 @@ class Frame(wx.Frame):
         '''Event handler for closing.'''
         try:
             # Save any unsaved settings
-            settings.saveSettings()
+            settings.saveSettings(self._controller)
         except Exception, msg:
-            logger.error(msg)
-            logger.error('Error during shutdown')
+            self._debug('Error during shutdown', msg)
 
+        self._controller.shutdown()
         self.Destroy()
 
 
@@ -188,7 +188,7 @@ class Frame(wx.Frame):
         m.Append(ID_COMMS_CONNECT, '&Connect', 'Connect To Comms Port')
         m.Append(ID_COMMS_DISCONNECT, '&Disconnect', 'Disconnect From Comms Port')
         m.AppendSeparator()
-        m.Append(ID_COMMS_DATA_UPDATE, '&Update Comms Data Settings...', 'Update Comms Data Settings')
+        #m.Append(ID_COMMS_DATA_UPDATE, '&Update Comms Data Settings...', 'Update Comms Data Settings')
         m.Append(ID_COMMS_TESTS, 'Interface Protocol &Test...', 'Run interface tests on firmware')
 
         # Help
@@ -215,7 +215,7 @@ class Frame(wx.Frame):
 
         self.Bind(wx.EVT_MENU, self.CommsConnect, id=ID_COMMS_CONNECT)
         self.Bind(wx.EVT_MENU, self.CommsDisconnect, id=ID_COMMS_DISCONNECT)
-        self.Bind(wx.EVT_MENU, self.CommsUpdateData, id=ID_COMMS_DATA_UPDATE)
+        #self.Bind(wx.EVT_MENU, self.CommsUpdateData, id=ID_COMMS_DATA_UPDATE)
         self.Bind(wx.EVT_MENU, self.CommsTests, id=ID_COMMS_TESTS)
 
         self.Bind(wx.EVT_MENU, self.OnAbout, id=ID_ABOUT)
@@ -278,11 +278,6 @@ class Frame(wx.Frame):
         debugFrame.debugFrame(self)
 
 
-    def ShowMemoryRequestFrame(self, event):
-        '''Show memory request frame'''
-        memoryRequestFrame.memoryRequestFrame(self)
-
-
     def CommsConnect(self, event = None):
         '''Connect comms'''
         if self.CommsIsConnected():
@@ -336,14 +331,6 @@ class Frame(wx.Frame):
         comms.getConnection().disconnect()
 
 
-    def CommsReceive(self, event = None):
-        '''Check for any packets in the buffer'''
-        if not self.CommsIsConnected():
-            return
-
-        comms.getConnection().recieve()
-
-
     def CommsIsConnected(self):
         '''Check if comms is connected'''
         return comms.getConnection().isConnected()
@@ -373,37 +360,12 @@ class Frame(wx.Frame):
 
 
 # Bring up wxpython interface
-def load():
-    
-    app = wx.App()
+def load(controller):
 
+    application = wx.App()
+        
     global frame
-    frame = Frame()
+    frame = Frame(controller)
     frame.Show()
 
-    app.MainLoop()
-
-    return app
-
-
-#########################################################
-# User-defined layout main page
-# NOTE: This an example. not currently used
-def layout(frame):
-
-    # We have a 10 x 10 grid to layout in
-
-    # frame.place() parameters:
-    # - int, horizontal axis, top left of element
-    # - int, vertical axis, top left of element
-    # - element object
-    # - non default height of element
-    # - non default width of element
-
-    # commsDiagnostics is flexible
-    frame.place(0, 0, commsDiagnostics(), 5, 10) 
-    
-    # commsUtilityRequests is 3x3
-    frame.place(6, 0, commsUtilityRequests()) 
-
-
+    application.MainLoop()

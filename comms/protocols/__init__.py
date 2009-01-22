@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2008, 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -17,9 +17,9 @@
 #
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
+import types
 
 import libs.config
-import logging, types
 
 
 # Generic protocol constants
@@ -34,47 +34,40 @@ BIT6  = 0x40	# 7th bit	= 64
 BIT7  = 0x80	# 8th bit	= 128	
 
 
-# Currently used protocol
-protocol = None
-plugin = None
+def getProtocol(controller):
+    '''
+    Return protocol, and if none exists - load
+    '''
+    return loadDefault(controller)
 
 
-def getProtocol():
-    '''Return protocol, and if none exists - load'''
-    if not protocol:
-        loadDefault()
-
-    return protocol
-
-
-def loadDefault():
-    '''Load default protocol'''
+def loadDefault(controller):
+    '''
+    Load default protocol
+    '''
 
     # Load config
-    def_protocol = libs.config.load('Protocol', 'default')
-    version = libs.config.load('Protocol', 'default_version')
+    def_protocol = libs.config.get('Protocol', 'default')
+    version = libs.config.get('Protocol', 'default_version')
 
     # Should end up in the format:
-    #   'protocols.FreeEMS.0_17,
+    #   'comms.protocols.FreeEMS.0_17,
     #
     # Which would refer to the file:
-    #   $cwd/protocols/FreeEMS/0_17.py
-    #
-    path = 'protocols.'+def_protocol+'.'+version
+    #   $cwd/comms/protocols/FreeEMS/0_17.py
 
-    global plugin
-    plugin = def_protocol+'.'+version
+    path = 'comms.protocols.'+def_protocol+'.'+version
 
-    logger = logging.getLogger('protocols')
-    logger.info('Loading protocol module: %s' % path)
+    controller.log('comms.protocol', 'DEBUG', 'Loading protocol plugin: %s' % path)
 
     # Dynamically import
-    global protocol
-    protocol = __import__(path, globals(), locals(), 'protocol').protocol()
+    return __import__(path, globals(), locals(), version)
 
 
 def to8bit(value, length = None):
-    '''Convert a var to an 8 bit list'''
+    '''
+    Convert a var to an 8 bit list
+    '''
     converted = []
 
     if not isinstance(value, list):
@@ -107,7 +100,9 @@ def to8bit(value, length = None):
 
 
 def from8bit(value):
-    '''Convert an 8 bit list to a var'''
+    '''
+    Convert an 8 bit list to a var
+    '''
     converted = 0
     i = 0
 
@@ -119,13 +114,15 @@ def from8bit(value):
             converted += num
         else:
             converted += num * (i * 256)
-        i += 1               #No i++ in Python? Really?
+        i += 1
         
     return converted
 
 
 def toHex(bytes):
-    '''Convert a list of bytes to a list of hex strings'''
+    '''
+    Convert a list of bytes to a list of hex strings
+    '''
     raw_hex = []
     
     for byte in bytes:
@@ -139,9 +136,20 @@ def toHex(bytes):
     return raw_hex
 
 
-class interface:
-    '''Base class for all protocol plugins'''
+def toHexString(bytes):
+    '''
+    Convert a list of bytes to a string of hex
+    '''
+    return ','.join(toHex(bytes))
 
-    def isConnected(self):
-        pass
 
+def toBinaryString(bytes):
+    '''
+    Convert a list of bytes to a binary write safe string
+    '''
+    string = ''
+
+    for byte in bytes:
+        string += chr(byte)
+
+    return string

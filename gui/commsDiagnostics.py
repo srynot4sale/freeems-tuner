@@ -18,17 +18,10 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import wx
-import wx.grid as grid
-import comms
-import protocols
-import gui
-import logging
-import datetime
-import settings
+import wx, wx.grid as grid
 
+import comms, gui, datetime, settings, action, comms.interface, comms.protocols as protocols
 
-logger = logging.getLogger('gui.commsDiagnostics')
 
 class commsDiagnostics(grid.Grid):
     
@@ -63,8 +56,11 @@ class commsDiagnostics(grid.Grid):
 
         # Bind to connection
         self.conn = comms.getConnection()
-        self.conn.bindSendWatcher(self.printSentPacket)
-        self.conn.bindRecieveWatcher(self.printRecievedPacket)
+        self.conn.bindSendWatcher(self)
+        self.conn.bindReceiveWatcher(self)
+
+        self.Bind(comms.interface.EVT_SEND, self.printPacket)
+        self.Bind(comms.interface.EVT_RECEIVE, self.printPacket)
 
 
     def onResize(self, event):
@@ -76,25 +72,22 @@ class commsDiagnostics(grid.Grid):
             r += 1
 
 
-    def printSentPacket(self, request):
+    def printPacket(self, event):
         '''Print sent packet to grid'''
-        self.insertRow(request)
-
-    
-    def printRecievedPacket(self, response):
-        '''Print received packet to grid'''
-        self.insertRow(response)
+        self.insertRow(event.packet)
 
 
     def insertRow(self, packet):
-        '''Insert row into grid'''
+        '''
+        Insert row into grid
+        '''
         time = datetime.datetime.time(datetime.datetime.now())
         header = self.getHeaderFlags(packet)
         payload_hex = packet.getPayloadBytes()
         
         #Format stuff before printing
         payload_id = packet.getPayloadIdInt()
-        payload_id_hum = protocols.getProtocol().getPacketType(payload_id)
+        payload_id_hum = comms.getConnection().getProtocol().getPacketName(payload_id)
         payload_hex_hum = self.formatPayloadHex(payload_hex)
 
         self.AppendRows()
@@ -131,7 +124,7 @@ class commsDiagnostics(grid.Grid):
                 # Get offset and pad with 0's
                 offset = hex(i)[2:5].rjust(4, '0')
                 
-                output += offset+':  '
+                output += offset+': '
                 
             i += 1
             output += hex(raw_hex)[2:5].rjust(2, '0')
@@ -139,7 +132,7 @@ class commsDiagnostics(grid.Grid):
             bytes.append(raw_hex)
 
             if i % 8 == 0 and i % 16:
-                output += " "
+                output += "  "
 
         # Pad the end
         while i % 16:
@@ -168,7 +161,9 @@ class commsDiagnostics(grid.Grid):
 
 
     def getHeaderFlags(self, packet):
-        '''Retrieve noterised version of flag bits'''
+        '''
+        Retrieve noterised version of flag bits
+        '''
         ascii = str()
 
         if packet.hasHeaderProtocolFlag():
@@ -183,3 +178,20 @@ class commsDiagnostics(grid.Grid):
             ascii += 'A'
 
         return ascii
+
+
+class actions():
+    '''
+    Modules' actions
+    '''
+
+    class printPacket(action.action):
+        '''
+        Save config to file
+        '''
+
+        def run(self):
+            '''
+            Print packet to diagnostics gui
+            '''
+            gui.frame.windows['main'].comms.printPacket(self._data)

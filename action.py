@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -18,21 +18,25 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import libs.config as config
+class action():
+    '''
+    Inherited interface for actions
+    '''
+    _controller = None
+    _data = None
 
-_section = 'UI_Settings'
+    def __init__(self, controller, data):
+        '''
+        Handles property setup and other generic code
+        '''
+        self._controller = controller
+        self._data = data
 
 
-def set(setting, value):
-    '''Update a UI setting value'''
-    return config.set(_section, setting, value)
+    def run(self):
+        '''
+        Method run by controller, to be overwritten in
+        child classes
+        '''
+        pass
 
-
-def get(setting, default):
-    '''Get a UI setting value'''
-    return config.get(_section, setting, default)
-
-
-def saveSettings(controller):
-    '''Save gui settings'''
-    controller.actionLowPriority('libs.config.save')
