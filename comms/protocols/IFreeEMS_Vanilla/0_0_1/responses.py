@@ -25,11 +25,11 @@ def getProtocolPacket(id):
     Return instance of requested protocol packet
     '''
     packetname = None
-
+    
     # Check if we have a packet title for this id
     if id in protocol.RESPONSE_PACKET_TITLES:
         packetname = 'response'+protocol.RESPONSE_PACKET_TITLES[id]
-
+    
     # Check if we have a class definition for this packet title
     if packetname and packetname in globals():
         return globals()[packetname]()

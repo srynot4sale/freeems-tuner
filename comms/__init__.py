@@ -103,7 +103,6 @@ class actions:
             while self._data['queue']:
 
                 response = self._data['queue'].pop(0)
-                continue
 
                 # If generic response (unknown packet type), trigger watchers
                 if isinstance(response, protocol.responses.responseGeneric):
