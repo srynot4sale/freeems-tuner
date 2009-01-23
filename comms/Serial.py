@@ -142,8 +142,6 @@ class connection(comms.interface.interface):
         # Log packet hex
         self._debug('Packet sent to Serial comms connection: %s' % ','.join(protocols.toHex(raw)))
 
-        self.runSendWatchers(packet)
-
 
     def run(self):
         '''Check for and receive packets waiting in the connection'''
