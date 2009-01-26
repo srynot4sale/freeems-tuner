@@ -161,7 +161,10 @@ class thread(libs.thread.thread):
 
             # We are in a packet, save byte unless we find an end byte
             elif state == STATE_IN_PACKET:
-                if byte == protocol.END_BYTE:
+                if byte == protocol.START_BYTE:
+                    del buffer[0:index]
+                    raise ParsingException, 'Found a start byte mid-way though packet'
+                elif byte == protocol.END_BYTE:
                     state = STATE_NOT_PACKET
                     packet.append(protocol.END_BYTE)
                     break
