@@ -49,19 +49,6 @@ class packet:
         self._headerFlags = flags
 
 
-    def setHeaderProtocolFlag(self, bool = True):
-        '''Flag this as a protocol packet'''
-        if bool:
-            self._headerFlags |= protocol.HEADER_IS_PROTO
-        else:
-            self._headerFlags &= ~protocol.HEADER_IS_PROTO
-        
-
-    def hasHeaderProtocolFlag(self):
-        '''Return if this is a protocol packet'''
-        return self._headerFlags & protocol.HEADER_IS_PROTO
-
-
     def setHeaderAckFlag(self, bool = True):
         '''Flag this packet as sending/requiring an ack'''
         if bool:
@@ -161,7 +148,6 @@ class packet:
         '''
         Generate a packet
         ''' 
-
         packet = []
 
         # Ensure the payload length packet header is set if required

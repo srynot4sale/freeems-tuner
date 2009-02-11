@@ -24,14 +24,13 @@ import __init__ as protocol
 class request(packet.packet):
 
     def __init__(self):
-        self.setHeaderProtocolFlag()
+        pass
 
 
 # Interface version request
 class requestInterfaceVersion(request):
 
     def __init__(self):
-
         request.__init__(self)
         self.setPayloadId(protocol.REQUEST_INTERFACE_VERSION)
 
@@ -40,7 +39,6 @@ class requestInterfaceVersion(request):
 class requestFirmwareVersion(request):
 
     def __init__(self):
-
         request.__init__(self)
         self.setPayloadId(protocol.REQUEST_FIRMWARE_VERSION)
 
@@ -49,7 +47,6 @@ class requestFirmwareVersion(request):
 class requestMaxPacketSize(request):
 
     def __init__(self):
-
         request.__init__(self)
         self.setPayloadId(protocol.REQUEST_MAX_PACKET_SIZE)
 
@@ -58,7 +55,6 @@ class requestMaxPacketSize(request):
 class requestEchoPacketReturn(request):
 
     def __init__(self):
-
         request.__init__(self)
         self.setPayloadId(protocol.REQUEST_ECHO_PACKET_RETURN)
         self.setPayload('test')
@@ -68,9 +64,7 @@ class requestEchoPacketReturn(request):
 class _requestMemory(request):
 
     def __init__(self):
-
         request.__init__(self)
-        self.setHeaderProtocolFlag(False)
 
 
     def setBlockId(self, id):
@@ -83,7 +77,7 @@ class requestRetrieveBlockFromRAM(_requestMemory):
 
     def __init__(self):
         _requestMemory.__init__(self)
-        self.setPayloadId(protocol.RETRIEVE_BLOCK_FROM_RAM)
+        self.setPayloadId(protocol.REQUEST_RETRIEVE_BLOCK_FROM_RAM)
 
 
 # Firmware memory block request
@@ -91,7 +85,7 @@ class requestRetrieveBlockFromFlash(_requestMemory):
 
     def __init__(self):
         _requestMemory.__init__(self)
-        self.setPayloadId(protocol.RETRIEVE_BLOCK_FROM_FLASH)
+        self.setPayloadId(protocol.REQUEST_RETRIEVE_BLOCK_FROM_FLASH)
 
 
 # Firmware memory block request
@@ -99,14 +93,13 @@ class requestBurnBlockFromRamToFlash(_requestMemory):
         
     def __init__(self):
         _requestMemory.__init__(self)
-        self.setPayloadId(protocol.BURN_BLOCK_FROM_RAM_TO_FLASH)
+        self.setPayloadId(protocol.REQUEST_BURN_BLOCK_FROM_RAM_TO_FLASH)
             
 
 # Firmware system reset request (hard)
 class requestHardSystemReset(request):
 
     def __init__(self):
-
         request.__init__(self)
         self.setPayloadId(protocol.REQUEST_HARD_SYSTEM_RESET)
 
@@ -115,6 +108,5 @@ class requestHardSystemReset(request):
 class requestSoftSystemReset(request):
 
     def __init__(self):
-
         request.__init__(self)
         self.setPayloadId(protocol.REQUEST_SOFT_SYSTEM_RESET)

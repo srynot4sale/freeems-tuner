@@ -20,7 +20,7 @@
 import comms.protocols as protocols, packet, __init__ as protocol
 
 
-def getProtocolPacket(id):
+def getPacket(id):
     '''
     Return instance of requested protocol packet
     '''
@@ -35,13 +35,6 @@ def getProtocolPacket(id):
         return globals()[packetname]()
     else:
         return responseGeneric()
-
-
-def getFirmwarePacket(id):
-    '''
-    Return instance of requested firmware packet
-    '''
-    return responseGeneric()
 
 
 class response(packet.packet):
@@ -59,7 +52,6 @@ class response(packet.packet):
         self._validation_rules = {
             'preset_payload_length': False,
             'requires_length': False,
-            'firmware_type': False,
         }
 
 
@@ -67,7 +59,6 @@ class response(packet.packet):
         '''
         Validate packet based on validation rules
         '''
-            
         rules = self._validation_rules
         pid = self.getPayloadIdInt()
 
@@ -88,20 +79,11 @@ class response(packet.packet):
             if self.getPayloadLengthInt() != length:
                 raise Exception, 'Packet type %s, payload length of %s does not match parsed length of %s' % (pid, self.getPayloadLengthInt(), length)
 
-        if rules['firmware_type']:
-            # Check firmware type flag is set
-            if self.hasHeaderProtocolFlag():
-                raise Exception, 'Packet type %s requires the firmware flag is set' % pid
-        elif rules['firmware_type'] == False:
-            if not self.hasHeaderProtocolFlag():
-                raise Exception, 'Packet type %s requires the protocol flag is set' % pid
-
 
     def parsePayload(self, payload):
         '''
         Parse the payload
         '''
-
         if self.hasHeaderLengthFlag():
             # If length set, account for 2 length bytes
             self.setPayloadLengthParsed(payload[0:2])
@@ -118,8 +100,6 @@ class responseGeneric(response):
 
     def __init__(self):
         response.__init__(self)
-        rules = self._validation_rules
-        rules['firmware_type'] = None
 
 
 class responseInterfaceVersion(response):
@@ -137,7 +117,6 @@ class responseInterfaceVersion(response):
         '''
         Run code to make an acurate test response
         '''
-        self.setHeaderProtocolFlag()
         self.setPayloadId(protocol.RESPONSE_INTERFACE_VERSION)
         self.setPayload('IFreeEMS_Vanilla001')
 
@@ -157,7 +136,6 @@ class responseFirmwareVersion(response):
         '''
         Run code to make an acurate test response
         '''
-        self.setHeaderProtocolFlag()
         self.setPayloadId(protocol.RESPONSE_FIRMWARE_VERSION)
         self.setPayload('FreeEMS_Vanilla_Test')
 
@@ -177,7 +155,6 @@ class responseMaxPacketSize(response):
         '''
         Run code to make an acurate test response
         '''
-        self.setHeaderProtocolFlag()
         self.setPayloadId(protocol.RESPONSE_MAX_PACKET_SIZE)
         self.setPayload([0, 255])
 
@@ -196,7 +173,6 @@ class responseEchoPacket(response):
         '''
         Run code to make an acurate test response
         '''
-        self.setHeaderProtocolFlag()
         self.setPayloadId(protocol.RESPONSE_ECHO_PACKET_RETURN)
         self.setPayload(request.getPacketRawBytes())
 
@@ -208,5 +184,4 @@ class responseBasicDatalog(response):
     def __init__(self):
         response.__init__(self)
         rules = self._validation_rules
-        rules['firmware_type'] = True
         rules['requires_length'] = True

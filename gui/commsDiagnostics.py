@@ -166,11 +166,6 @@ class commsDiagnostics(grid.Grid):
         '''
         ascii = str()
 
-        if packet.hasHeaderProtocolFlag():
-            ascii += 'P'
-        else:
-            ascii += 'I'
-
         if packet.hasHeaderLengthFlag():
             ascii += 'L'
 

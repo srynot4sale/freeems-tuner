@@ -235,10 +235,7 @@ class thread(libs.thread.thread):
             raise ParsingException, 'Packet incorrectly processed, %d bytes left' % (len(packet) - 1 - index)
 
         # Create response packet object
-        #if flags & protocol.HEADER_IS_PROTO:
-        response = responses.getProtocolPacket(payload_id)
-        #else:
-        #    response = responses.getFirmwarePacket(payload_id)
+        response = responses.getPacket(payload_id)
 
         # Populate data
         response.parseHeaderFlags(contents['flags'])
