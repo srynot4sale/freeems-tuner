@@ -132,7 +132,7 @@ class interface(libs.thread.thread):
     
     def _receive(self, buffer):
         '''
-        Sending a raw buffer to the receive thread
+        Sending raw buffer to the receive thread
         '''
         self._receiveThread.received(buffer)
 

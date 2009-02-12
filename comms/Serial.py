@@ -41,10 +41,6 @@ class connection(comms.interface.interface):
         rtscts      = 0
 
 
-    # Unprocessed buffer contents
-    _buffer = []
-
-
     def __init__(self, name, controller):
         '''
         Initialise comms thread and setup serial
@@ -135,12 +131,11 @@ class connection(comms.interface.interface):
         '''
         Send a packet over the connection
         '''
-        raw = protocols.to8bit( packet.getPacketRawBytes() )
-        self._getConnection().write(protocols.toBinaryString(raw))
+        self._getConnection().write(packet.getBinary())
         self._getConnection().flushOutput()
         
         # Log packet hex
-        self._debug('Packet sent to Serial comms connection: %s' % ','.join(protocols.toHex(raw)))
+        self._debug('Packet sent to Serial comms connection: %s' % packet.getHexString())
 
 
     def run(self):
@@ -174,13 +169,7 @@ class connection(comms.interface.interface):
             conn = self._getConnection()
             buffer_size = conn.inWaiting()
             if buffer_size:
-                buffer = conn.read(buffer_size)
-
-                for char in buffer:
-                    self._buffer.append(ord(char))
-
-                self._receive(self._buffer)
-                self._buffer = []
+                self._receive(conn.read(buffer_size))
 
             # If stuff in send buffer
             while len(self._queue):

@@ -66,9 +66,9 @@ def loadDefault(controller):
 
 def to8bit(value, length = None):
     '''
-    Convert a var to an 8 bit list
+    Convert a var to an 8 bit string
     '''
-    converted = []
+    converted = ''
 
     if not isinstance(value, list):
         if isinstance(value, str):
@@ -83,15 +83,14 @@ def to8bit(value, length = None):
             byte = ord(byte)
 
         if byte > 256:
-            converted.append(byte >> 8)
+            converted += chr(byte >> 8)
             byte &= 0xFF
 
-        converted.append(byte)
+        converted += chr(byte)
 
     # If a specified length is required
     if length and len(converted) < length:
-        padding = list(range(0, (length - len(converted))))
-        converted = padding + converted
+        converted.rjust(length, chr(0x00))
 
     elif length and len(converted) > length:
         raise IndexError, 'Bytes larger than specified length'
@@ -101,15 +100,13 @@ def to8bit(value, length = None):
 
 def from8bit(value):
     '''
-    Convert an 8 bit list to a var
+    Convert an 8 bit string to an integer
     '''
     converted = 0
     i = 0
 
-    if not isinstance(value, list):
-        raise TypeError, 'Unexpected type recieved'
-
-    for num in reversed(value):
+    for byte in reversed(value):
+        num = ord(byte)
         if i < 1:
             converted += num
         else:
@@ -121,35 +118,16 @@ def from8bit(value):
 
 def toHex(bytes):
     '''
-    Convert a list of bytes to a list of hex strings
+    Convert a string to a human readable hex string
     '''
-    raw_hex = []
+    hex = []
     
     for byte in bytes:
-        byte = hex(byte).upper().replace('X','x')
+        byte = hex(ord(byte)).upper().replace('X','x')
         
         if len(byte) == 3:
             byte = '0x0'+byte[-1]
 
-        raw_hex.append(byte)
-            
-    return raw_hex
+        hex.append(byte)
 
-
-def toHexString(bytes):
-    '''
-    Convert a list of bytes to a string of hex
-    '''
-    return ','.join(toHex(bytes))
-
-
-def toBinaryString(bytes):
-    '''
-    Convert a list of bytes to a binary write safe string
-    '''
-    string = ''
-
-    for byte in bytes:
-        string += chr(byte)
-
-    return string
+    return ','.join(hex)

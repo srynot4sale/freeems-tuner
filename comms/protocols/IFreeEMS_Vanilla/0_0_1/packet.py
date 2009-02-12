@@ -24,7 +24,7 @@ class packet:
     '''Serial packet base definition'''
 
     # Flags
-    _headerFlags = protocols.ZEROS
+    _headerFlags = chr(protocols.ZEROS)
 
     # Payload id
     _payload_id = 0
@@ -41,12 +41,12 @@ class packet:
 
     def getHeaderFlags(self):
         '''Returns header flags'''
-        return self._headerFlags
+        return chr(self._headerFlags)
 
 
     def parseHeaderFlags(self, flags):
         '''Saves header flags'''
-        self._headerFlags = flags
+        self._headerFlags = ord(flags)
 
 
     def setHeaderAckFlag(self, bool = True):
@@ -77,7 +77,7 @@ class packet:
 
     def setPayloadId(self, id):
         '''Set payload id'''
-        if isinstance(id, list):
+        if isinstance(id, string):
             id = protocols.from8bit(id)
 
         self._payload_id = id
@@ -97,20 +97,12 @@ class packet:
 
 
     def setPayload(self, payload):
-        '''Save payload as 8bit bytes'''
-        if isinstance(payload, list):
-            self._payload = payload
-        else:
-            self._payload = protocols.to8bit(payload)
+        '''Save payload as 8bit string'''
+        self._payload = payload
 
 
     def getPayload(self):
         '''Return payload as string'''
-        return self.__str__(self.getPayloadBytes())
-
-
-    def getPayloadBytes(self):
-        '''Return payload as bytes for inserting directly into packet'''
         return self._payload
 
 
@@ -121,20 +113,7 @@ class packet:
 
     def getPayloadLengthInt(self):
         '''Return length of payload as int'''
-        return len(self.getPayloadBytes())
-
-
-    def setPayloadLengthParsed(self, length):
-        '''Save parsed payload length'''
-        if isinstance(length, list):
-            length = protocols.from8bit(length)
-
-        self._payload_parsed_length = length
-
-
-    def getPayloadLengthParsed(self):
-        '''Return parsed payload length'''
-        return self._payload_parsed_length
+        return len(self.getPayload())
 
 
     def createTestResponse(self, request):
@@ -148,27 +127,24 @@ class packet:
         '''
         Generate a packet
         ''' 
-        packet = []
+        packet = ''
 
         # Ensure the payload length packet header is set if required
-        if self.getPayloadLength():
+        if self.getPayloadLengthInt():
             self.setHeaderLengthFlag()
 
-        packet.append   ( self.getHeaderFlags() )
-        packet.extend   ( self.getPayloadId() )
+        packet += self.getHeaderFlags()
+        packet += self.getPayloadId()
 
-        if self.getPayloadLength():
-            packet.extend   ( self.getPayloadLength() )
-            packet.extend   ( self.getPayloadBytes() )
+        if self.getPayloadLengthInt():
+            packet += self.getPayloadLength()
+            packet += self.getPayload()
 
         checksum = getChecksum(packet)
         packet = escape(packet)
 
-        packet.append   ( checksum )
-        packet.insert   ( 0, protocol.START_BYTE )
-        packet.append   ( protocol.END_BYTE )
-        
-        return packet
+        packet += checksum
+        return protocol.START_BYTE + packet + protocol.END_BYTE
 
 
     def prepare(self):
@@ -198,7 +174,7 @@ def escape(packet):
     '''
     Escape a raw packet
     '''
-    escaped = []
+    escaped = ''
 
     for byte in packet:
 

@@ -28,7 +28,7 @@ class connection(comms.interface.interface):
     '''
 
     # Fake receive buffer
-    _buffer = []
+    _buffer = ''
 
 
     def __init__(self, name, controller):
@@ -88,10 +88,10 @@ class connection(comms.interface.interface):
             # In this fake comms plugin, all sent packets
             # are reflected back at the moment
             response.prepare()
-            self._buffer.extend(response.getPacketRawBytes())
+            self._buffer += response.getBinary()
 
         # Log packet hex
-        self._debug('Packet sent to test comms connection: %s' % protocols.toHexString(packet.getPacketRawBytes()))
+        self._debug('Packet sent to test comms connection: %s' % packet.getHexString())
 
 
     def run(self):
@@ -126,7 +126,7 @@ class connection(comms.interface.interface):
             # If stuff in receive buffer
             if len(self._buffer):
                 self._receive(self._buffer)
-                self._buffer = []
+                self._buffer = ''
 
             # If stuff in send buffer
             while len(self._queue):

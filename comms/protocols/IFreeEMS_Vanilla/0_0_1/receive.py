@@ -22,11 +22,6 @@ import copy, types
 import libs.thread, comms.protocols as protocols, __init__ as protocol, packet as packetlib, responses
 
 
-STATE_NOT_PACKET            = 0
-STATE_ESCAPE_BYTE           = 1
-STATE_IN_PACKET             = 2
-
-
 class thread(libs.thread.thread):
     '''
     Thread for handling the receive queue and
@@ -36,7 +31,7 @@ class thread(libs.thread.thread):
     # Comms plugin that created this thread
     comms = None
 
-    # Buffer of packet request to process into packet classes
+    # Buffer of raw data to process into packet classes
     _buffer = []
 
     # Queue of processed packets ready to be handled by the controller
@@ -58,7 +53,7 @@ class thread(libs.thread.thread):
         '''
         Add to buffer and wake thread
         '''
-        self._buffer.extend(buffer)
+        self._buffer.append(buffer)
         #self._debug('Received %d bytes of buffer' % len(buffer))
         self.wake()
 
@@ -82,22 +77,29 @@ class thread(libs.thread.thread):
     def _process(self):
         '''
         Processes buffer into packets
-        '''
-        # Check for any complete packets
-        cache = copy.copy(self._buffer)
 
-        while self._buffer:
+        The reason for having a cache string and not processing the raw
+        buffer directly is to keep things thread safe simpler. By processing
+        the cache and only adding to it from the same thread, we can be sure
+        it is not going to be added to mid-processing.
+        '''
+        cache = ''
+
+        # Check for any complete packets
+        while self._buffer or cache:
+            
+            if len(self._buffer):
+                cache += self._buffer.pop(0)
+
             try:
-                packet = self._processReceiveBuffer(self._buffer)
+                packet = self._processBuffer(cache)
             except ParsingException, msg:
-                # Get bad buffer (what has been removed from buffer already)
-                bad_buffer = cache[0:(len(cache) - len(self._buffer))]
-                self._error('processReceiveBuffer could not parse buffer. %s' % msg, protocols.toHexString(bad_buffer))
+                self._error('processReceiveBuffer could not parse buffer. %s' % msg, protocols.toHex(cache))
                 continue
             except Exception, msg:
-                # Program error, wipe buffer
-                self._error('processReceiveBuffer threw exception, wiping buffer: %s' % msg, cache)
-                self._buffer = []
+                # Program error, clean buffer
+                self._error('processReceiveBuffer threw exception, wiping buffer: %s' % msg, protocols.toHex(cache))
+                cache = ''
                 continue
         
             if not packet:
@@ -110,132 +112,77 @@ class thread(libs.thread.thread):
             self._controller.action('comms.handleReceivedPackets', data)
    
 
-    def _processReceiveBuffer(self, buffer):
+    def _processBuffer(self, buffer):
         '''
         Check for any incoming packets and return if found
 
-        - Keep removing bytes until START_BYTE found
+        - Removing anything before first START_BYTE
         - Check for END_BYTE
         - Loop though buffer copy
             - If complete packet found, remove length from buffer
             - If incomplete packet, leave buffer and try again later
         '''
         # Remove any buffer before the first start byte
-        bad_bytes = False
-        while len(buffer) and buffer[0] != protocol.START_BYTE:
-            # Remove byte and append to bad_buffer
-            buffer.pop(0)
-            bad_bytes = True
+        if buffer[0] !== protocol.START_BYTE:
+            if protocol.START_BYTE not in buffer:
+                tmp = buffer
+                del buffer[:]
+            else:
+                index = buffer.index(protocol.START_BYTE)
+                tmp = buffer[:index]
+                del buffer[:index]
 
-        if bad_bytes:
-            raise ParsingException, 'Bad/incomplete packet found in buffer before start byte'
+            raise ParsingException, 'Bad/incomplete packet found in buffer before start byte %s' % protocol.toHex(tmp)
 
-        # If no buffer left or no end byte in buffer, return
-        if not len(buffer) or protocol.END_BYTE not in buffer:
+        # If no end byte in buffer, return as it must not contain a complete packet
+        if protocol.END_BYTE not in buffer:
             return
 
-        # Begin state control machine :-)
-        state = STATE_NOT_PACKET
-        packet = []
-        index = 0
+        # Grab packet from buffer (minus start and end bytes)
+        end = buffer.index(protocol.END_BYTE)
+        packet = buffer[1:end-1] 
 
-        # Loop through buffer_copy
-        buffer_copy = copy.copy(buffer)
+        # Clear processed buffer
+        del buffer[:end]
 
-        for byte in buffer_copy:
-
-            # Keep track of how many bytes we have processed
-            index += 1
-
-            # If have not started a packet yet check for start_byte
-            if state == STATE_NOT_PACKET:
-                # If not a start byte, we should never have got here
-                if byte != protocol.START_BYTE:
-                    del buffer[0:index]
-                    raise ParsingException, 'Should never have got here, expecting a start byte'
-                # Otherwise, start packet
-                else:
-                    state = STATE_IN_PACKET
-                    packet.append(protocol.START_BYTE)
-                    continue
-
-            # We are in a packet, save byte unless we find an end byte
-            elif state == STATE_IN_PACKET:
-                if byte == protocol.START_BYTE:
-                    del buffer[0:index]
-                    raise ParsingException, 'Found a start byte mid-way though packet'
-                elif byte == protocol.END_BYTE:
-                    state = STATE_NOT_PACKET
-                    packet.append(protocol.END_BYTE)
-                    break
-                elif byte == protocol.ESCAPE_BYTE:
-                    state = STATE_ESCAPE_BYTE
-                    continue
-                else:
-                    packet.append(byte)
-                    continue
-
-            # If we are in escape mode (previous byte was an escape), escape byte
-            elif state == STATE_ESCAPE_BYTE:
-                esc_byte = byte ^ 0xFF
-                
-                # Check it is a legitimately escaped byte
-                if esc_byte in (protocol.START_BYTE, protocol.ESCAPE_BYTE, protocol.END_BYTE):
-                    packet.append(esc_byte)
-                    state = STATE_IN_PACKET
-                    continue
-                else:
-                    del buffer[0:index]
-                    raise ParsingException, 'Wrongly escaped byte found in buffer: 0x%X' % esc_byte
-        
-        # Check if we have a complete packet
-        if len(packet) and state == STATE_NOT_PACKET:
-
-            # Remove this byte from buffer as it has been processed
-            del buffer[0:index]
-            return self._processIncomingPacket(packet)
+        # Process packet
+        return self._processIncomingPacket(packet)
 
 
     def _processIncomingPacket(self, packet):
         '''
         Takes a raw packet, checks it and returns the correct packet class
         '''
-        contents = {}
-        contents['flags'] = None
-        contents['payload_id'] = None
-        contents['payload'] = []
-        contents['checksum'] = None
+        # Check for special bytes n packet that shouldn't be there
+        if (protocol.START_BYTE, protocol.END_BYTE) in packet:
+            raise ParsingException, 'Unescaped bytes found in packet: %s' % protocols.toHex(packet)
+        
+        # Process escapes
+        while protocol.ESCAPE_BYTE in packet:
+            i = packet.index(protocol.ESCAPE_BYTE)
+            if packet[i + 1] in (protocol.START_BYTE, protocol.END_BYTE, protocol.ESCAPE_BYTE):
+                del packet[i]
+                # Convert escaped byte to an integer to XOR, and then convert back to a string
+                packet[i] = chr(ord(packet[i]) ^ 0xFF)
+            else:
+                raise ParsingException, 'Wrongly escaped byte found in packet: %s' % protocols.toHex(packet)
 
-        index = 1
-
-        # Grab flags
-        contents['flags'] = flags = packet[index]
-        index += 1
-
-        # Grab payload id
-        contents['payload_id'] = payload_id = protocols.from8bit(packet[index:index+2])
-        index += 2
-
-        # Grab payload
-        contents['payload'] = payload = packet[index:(len(packet) - 2)]
-        index += len(payload)
-
-        # Grab checksum
-        contents['checksum'] = checksum = packet[index]
-        index += 1
+        # Split up packet
+        contents = {
+                'flags':        packet[0],
+                'payload_id':   protocols.from8bit(packet[1:2]),
+                'payload':      packet[3:-2]
+                'checksum':     packet[-1]
+        }
 
         # Check checksum
-        gen_checksum = packetlib.getChecksum(packet[1:index-1])
+        gen_checksum = packetlib.getChecksum(packet)
 
-        if checksum != gen_checksum:
-            raise ParsingException, 'Checksum is incorrect! Provided: %d, generated: %d' % (checksum, gen_checksum)
-
-        # Just double check we only have one byte left
-        if index != (len(packet) - 1):
-            raise ParsingException, 'Packet incorrectly processed, %d bytes left' % (len(packet) - 1 - index)
+        if contents['checksum'] != gen_checksum:
+            raise ParsingException, 'Checksum is incorrect! Provided: %d, generated: %d' % (contents['checksum'], gen_checksum)
 
         # Create response packet object
-        response = responses.getPacket(payload_id)
+        response = responses.getPacket(contents['payload_id'])
 
         # Populate data
         response.parseHeaderFlags(contents['flags'])

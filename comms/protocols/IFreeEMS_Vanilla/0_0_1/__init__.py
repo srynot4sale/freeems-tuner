@@ -21,9 +21,9 @@
 import comms.protocols as protocols, send, receive, requests, responses, test
 
 
-START_BYTE = 0xAA
-END_BYTE = 0xCC
-ESCAPE_BYTE = 0xBB
+START_BYTE          = chr(0xAA)
+END_BYTE            = chr(0xCC)
+ESCAPE_BYTE         = chr(0xBB)
 
 HEADER_HAS_ACK      = protocols.BIT0
 HEADER_IS_NACK      = protocols.BIT1
