@@ -107,10 +107,9 @@ class interface(libs.thread.thread):
         '''
         Return (and load if necessary) protocol interface
         '''
-        if self._protocol:
-            return self._protocol
-
+        if not self._protocol:
         self._protocol = protocols.getProtocol(self._controller)
+
         return self._protocol
 
 
