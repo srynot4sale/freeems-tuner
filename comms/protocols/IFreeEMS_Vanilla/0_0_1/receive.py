@@ -123,7 +123,7 @@ class thread(libs.thread.thread):
             - If incomplete packet, leave buffer and try again later
         '''
         # Remove any buffer before the first start byte
-        if buffer[0] !== protocol.START_BYTE:
+        if buffer[0] != protocol.START_BYTE:
             if protocol.START_BYTE not in buffer:
                 tmp = buffer
                 del buffer[:]
@@ -160,7 +160,7 @@ class thread(libs.thread.thread):
         # Process escapes
         while protocol.ESCAPE_BYTE in packet:
             i = packet.index(protocol.ESCAPE_BYTE)
-            if packet[i + 1] in (protocol.START_BYTE, protocol.END_BYTE, protocol.ESCAPE_BYTE):
+            if packet[i + 1] in protocol.SPECIAL_BYTES:
                 del packet[i]
                 # Convert escaped byte to an integer to XOR, and then convert back to a string
                 packet[i] = chr(ord(packet[i]) ^ 0xFF)
@@ -170,8 +170,8 @@ class thread(libs.thread.thread):
         # Split up packet
         contents = {
                 'flags':        packet[0],
-                'payload_id':   protocols.from8bit(packet[1:2]),
-                'payload':      packet[3:-2]
+                'payload_id':   protocols.smallFrom8bit(packet[1:2]),
+                'payload':      packet[3:-2],
                 'checksum':     packet[-1]
         }
 

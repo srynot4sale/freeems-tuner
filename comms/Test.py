@@ -91,7 +91,7 @@ class connection(comms.interface.interface):
             self._buffer += response.getBinary()
 
         # Log packet hex
-        self._debug('Packet sent to test comms connection: %s' % packet.getHexString())
+        self._debug('Packet sent to test comms connection: %s' % packet.getHex())
 
 
     def run(self):

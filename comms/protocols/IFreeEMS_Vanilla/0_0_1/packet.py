@@ -24,7 +24,7 @@ class packet:
     '''Serial packet base definition'''
 
     # Flags
-    _headerFlags = chr(protocols.ZEROS)
+    _headerFlags = protocols.ZEROS
 
     # Payload id
     _payload_id = 0
@@ -77,18 +77,17 @@ class packet:
 
     def setPayloadId(self, id):
         '''Set payload id'''
-        if isinstance(id, string):
-            id = protocols.from8bit(id)
+        if isinstance(id, str):
+            id = protocols.shortFrom8bit(id)
 
         self._payload_id = id
 
 
     def getPayloadId(self):
         '''
-        Return payload id
-        This is padded with a 0 byte for inserting directly into packet
+        Return payload id as 8-bit string
         '''
-        return protocols.to8bit(self.getPayloadIdInt(), 2)
+        return protocols.shortTo8bit(self.getPayloadIdInt())
 
 
     def getPayloadIdInt(self):
@@ -108,7 +107,7 @@ class packet:
 
     def getPayloadLength(self):
         '''Return length of payload'''
-        return protocols.to8bit(self.getPayloadLengthInt(), 2)
+        return protocols.shortTo8bit(self.getPayloadLengthInt())
 
 
     def getPayloadLengthInt(self):
@@ -154,7 +153,7 @@ class packet:
         self._processed = self._buildPacket()
 
 
-    def getPacketRawBytes(self):
+    def getBinary(self):
         '''
         Return a packet as raw bytes
         '''
@@ -164,7 +163,7 @@ class packet:
         return self._processed
 
 
-    def getPacketHex(self):
+    def getHex(self):
         '''Return a packet as hex strings'''
         packet = self._buildPacket()
         return protocols.toHex(packet)
@@ -174,19 +173,26 @@ def escape(packet):
     '''
     Escape a raw packet
     '''
-    escaped = ''
+    for special_byte in protocol.SPECIAL_BYTES:
 
-    for byte in packet:
+        processed = 0
 
-        # If not special - dont escape
-        if byte not in (protocol.START_BYTE, protocol.ESCAPE_BYTE, protocol.END_BYTE):
-            escaped.append(byte)
-            continue
+        # Keep looping if special byte exists after bytes already processed
+        while special_byte in packet[processed:]:
 
-        # Add escape byte and escaped packet
-        escaped.extend([protocol.ESCAPE_BYTE, byte ^ 0xFF])
+            # Check for any unprocessed special bytes
+            i = packet.index(special_byte, processed)
 
-    return escaped
+            # Escape byte
+            packet[i] = chr(ord(packet[i]) ^ 0xFF)
+
+            # Insert special escape byte before byte
+            packet = packet[:i] + protocol.ESCAPE_BYTE + packet[i:]
+
+            # Reset processed-to index
+            processed = i
+        
+    return packet
 
 
 def getChecksum(bytes):
@@ -195,10 +201,6 @@ def getChecksum(bytes):
     '''
     checksum = 0
     for byte in bytes:
-        checksum += byte
+        checksum += ord(byte)
 
-    if checksum <= 256:
-        return checksum
-
-    checksum = checksum % 256
-    return checksum
+    return chr(checksum % 256)

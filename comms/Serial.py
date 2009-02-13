@@ -135,7 +135,7 @@ class connection(comms.interface.interface):
         self._getConnection().flushOutput()
         
         # Log packet hex
-        self._debug('Packet sent to Serial comms connection: %s' % packet.getHexString())
+        self._debug('Packet sent to Serial comms connection: %s' % packet.getHex())
 
 
     def run(self):

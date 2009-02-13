@@ -17,7 +17,7 @@
 #
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
-import types
+import struct
 
 import libs.config
 
@@ -64,63 +64,53 @@ def loadDefault(controller):
     return __import__(path, globals(), locals(), version)
 
 
-def to8bit(value, length = None):
+def shortFrom8bit(value):
     '''
-    Convert a var to an 8 bit string
+    Get an unsigned short from a 8 bit string
     '''
-    converted = ''
-
-    if not isinstance(value, list):
-        if isinstance(value, str):
-            value = list(value)
-        elif isinstance(value, int):
-            value = [value]
-        else:
-            raise TypeError, 'Unexpected type recieved'
-
-    for byte in value:
-        if isinstance(byte, str):
-            byte = ord(byte)
-
-        if byte > 256:
-            converted += chr(byte >> 8)
-            byte &= 0xFF
-
-        converted += chr(byte)
-
-    # If a specified length is required
-    if length and len(converted) < length:
-        converted.rjust(length, chr(0x00))
-
-    elif length and len(converted) > length:
-        raise IndexError, 'Bytes larger than specified length'
-        
-    return converted
+    return struct.unpack('>H', value)[0]
 
 
-def from8bit(value):
+def intFrom8bit(value):
     '''
-    Convert an 8 bit string to an integer
+    Get an unsigned int from a 8 bit string
     '''
-    converted = 0
-    i = 0
+    return struct.unpack('>I', value)[0]
 
-    for byte in reversed(value):
-        num = ord(byte)
-        if i < 1:
-            converted += num
-        else:
-            converted += num * (i * 256)
-        i += 1
-        
-    return converted
+
+def longFrom8bit(value):
+    '''
+    Get an unsigned long from a 8 bit string
+    '''
+    return struct.unpack('>L', value)[0]
+
+
+def shortTo8bit(value):
+    '''
+    Convert an unsigned short to a 8 bit string
+    '''
+    return struct.pack('>H', value)
+
+
+def intTo8bit(value):
+    '''
+    Convert an unsigned int to a 8 bit string
+    '''
+    return struct.pack('>I', value)
+
+
+def longTo8bit(value):
+    '''
+    Convert an unsigned long to a 8 bit string
+    '''
+    return struct.pack('>L', value)
 
 
 def toHex(bytes):
     '''
     Convert a string to a human readable hex string
     '''
-    hex = []
+    hexlist = []
     
     for byte in bytes:
         byte = hex(ord(byte)).upper().replace('X','x')
@@ -128,6 +118,6 @@ def toHex(bytes):
         if len(byte) == 3:
             byte = '0x0'+byte[-1]
 
-        hex.append(byte)
+        hexlist.append(byte)
 
-    return ','.join(hex)
+    return ','.join(hexlist)
