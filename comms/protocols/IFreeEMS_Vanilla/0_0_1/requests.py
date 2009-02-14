@@ -57,7 +57,12 @@ class requestEchoPacketReturn(request):
     def __init__(self):
         request.__init__(self)
         self.setPayloadId(protocol.REQUEST_ECHO_PACKET_RETURN)
-        self.setPayload('test')
+        
+        string = ''
+        for byte in range(0,255):
+            string += chr(byte)
+
+        self.setPayload(string)
 
 
 # Memory request parent class

@@ -29,8 +29,8 @@ class packet:
     # Payload id
     _payload_id = 0
 
-    # Parsed payload length
-    _payload_parsed_len = 0
+    # Payload length
+    _payload_length = 0
 
     # Payload
     _payload = []
@@ -104,14 +104,32 @@ class packet:
         '''Return payload as string'''
         return self._payload
 
+    
+    def setPayloadLength(self, length):
+        '''
+        Set payload length defined in packet
+        '''
+        self._payload_length = protocols.shortFrom8bit(length)
+
 
     def getPayloadLength(self):
-        '''Return length of payload'''
-        return protocols.shortTo8bit(self.getPayloadLengthInt())
+        '''
+        Return payload length defined in packet
+        '''
+        return self._payload_length
 
 
-    def getPayloadLengthInt(self):
-        '''Return length of payload as int'''
+    def getCalculatedPayloadLength(self):
+        '''
+        Return length of payload as 8 bit string
+        '''
+        return protocols.shortTo8bit(self.getCalculatedPayloadLengthInt())
+
+
+    def getCalculatedPayloadLengthInt(self):
+        '''
+        Return length of payload as int
+        '''
         return len(self.getPayload())
 
 
@@ -129,21 +147,19 @@ class packet:
         packet = ''
 
         # Ensure the payload length packet header is set if required
-        if self.getPayloadLengthInt():
+        if self.getCalculatedPayloadLengthInt():
             self.setHeaderLengthFlag()
 
         packet += self.getHeaderFlags()
         packet += self.getPayloadId()
 
-        if self.getPayloadLengthInt():
-            packet += self.getPayloadLength()
+        if self.getCalculatedPayloadLengthInt():
+            packet += self.getCalculatedPayloadLength()
             packet += self.getPayload()
 
         checksum = getChecksum(packet)
-        packet = escape(packet)
 
-        packet += checksum
-        return protocol.START_BYTE + packet + protocol.END_BYTE
+        return protocol.START_BYTE + escape(packet) + checksum + protocol.END_BYTE
 
 
     def prepare(self):
@@ -179,18 +195,14 @@ def escape(packet):
 
         # Keep looping if special byte exists after bytes already processed
         while special_byte in packet[processed:]:
-
             # Check for any unprocessed special bytes
             i = packet.index(special_byte, processed)
 
-            # Escape byte
-            packet[i] = chr(ord(packet[i]) ^ 0xFF)
-
-            # Insert special escape byte before byte
-            packet = packet[:i] + protocol.ESCAPE_BYTE + packet[i:]
+            # Insert special escape byte and escaped byte
+            packet = packet[:i] + protocol.ESCAPE_BYTE + chr(ord(packet[i]) ^ 0xFF) + packet[i+1:]
 
             # Reset processed-to index
-            processed = i
+            processed = i+1
         
     return packet
 

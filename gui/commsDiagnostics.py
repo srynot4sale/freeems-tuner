@@ -83,12 +83,12 @@ class commsDiagnostics(grid.Grid):
         '''
         time = datetime.datetime.time(datetime.datetime.now())
         header = self.getHeaderFlags(packet)
-        payload_hex = packet.getPayloadBytes()
+        payload = packet.getPayload()
         
         #Format stuff before printing
         payload_id = packet.getPayloadIdInt()
         payload_id_hum = comms.getConnection().getProtocol().getPacketName(payload_id)
-        payload_hex_hum = self.formatPayloadHex(payload_hex)
+        payload_hex_hum = self.formatPayloadHex(payload)
 
         self.AppendRows()
         self.SetCellValue(self.row, 0, str(time))
@@ -113,6 +113,9 @@ class commsDiagnostics(grid.Grid):
         i = 0
 
         for raw_hex in data:
+
+            raw_hex = ord(raw_hex)
+
             # If end of line
             if i % 16 == 0:
                 

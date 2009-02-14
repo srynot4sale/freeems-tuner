@@ -34,6 +34,9 @@ class thread(libs.thread.thread):
     # Buffer of raw data to process into packet classes
     _buffer = []
 
+    # Buffer being currently processed
+    _cache = ''
+
     # Queue of processed packets ready to be handled by the controller
     queue = []
 
@@ -83,23 +86,30 @@ class thread(libs.thread.thread):
         the cache and only adding to it from the same thread, we can be sure
         it is not going to be added to mid-processing.
         '''
-        cache = ''
+        self._cache = ''
+        packet = True
 
         # Check for any complete packets
-        while self._buffer or cache:
+        while self._buffer or self._cache:
             
             if len(self._buffer):
-                cache += self._buffer.pop(0)
+                self._cache += self._buffer.pop(0)
+            elif not packet:
+                # Hopefully fix a race condition where a
+                # unfinished packet at the end of the
+                # buffer will cause an endless loop
+                break
 
             try:
-                packet = self._processBuffer(cache)
+                packet = self._processBuffer()
             except ParsingException, msg:
-                self._error('processReceiveBuffer could not parse buffer. %s' % msg, protocols.toHex(cache))
+                self._error('processReceiveBuffer could not parse buffer. %s' % msg, protocols.toHex(self._cache))
                 continue
             except Exception, msg:
                 # Program error, clean buffer
-                self._error('processReceiveBuffer threw exception, wiping buffer: %s' % msg, protocols.toHex(cache))
-                cache = ''
+                raise
+                self._error('processReceiveBuffer threw exception, wiping buffer: %s' % msg, protocols.toHex(self._cache))
+                self._cache = ''
                 continue
         
             if not packet:
@@ -112,7 +122,7 @@ class thread(libs.thread.thread):
             self._controller.action('comms.handleReceivedPackets', data)
    
 
-    def _processBuffer(self, buffer):
+    def _processBuffer(self):
         '''
         Check for any incoming packets and return if found
 
@@ -123,27 +133,27 @@ class thread(libs.thread.thread):
             - If incomplete packet, leave buffer and try again later
         '''
         # Remove any buffer before the first start byte
-        if buffer[0] != protocol.START_BYTE:
-            if protocol.START_BYTE not in buffer:
-                tmp = buffer
-                del buffer[:]
+        if self._cache[0] != protocol.START_BYTE:
+            if protocol.START_BYTE not in self._cache:
+                tmp = self._cache
+                self._cache = ''
             else:
-                index = buffer.index(protocol.START_BYTE)
-                tmp = buffer[:index]
-                del buffer[:index]
+                index = self._cache.index(protocol.START_BYTE)
+                tmp = self._cache[:index]
+                self._cache = self._cache[index:]
 
-            raise ParsingException, 'Bad/incomplete packet found in buffer before start byte %s' % protocol.toHex(tmp)
+            raise ParsingException, 'Bad/incomplete packet found in buffer before start byte %s' % protocols.toHex(tmp)
 
         # If no end byte in buffer, return as it must not contain a complete packet
-        if protocol.END_BYTE not in buffer:
+        if protocol.END_BYTE not in self._cache:
             return
 
         # Grab packet from buffer (minus start and end bytes)
-        end = buffer.index(protocol.END_BYTE)
-        packet = buffer[1:end-1] 
+        end = self._cache.index(protocol.END_BYTE)
+        packet = self._cache[1:end] 
 
         # Clear processed buffer
-        del buffer[:end]
+        self._cache = self._cache[end+1:]
 
         # Process packet
         return self._processIncomingPacket(packet)
@@ -154,32 +164,36 @@ class thread(libs.thread.thread):
         Takes a raw packet, checks it and returns the correct packet class
         '''
         # Check for special bytes n packet that shouldn't be there
-        if (protocol.START_BYTE, protocol.END_BYTE) in packet:
+        if protocol.START_BYTE in packet or protocol.END_BYTE in packet:
             raise ParsingException, 'Unescaped bytes found in packet: %s' % protocols.toHex(packet)
-        
+
         # Process escapes
-        while protocol.ESCAPE_BYTE in packet:
-            i = packet.index(protocol.ESCAPE_BYTE)
-            if packet[i + 1] in protocol.SPECIAL_BYTES:
-                del packet[i]
-                # Convert escaped byte to an integer to XOR, and then convert back to a string
-                packet[i] = chr(ord(packet[i]) ^ 0xFF)
+        processed = 0
+        while protocol.ESCAPE_BYTE in packet[processed:]:
+            i = packet.index(protocol.ESCAPE_BYTE, processed)
+            processed = i+1
+
+            # Convert escaped byte to an integer to XOR, and then convert back to a string
+            unescaped = chr(ord(packet[i+1]) ^ 0xFF)
+
+            if unescaped in protocol.SPECIAL_BYTES:
+                packet = packet[:i] + unescaped + packet[i+2:]
             else:
-                raise ParsingException, 'Wrongly escaped byte found in packet: %s' % protocols.toHex(packet)
+                raise ParsingException, 'Wrongly escaped byte found in packet (%s): %s' % (hex(ord(unescaped)), protocols.toHex(packet))
 
         # Split up packet
         contents = {
                 'flags':        packet[0],
-                'payload_id':   protocols.smallFrom8bit(packet[1:2]),
-                'payload':      packet[3:-2],
+                'payload_id':   protocols.shortFrom8bit(packet[1:3]),
+                'payload':      packet[3:-1],
                 'checksum':     packet[-1]
         }
 
         # Check checksum
-        gen_checksum = packetlib.getChecksum(packet)
+        gen_checksum = packetlib.getChecksum(packet[:-1])
 
         if contents['checksum'] != gen_checksum:
-            raise ParsingException, 'Checksum is incorrect! Provided: %d, generated: %d' % (contents['checksum'], gen_checksum)
+            raise ParsingException, 'Checksum is incorrect! Provided: %d, generated: %d' % (ord(contents['checksum']), ord(gen_checksum))
 
         # Create response packet object
         response = responses.getPacket(contents['payload_id'])

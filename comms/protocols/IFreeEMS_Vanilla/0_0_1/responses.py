@@ -64,20 +64,20 @@ class response(packet.packet):
 
         if rules['preset_payload_length']:
             # Check payload is the required length
-            if rules['preset_payload_length'] != self.getPayloadLengthInt():
-                raise Exception, 'Packet type %d preset length of %s does not match the actual payload length of %s' % (pid, rules['preset_payload_length'], self.getPayloadLengthInt())
+            if rules['preset_payload_length'] != self.getCalculatedPayloadLengthInt():
+                raise Exception, 'Packet type %d preset length of %s does not match the actual payload length of %s' % (pid, rules['preset_payload_length'], self.getCalculatedPayloadLengthInt())
             
         if rules['requires_length']:
             # Check a length was supplied and the payload matches
             if not self.hasHeaderLengthFlag():
                 raise Exception, 'Packet type %s was expecting a length flag to be set' % pid
 
-            length = self.getPayloadLengthParsed()
+            length = self.getPayloadLength()
             if not length:
                 raise Exception, 'Packet type %s was expecting a length to be set' % pid
 
-            if self.getPayloadLengthInt() != length:
-                raise Exception, 'Packet type %s, payload length of %s does not match parsed length of %s' % (pid, self.getPayloadLengthInt(), length)
+            if self.getCalculatedPayloadLengthInt() != length:
+                raise Exception, 'Packet type %s, payload length of %s does not match parsed length of %s' % (pid, self.getCalculatedPayloadLengthInt(), length)
 
 
     def parsePayload(self, payload):
@@ -86,7 +86,7 @@ class response(packet.packet):
         '''
         if self.hasHeaderLengthFlag():
             # If length set, account for 2 length bytes
-            self.setPayloadLengthParsed(payload[0:2])
+            self.setPayloadLength(payload[:2])
             self.setPayload(payload[2:])
 
         else:
@@ -156,7 +156,7 @@ class responseMaxPacketSize(response):
         Run code to make an acurate test response
         '''
         self.setPayloadId(protocol.RESPONSE_MAX_PACKET_SIZE)
-        self.setPayload([0, 255])
+        self.setPayload(protocols.shortTo8bit(255))
 
 
 class responseEchoPacket(response):
@@ -174,7 +174,7 @@ class responseEchoPacket(response):
         Run code to make an acurate test response
         '''
         self.setPayloadId(protocol.RESPONSE_ECHO_PACKET_RETURN)
-        self.setPayload(request.getPacketRawBytes())
+        self.setPayload(request.getBinary())
 
 
 class responseBasicDatalog(response):
