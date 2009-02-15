@@ -201,13 +201,9 @@ class app(libs.thread.thread):
                     block_id = None
                     (action, data) = action
                 
-                # Log action
-                #if action != 'Log':
-                #    self._log('DEBUG', 'Performing %s action' % action)
-
                 # Check where action is located
                 if '.' in action:
-                    # Run method in action module
+                    # Run method in a different module
                     loc = action.rfind('.')
                     module = action[0:loc]
                     method = action[loc+1:]
