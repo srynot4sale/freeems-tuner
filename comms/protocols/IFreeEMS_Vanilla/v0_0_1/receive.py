@@ -132,17 +132,30 @@ class thread(libs.thread.thread):
             - If complete packet found, remove length from buffer
             - If incomplete packet, leave buffer and try again later
         '''
-        # Remove any buffer before the first start byte
-        if self._cache[0] != protocol.START_BYTE:
-            if protocol.START_BYTE not in self._cache:
-                tmp = self._cache
-                self._cache = ''
-            else:
-                index = self._cache.index(protocol.START_BYTE)
-                tmp = self._cache[:index]
-                self._cache = self._cache[index:]
+        try:
+            index = -1
 
-            raise ParsingException, 'Bad/incomplete packet found in buffer before start byte %s' % protocols.toHex(tmp)
+            # Remove any buffer before the first start byte
+            if self._cache[0] != protocol.START_BYTE:
+                index = self._cache.find(protocol.START_BYTE, 1)
+                if index > 0:
+                    raise ParsingException, 'Bad/incomplete packet found in buffer before start byte %s' % protocols.toHex(self._cache[:index])
+                else:
+                    raise ParsingException, 'Bad/incomplete packet found in buffer %s' % protocols.toHex(self._cache)
+
+        except ParsingException:
+            # Catch parsing eceptions and tidy up the buffer
+            if index > 0:
+                self._cache = self._cache[index:]
+            else:
+               self._cache = ''
+            
+            raise
+
+        # If another start byte in buffer before next end byte
+        #if protocol.START_BYTE in self._cache[1:]:
+        #    i
+
 
         # If no end byte in buffer, return as it must not contain a complete packet
         if protocol.END_BYTE not in self._cache:
