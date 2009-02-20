@@ -103,7 +103,7 @@ class thread(libs.thread.thread):
             try:
                 packet = self._processBuffer()
             except ParsingException, msg:
-                self._error('processReceiveBuffer could not parse buffer. %s' % msg, protocols.toHex(self._cache))
+                self._error('processReceiveBuffer could not parse buffer. %s' % msg)
                 continue
             except Exception, msg:
                 # Program error, clean buffer
@@ -220,7 +220,7 @@ class thread(libs.thread.thread):
         gen_checksum = packetlib.getChecksum(packet[:-1])
 
         if contents['checksum'] != gen_checksum:
-            raise ParsingException, 'Checksum is incorrect! Provided: %d, generated: %d' % (ord(contents['checksum']), ord(gen_checksum))
+            raise ParsingException, 'Checksum is incorrect! Provided: %d, generated: %d, packet: [%s]' % (ord(contents['checksum']), ord(gen_checksum), protocols.toHex(packet))
 
         # Create response packet object
         response = responses.getPacket(contents['payload_id'])
