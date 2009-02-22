@@ -5,5 +5,6 @@ Move gui/__init__ CommsUpdateData into controller
 and other new unused code
 
 Thread crash handling, check in controller if shutting down when checking for # of threads. If not shutting down, attempt to restart thread
+Check in gui thread if the controller has crashed, and show prompt/exit if so
 
 Research better queues

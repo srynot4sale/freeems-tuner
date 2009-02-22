@@ -45,16 +45,15 @@ def loadDefault(controller):
     '''
     Load default protocol
     '''
-
     # Load config
     def_protocol = libs.config.get('Protocol', 'default')
     version = libs.config.get('Protocol', 'default_version')
 
     # Should end up in the format:
-    #   'comms.protocols.FreeEMS.0_17,
+    #   'comms.protocols.IFreeEMS_Vanilla.v0_1_1,
     #
     # Which would refer to the file:
-    #   $cwd/comms/protocols/FreeEMS/0_17.py
+    #   $cwd/comms/protocols/IFreeEMS_Vanilla/v0_1_1/__init__.py
 
     path = 'comms.protocols.'+def_protocol+'.'+version
 

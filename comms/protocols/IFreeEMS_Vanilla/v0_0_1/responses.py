@@ -48,7 +48,6 @@ class response(packet.packet):
         '''
         Set defaults
         '''
-
         self._validation_rules = {
             'preset_payload_length': False,
             'requires_length': False,

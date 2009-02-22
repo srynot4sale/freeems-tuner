@@ -145,6 +145,5 @@ class actions():
         '''
         Save config to file
         '''
-
         def run(self):
             save()
