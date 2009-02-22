@@ -108,6 +108,10 @@ class actions:
                 if isinstance(response, protocol.responses.responseGeneric):
                     comms.triggerReceiveWatchers(response)
 
+                # If a datalog packet, do not create a debug message
+                if isinstance(response, protocol.responses.responseBasicDatalog):
+                    return
+
                 self._controller.log(
                         'comms.handleReceivedPackets',
                         'DEBUG',
