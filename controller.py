@@ -18,8 +18,9 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import threading, datetime, time
+import threading, datetime, time, types
 import libs.thread, comms, libs.config as config
+
 
 class app(libs.thread.thread):
     '''
@@ -39,6 +40,24 @@ class app(libs.thread.thread):
     _actionBlockingLastId = 0
     _actionBlockingBlocks = {}
     _actionBlockingData = {}
+
+    # Logging level
+    log_levels = {
+            'DEBUG':    0,
+            'INFO':     1,
+            'WARNING':  2,
+            'ERROR':    3,
+            'CRITICAL': 4
+    }
+
+    log_verboseness = None
+
+    # Log destinations
+    log_to_file = False
+    log_to_terminal = False
+
+    log_file_obj = None
+
 
     def __init__(self):
         '''
@@ -224,6 +243,10 @@ class app(libs.thread.thread):
         # that would never got run
         self._log('DEBUG', 'Shutting down controller thread')
 
+        # Check if log file object is open
+        if isinstance(self.log_file_obj, file):
+            self.log_file_obj.close()
+
     
     def _log(self, severity, message, data = None):
         '''
@@ -234,12 +257,50 @@ class app(libs.thread.thread):
         self._actionLog((time, 'controller.app', severity, message, data))
 
 
-    def _actionLog(self, data = None):
+    def _actionLog(self, data):
         '''
-        Prints log to console (for now)
+        Sends log message to appropriate handler
+        '''
+        if isinstance(self.log_verboseness, types.NoneType):
+            # Config has not yet been loaded
+            self.log_verboseness = self.log_levels[config.get('Logging', 'verboseness')]
+            self.log_to_file = config.getBool('Logging', 'to_file')
+            self.log_to_terminal = config.getBool('Logging', 'to_terminal')
+
+        if self.log_levels[data[2]] < self.log_verboseness:
+            # Not logging this level message
+            return
+
+        if self.log_to_file:
+            self._actionLogFile(data)
+
+        if self.log_to_terminal:
+            self._actionLogTerminal(data)
+
+
+    def _actionLogFile(self, data):
+        '''
+        Appends to log file
+        '''
+        if not isinstance(self.log_file_obj, file):
+            self.log_file_obj = open(libs.data.getPath()+'app.log', 'w')
+
+        (time, section, severity, message, data) = data
+        
+        time = time.strftime('%H:%M:%S')
+
+        if data == None:
+            data = ''
+
+        self.log_file_obj.write('%s %-30s %s %s %s\n' % (time, section, severity, message, data))
+
+
+    def _actionLogTerminal(self, data):
+        '''
+        Prints log to console
         '''
         (time, section, severity, message, data) = data
-
+        
         time = time.strftime('%H:%M:%S')
 
         if data == None:
