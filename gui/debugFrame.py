@@ -81,9 +81,16 @@ class debugFrame(wx.Frame):
         data += 'FreeEMS:\n'
         data += '--------------------\n'
         data += 'Tuner version: %s\n' % version.__revision__
-        data += 'Comms plugin: %s\n' % type(comm)
-        data += 'Protocol plugin: %s\n' % type(comm.getProtocol())
-        data += 'Data directory: %s\n' % libs.data.getPath()
+        data += 'Comms plugin: %s\n' % str(comm.__class__).split('\'')[1]
+        data += 'Protocol plugin: %s\n' % comm.getProtocol().__name__
+        data += 'Data directory: %s\n\n' % libs.data.getPath()
+
+        data += 'Config:\n'
+        data += '--------------------\n'
+
+        configfile = open(libs.data.getPath() + '/my_config.cached.ini', 'r')
+        data += ''.join(configfile.readlines())
+        configfile.close()
 
         display.SetValue(data)
 
