@@ -2,5 +2,4 @@ data/my_config.ini
 data/my_config.cached.ini
 data/test_input.bin
 data/app.log
-utils/*
 *.pyc
