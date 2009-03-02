@@ -71,6 +71,9 @@ class interface(libs.thread.thread):
     # Protocol module
     _protocol = None
 
+    # Log file
+    _logfile = None
+
 
     def __init__(self, name, controller):
         '''
@@ -213,7 +216,44 @@ class interface(libs.thread.thread):
         # Post the event
         for watcher in self._receive_watchers:
             wx.PostEvent(watcher, receive_event)
-    
+
+
+    def isLogging(self):
+        '''
+        Check if logging data to file
+        '''
+        return isinstance(self._logfile, file)
+
+
+    def stopLogging(self):
+        '''
+        Stop logging data to file
+        '''
+        if not self.isLogging():
+            return
+
+        self._debug('Stop logging comms to file')
+        self._logfile.close()
+        self._logfile = None
+
+
+    def startLogging(self, path):
+        '''
+        Start logging data to file
+        '''
+        self._debug('Start logging comms to file (%s)' % path)
+        self._logfile = open(path, 'wb')  
+
+
+    def logBuffer(self, buffer):
+        '''
+        Log receive buffer to log file
+        '''
+        if not self._isLogging():
+            return
+
+        self._logfile.write(buffer)
+
     
     def run(self):
         '''

@@ -18,7 +18,7 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import wx, os
+import wx, os, datetime
 import version, comms, settings
 import libs.config as config, libs.data as data
 
@@ -36,6 +36,8 @@ ID_TAB_POPOUT = wx.NewId()
 
 ID_COMMS_CONNECT = wx.NewId()
 ID_COMMS_DISCONNECT = wx.NewId()
+ID_COMMS_LOGGING_START = wx.NewId()
+ID_COMMS_LOGGING_STOP = wx.NewId()
 ID_COMMS_TESTS = wx.NewId()
 ID_COMMS_DATA_UPDATE = wx.NewId()
 
@@ -187,6 +189,8 @@ class Frame(wx.Frame):
         m = self.menus['comms'] = wx.Menu()
         m.Append(ID_COMMS_CONNECT, '&Connect', 'Connect To Comms Port')
         m.Append(ID_COMMS_DISCONNECT, '&Disconnect', 'Disconnect From Comms Port')
+        m.Append(ID_COMMS_LOGGING_START, 'Start &Logging', 'Start logging comms data')
+        m.Append(ID_COMMS_LOGGING_STOP, '&Stop Logging', 'Stop logging comms data')
         m.AppendSeparator()
         #m.Append(ID_COMMS_DATA_UPDATE, '&Update Comms Data Settings...', 'Update Comms Data Settings')
         m.Append(ID_COMMS_TESTS, 'Interface Protocol &Test...', 'Run interface tests on firmware')
@@ -215,6 +219,8 @@ class Frame(wx.Frame):
 
         self.Bind(wx.EVT_MENU, self.CommsConnect, id=ID_COMMS_CONNECT)
         self.Bind(wx.EVT_MENU, self.CommsDisconnect, id=ID_COMMS_DISCONNECT)
+        self.Bind(wx.EVT_MENU, self.CommsLoggingStart, id=ID_COMMS_LOGGING_START)
+        self.Bind(wx.EVT_MENU, self.CommsLoggingStop, id=ID_COMMS_LOGGING_STOP)
         #self.Bind(wx.EVT_MENU, self.CommsUpdateData, id=ID_COMMS_DATA_UPDATE)
         self.Bind(wx.EVT_MENU, self.CommsTests, id=ID_COMMS_TESTS)
 
@@ -226,6 +232,8 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_REDO)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_CONNECT)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_DISCONNECT)
+        self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_LOGGING_START)
+        self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_LOGGING_STOP)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_TESTS)
         
 
@@ -332,8 +340,49 @@ class Frame(wx.Frame):
 
 
     def CommsIsConnected(self):
-        '''Check if comms is connected'''
+        '''
+        Check if comms is connected
+        '''
         return comms.getConnection().isConnected()
+
+
+    def CommsLoggingStart(self, event):
+        '''
+        Start logging comms
+        '''
+        timestamp = datetime.datetime.today().strftime('%Y%m%d%H%M%S')
+
+        dialog = wx.FileDialog(
+                parent = self,
+                message = 'Comms Log File',
+                defaultDir = 'data/',
+                defaultFile = 'comms' + timestamp + '.bin',
+                style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+
+        dialog.ShowModal()
+
+        comms.getConnection().startLogging(dialog.GetPath())
+
+
+    def CommsLoggingStop(self, event):
+        '''
+        Stop logging comms
+        '''
+        comms.getConnection().stopLogging()
+
+
+    def CommsCanStartLogging(self):
+        '''
+        Can the user start logging
+        '''
+        return self.CommsIsConnected() and not self.CommsIsLogging()
+
+
+    def CommsIsLogging(self):
+        '''
+        Check if comms is logging
+        '''
+        return comms.getConnection().isLogging()
 
 
     def OnUpdateMenu(self, event):
@@ -352,6 +401,10 @@ class Frame(wx.Frame):
                 event.Enable(self.CommsIsConnected())
             elif id == ID_COMMS_TESTS:
                 event.Enable(self.CommsIsConnected())
+            elif id == ID_COMMS_LOGGING_START:
+                event.Enable(self.CommsCanStartLogging())
+            elif id == ID_COMMS_LOGGING_STOP:
+                event.Enable(self.CommsIsLogging())
             else:
                 event.Enable(False)
         except AttributeError:
