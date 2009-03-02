@@ -59,8 +59,9 @@ class commsDiagnostics(grid.Grid):
         self.conn.bindSendWatcher(self)
         self.conn.bindReceiveWatcher(self)
 
-        self.Bind(comms.interface.EVT_SEND, self.printPacket)
-        self.Bind(comms.interface.EVT_RECEIVE, self.printPacket)
+        # Bind to events
+        self.Bind(comms.interface.EVT_SEND, self.printSentPacket)
+        self.Bind(comms.interface.EVT_RECEIVE, self.printReceivedPacket)
 
 
     def onResize(self, event):
@@ -72,9 +73,22 @@ class commsDiagnostics(grid.Grid):
             r += 1
 
 
-    def printPacket(self, event):
-        '''Print sent packet to grid'''
+    def printSentPacket(self, event):
+        '''
+        Print sent packet to grid
+        '''
         self.insertRow(event.packet)
+
+
+    def printReceivedPacket(self, event):
+        '''
+        Print received packet to grid
+        '''
+        protocol = self.conn.getProtocol()
+
+        # If generic response (unknown packet type), print to grid
+        if isinstance(event.packet, protocol.responses.responseGeneric):
+            self.insertRow(event.packet)
 
 
     def insertRow(self, packet):

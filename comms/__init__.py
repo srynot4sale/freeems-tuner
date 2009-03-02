@@ -104,9 +104,8 @@ class actions:
 
                 response = self._data['queue'].pop(0)
 
-                # If generic response (unknown packet type), trigger watchers
-                if isinstance(response, protocol.responses.responseGeneric):
-                    comms.triggerReceiveWatchers(response)
+                # Trigger watchers
+                comms.triggerReceiveWatchers(response)
 
                 # If a datalog packet, do not create a debug message
                 if isinstance(response, protocol.responses.responseBasicDatalog):
