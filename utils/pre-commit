@@ -12,8 +12,7 @@ try:
     versionpy = '/var/dev/freeems/version.py'
 
     # Build revision line
-    date = datetime.datetime.today()
-    revision = '__revision__ = \'r%04d%02d%02d%02d%02d%02d\'\n' % (date.year, date.month, date.day, date.hour, date.minute, date.second)
+    revision = datetime.datetime.today().strftime('__revision__ = \'r%Y%m%d%H%M%S\'\n')
     print revision
 
     # Load version.py for reading
