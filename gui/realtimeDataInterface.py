@@ -18,6 +18,8 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
+import comms, gui, commsConnectWarning
+
 import wx
 
 
@@ -25,6 +27,8 @@ blank = (0,0)
 
 
 class realtimeDataInterface(wx.BoxSizer):
+
+    ID_LOGGING_TOGGLE = wx.NewId()
 
     hum_label = ['Inlet Air Temperature',
                  'Coolant/Head Temperature',
@@ -76,15 +80,32 @@ class realtimeDataInterface(wx.BoxSizer):
         '''Setup UI elements'''
 
         wx.BoxSizer.__init__(self, wx.VERTICAL)
+        self._controller = parent.controller
 
         # Populate real-time data for display
 
         # maybe a loop here
         # maybe some more control flow here
         # maybe a GOTO here ;)
-        
 
+        # Controls
+        log_types = ['Basic']
+        self.logging_type = wx.Choice(parent, -1, choices = log_types)
+        self.toggle = wx.Button(parent, self.ID_LOGGING_TOGGLE, 'Start Logging')
+
+        self.toggle.Bind(wx.EVT_BUTTON, self.toggleLogging, id=self.ID_LOGGING_TOGGLE)
+        
+        
         # Locating elements
+        sizer6 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer6.Add(self.logging_type, 10, wx.EXPAND)
+        sizer6.Add(blank, 1)
+        sizer6.Add(self.toggle, 10, wx.EXPAND)
+
+        sizer5 = wx.BoxSizer(wx.VERTICAL)
+        sizer5.Add(sizer6, 1)
+        sizer5.Add(blank, 12)
+
         sizer4 = wx.BoxSizer(wx.VERTICAL)
         sizer4.Add(blank, 1)
         for data in self.realtime_data:
@@ -113,8 +134,26 @@ class realtimeDataInterface(wx.BoxSizer):
         sizer1.Add(sizer3, 8, wx.EXPAND)
         sizer1.Add(blank, 1)
         sizer1.Add(sizer4, 3, wx.EXPAND)
-        sizer1.Add(blank, 40)
+        sizer1.Add(blank, 19)
+        sizer1.Add(sizer5, 20, wx.EXPAND)
+        sizer1.Add(blank, 1)
 
         self.Add(blank, 1)
         self.Add(sizer1, 10, wx.EXPAND)
         self.Add(blank, 1)
+
+
+    def toggleLogging(self, event):
+        '''
+        Send packet to toggle logging
+        '''
+        # Check connected
+        if not commsConnectWarning.confirmConnected(gui.frame):
+            return
+
+        protocol = comms.getConnection().getProtocol()
+        packet = protocol.getRequestPacket('SetAsyncDatalogType')
+        packet.startBasic()
+
+        data = {'packet': packet}
+        self._controller.action('comms.sendRequest', data)

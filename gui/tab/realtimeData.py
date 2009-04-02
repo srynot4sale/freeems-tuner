@@ -37,6 +37,7 @@ class tab(wx.Panel):
         Setup interface elements
         '''
         wx.Panel.__init__(self, parent)
+        self.controller = parent.GetParent().getController()
 
         self.interface = gui.realtimeDataInterface.realtimeDataInterface(self)
 

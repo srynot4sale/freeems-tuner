@@ -19,6 +19,7 @@
 
 import packet
 import __init__ as protocol
+import comms.protocols.__init__ as protocols
 
 # Base request object
 class request(packet.packet):
@@ -115,3 +116,19 @@ class requestSoftSystemReset(request):
     def __init__(self):
         request.__init__(self)
         self.setPayloadId(protocol.REQUEST_SOFT_SYSTEM_RESET)
+
+
+# Set async datalog type
+class requestSetAsyncDatalogType(request):
+
+    def __init__(self):
+        request.__init__(self)
+        self.setPayloadId(protocol.REQUEST_SET_ASYNC_DATALOG_TYPE)
+
+
+    def stop(self):
+        self.setPayload(protocols.SZEROS)
+
+
+    def startBasic(self):
+        self.setPayload(protocols.SBIT0)

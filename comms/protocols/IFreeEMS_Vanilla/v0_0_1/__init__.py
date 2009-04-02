@@ -66,18 +66,21 @@ RESPONSE_BURN_BLOCK_FROM_RAM_TO_FLASH   = 265
 RESPONSE_ERASE_ALL_BLOCKS_FROM_FLASH    = 267
 RESPONSE_BURN_ALL_BLOCKS_OF_FLASH       = 269
 
+REQUEST_SET_ASYNC_DATALOG_TYPE          = 304
+
 REQUEST_BASIC_DATALOG                   = 400
 RESPONSE_BASIC_DATALOG                  = 401
 
 REQUEST_PACKET_TITLES = {
-        REQUEST_INTERFACE_VERSION:   "InterfaceVersion",
-        REQUEST_FIRMWARE_VERSION:    "FirmwareVersion",
-        REQUEST_MAX_PACKET_SIZE:     "MaxPacketSize",
-        REQUEST_ECHO_PACKET_RETURN:  "EchoPacket",
-        REQUEST_SOFT_SYSTEM_RESET:   "SoftReset",
-        REQUEST_HARD_SYSTEM_RESET:   "HardReset",
-        REQUEST_ASYNC_ERROR_CODE:    "AsyncError",
-        REQUEST_ASYNC_DEBUG_INFO:    "AsyncDebug",
+        REQUEST_INTERFACE_VERSION:          "InterfaceVersion",
+        REQUEST_FIRMWARE_VERSION:           "FirmwareVersion",
+        REQUEST_MAX_PACKET_SIZE:            "MaxPacketSize",
+        REQUEST_ECHO_PACKET_RETURN:         "EchoPacket",
+        REQUEST_SOFT_SYSTEM_RESET:          "SoftReset",
+        REQUEST_HARD_SYSTEM_RESET:          "HardReset",
+        REQUEST_ASYNC_ERROR_CODE:           "AsyncError",
+        REQUEST_ASYNC_DEBUG_INFO:           "AsyncDebug",
+        REQUEST_SET_ASYNC_DATALOG_TYPE:     "SetAsyncDatalog",
 }
 
 RESPONSE_PACKET_TITLES = {
