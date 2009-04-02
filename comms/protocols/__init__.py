@@ -33,6 +33,16 @@ BIT5  = 0x20	# 6th bit	= 32
 BIT6  = 0x40	# 7th bit	= 64	
 BIT7  = 0x80	# 8th bit	= 128	
 
+SZEROS  = chr(ZEROS)
+SBIT0   = chr(BIT0)
+SBIT1   = chr(BIT1)
+SBIT2   = chr(BIT2)
+SBIT3   = chr(BIT3)
+SBIT4   = chr(BIT4)
+SBIT5   = chr(BIT5)
+SBIT6   = chr(BIT6)
+SBIT7   = chr(BIT7)
+
 
 def getProtocol(controller):
     '''
