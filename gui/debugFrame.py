@@ -82,7 +82,7 @@ class debugFrame(wx.Frame):
         data += '--------------------\n'
         data += 'Tuner version: %s\n' % version.__revision__
         data += 'Comms plugin: %s\n' % str(comm.__class__).split('\'')[1]
-        data += 'Protocol plugin: %s\n' % comm.getProtocol().__name__
+        data += 'Protocol plugin: %s\n' % comm.getProtocol().getProtocolName()
         data += 'Data directory: %s\n\n' % libs.data.getPath()
 
         data += 'Config:\n'

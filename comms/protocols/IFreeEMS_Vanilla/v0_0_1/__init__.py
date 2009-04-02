@@ -105,6 +105,14 @@ UTILITY_REQUEST_PACKETS = {
 }
 
 
+def getProtocolName():
+    '''
+    Return a human readable protocol name
+    '''
+    parts = __name__.split('.')
+    return ('%s (%s)' % (parts[2], parts[3])).replace('_', '.')
+
+
 def getSendObject(name, controller, comms):
     return send.thread(name, controller, comms)
 

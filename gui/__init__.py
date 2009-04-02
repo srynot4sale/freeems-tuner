@@ -72,7 +72,7 @@ class Frame(wx.Frame):
         self._debug('Gui frame initialised')
 
         self.CreateStatusBar()
-        self.SetStatusText('Version %s' % self.revision)
+        self.SetStatusText('Interface: %s' % comms.getConnection().getProtocol().getProtocolName())
         self._createMenus()
 
         self.iconized = False
