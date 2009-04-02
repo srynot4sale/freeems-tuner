@@ -57,35 +57,47 @@ def _loadDefault():
 
 class actions:
 
-    class sendUtilityRequest(action.action):
+    class _action(action.action):
+
+        def _getConnection(self):
+            '''
+            Get connection from action data, or use default
+            '''
+            if 'connection' in self._data:
+                return getConnection(self._data['connection'])
+            else:
+                return getConnection()
+
+
+    class sendRequest(_action):
+
+        def run(self):
+            '''
+            Send packet to correct thread
+            '''
+            self._getConnection().send(self._data['packet'])
+
+
+    class sendUtilityRequest(_action):
 
         def run(self):
             '''
             Create packet and send to correct thread
             '''
-            if 'connection' in self._data:
-                comms = getConnection(self._data['connection'])
-            else:
-                comms = getConnection()
+            comms = self._getConnection()
 
-            protocol = comms.getProtocol()
-
-            comms.send(protocol.getRequestPacket(self._data['type']))
+            comms.send(comms.getProtocol().getRequestPacket(self._data['type']))
 
 
-    class sendMemoryRequest(action.action):
+    class sendMemoryRequest(_action):
 
         def run(self):
             '''
             Create memory request packet and send to correct thread
             '''
-            if 'connection' in self._data:
-                comms = getConnection(self._data['connection'])
-            else:
-                comms = getConnection()
+            comms = self._getConnection()
 
-            protocol = comms.getProtocol()
-            packet = protocol.getRequestPacket(self._data['type'])
+            packet = comms.getProtocol().getRequestPacket(self._data['type'])
             packet.setPayload(self._data['block_id'])
 
             comms.send(packet)
