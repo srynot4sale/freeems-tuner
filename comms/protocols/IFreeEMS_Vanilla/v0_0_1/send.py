@@ -37,6 +37,8 @@ class thread(libs.thread.thread):
         '''
         Sets up threading stuff
         '''
+        libs.thread.thread.__init__(self)
+
         self._setup(name, controller)
         self.comms = comms
 

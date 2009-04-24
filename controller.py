@@ -63,6 +63,7 @@ class app(libs.thread.thread):
         '''
         Initialisation routine
         '''
+        libs.thread.thread.__init__(self)
 
         self._setup('controller.app', self)
         self._debug('Starting controller thread')
