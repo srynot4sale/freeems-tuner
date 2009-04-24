@@ -20,7 +20,7 @@
 
 import wx, sys
 
-import comms, version, libs.data
+import comms, version, libs.data, libs.config
 
 
 class debugFrame(wx.Frame):
@@ -88,7 +88,10 @@ class debugFrame(wx.Frame):
         data += 'Config:\n'
         data += '--------------------\n'
 
-        configfile = open(libs.data.getPath() + '/my_config.cached.ini', 'r')
+        # Update the config file (in case it hasn't been created yet)
+        libs.config.save()
+
+        configfile = open(libs.data.getPath() + 'my_config.cached.ini', 'r')
         data += ''.join(configfile.readlines())
         configfile.close()
 
