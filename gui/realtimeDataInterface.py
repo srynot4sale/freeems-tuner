@@ -65,7 +65,7 @@ class realtimeDataInterface(wx.BoxSizer):
                  'IAP', 'MAF', 'DMAP',
                  'DTPS', 'RPM', 'DRPM',
                  'DDRPM', 'LoadMain', 'VEMain',
-                 'Lamda', 'AirFlow', 'Density&Fuel',
+                 'Lamda', 'AirFlow', 'Density&&Fuel',
                  'BasePW', 'IDT', 'ETE',
                  'TFCTotal', 'FinalPW','RefPW'
                  ]
