@@ -19,7 +19,6 @@
 
 
 import wx
-import logging
 import sys
 
 import comms

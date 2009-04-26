@@ -295,7 +295,7 @@ class Frame(wx.Frame):
             comms.getConnection().connect()
 
         except comms.CannotconnectException, msg:
-            logger.error(msg)
+            self._controller._error(msg)
 
     
     def CommsUpdateData(self, event):

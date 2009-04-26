@@ -19,7 +19,6 @@
 
 
 import wx
-import logging
 
 from gui.commsUtilityRequests import commsUtilityRequests 
 from gui.commsDiagnostics import commsDiagnostics

@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2008, 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -19,13 +19,10 @@
 
 
 # Load libraries
-import libs.data, libs.logger, controller, gui
+import libs.data, controller, gui
 
 # Begin setting up program
 libs.data.createDirectory()
-
-# Turn on logging
-libs.logger.setup()
 
 # Start up the program controller
 ctr = controller.app()

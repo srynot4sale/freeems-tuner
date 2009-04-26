@@ -78,7 +78,7 @@ class memoryRequestInterface(wx.BoxSizer):
 
         except KeyError, e:
             # Data file appears to be formed incorrectly
-            logger.error('Data location ids data file appears to be formed incorrectly: %s' % e)
+            self.controller._error('Data location ids data file appears to be formed incorrectly', e)
             self._b_options = []
             self._b_ids = []
 

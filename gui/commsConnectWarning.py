@@ -1,4 +1,4 @@
-#   Copyright 2008 Aaron Barnes
+#   Copyright 2008, 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -19,9 +19,7 @@
 
 
 import wx
-import logging
 
-logger = logging.getLogger('gui.commsConnectWarning')
 
 def confirmConnected(window):
     '''Confirm the comms plugin is connected, if not show dialog'''
