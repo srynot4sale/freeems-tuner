@@ -21,7 +21,9 @@ import comms.protocols as protocols, __init__ as protocol
 
 
 class packet:
-    '''Serial packet base definition'''
+    '''
+    Serial packet base definition
+    '''
 
     # Flags
     _headerFlags = protocols.ZEROS
@@ -40,17 +42,23 @@ class packet:
 
 
     def getHeaderFlags(self):
-        '''Returns header flags'''
+        '''
+        Returns header flags
+        '''
         return chr(self._headerFlags)
 
 
     def parseHeaderFlags(self, flags):
-        '''Saves header flags'''
+        '''
+        Saves header flags
+        '''
         self._headerFlags = ord(flags)
 
 
     def setHeaderAckFlag(self, bool = True):
-        '''Flag this packet as sending/requiring an ack'''
+        '''
+        Flag this packet as sending/requiring an ack
+        '''
         if bool:
             self._headerFlags |= protocol.HEADER_HAS_ACK
         else:
@@ -58,12 +66,16 @@ class packet:
 
 
     def hasHeaderAckFlag(self):
-        '''Return if this packet is sending/requires an ack'''
+        '''
+        Return if this packet is sending/requires an ack
+        '''
         return self._headerFlags & protocol.HEADER_HAS_ACK
 
 
     def setHeaderLengthFlag(self, bool = True):
-        '''Flag this packet as having a payload length'''
+        '''
+        Flag this packet as having a payload length
+        '''
         if bool:
             self._headerFlags |= protocol.HEADER_HAS_LENGTH
         else:
@@ -71,12 +83,16 @@ class packet:
 
 
     def hasHeaderLengthFlag(self):
-        '''Return if this packet has a payload length'''
+        '''
+        Return if this packet has a payload length
+        '''
         return self._headerFlags & protocol.HEADER_HAS_LENGTH
 
 
     def setPayloadId(self, id):
-        '''Set payload id'''
+        '''
+        Set payload id
+        '''
         if isinstance(id, str):
             id = protocols.shortFrom8bit(id)
 
@@ -91,17 +107,23 @@ class packet:
 
 
     def getPayloadIdInt(self):
-        '''Return payload id as int'''
+        '''
+        Return payload id as int
+        '''
         return self._payload_id
 
 
     def setPayload(self, payload):
-        '''Save payload as 8bit string'''
+        '''
+        Save payload as 8bit string
+        '''
         self._payload = payload
 
 
     def getPayload(self):
-        '''Return payload as string'''
+        '''
+        Return payload as string
+        '''
         return self._payload
 
     
@@ -180,7 +202,9 @@ class packet:
 
 
     def getHex(self):
-        '''Return a packet as hex strings'''
+        '''
+        Return a packet as hex strings
+        '''
         packet = self._buildPacket()
         return protocols.toHex(packet)
 
