@@ -170,7 +170,7 @@ class connection(comms.interface.interface):
             # If stuff in receive buffer
             conn = self._getConnection()
             buffer_size = conn.inWaiting()
-            if buffer_size and not self._isLogging():
+            if buffer_size and not self.isLogging():
                 self._receive(conn.read(buffer_size))
             elif buffer_size:
                 buffer = conn.read(buffer_size)

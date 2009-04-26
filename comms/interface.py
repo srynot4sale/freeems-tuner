@@ -251,7 +251,7 @@ class interface(libs.thread.thread):
         '''
         Log receive buffer to log file
         '''
-        if not self._isLogging():
+        if not self.isLogging():
             return
 
         self._logfile.write(buffer)
