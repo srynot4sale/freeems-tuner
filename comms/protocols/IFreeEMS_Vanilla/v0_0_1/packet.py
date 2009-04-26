@@ -117,7 +117,10 @@ class packet:
         '''
         Save payload as 8bit string
         '''
-        self._payload = payload
+        if isinstance(payload, str):
+            self._payload = payload
+        else:
+            self._payload = protocols.shortTo8bit(payload)
 
 
     def getPayload(self):
