@@ -117,7 +117,10 @@ class packet:
         '''
         Save payload as 8bit string
         '''
-        if isinstance(payload, str):
+        if payload == []:
+            # Hack around the send thread turning an empty payload into a list
+            return
+        elif isinstance(payload, str):
             self._payload = payload
         else:
             self._payload = protocols.shortTo8bit(payload)
