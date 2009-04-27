@@ -66,7 +66,8 @@ RESPONSE_BURN_BLOCK_FROM_RAM_TO_FLASH   = 265
 RESPONSE_ERASE_ALL_BLOCKS_FROM_FLASH    = 267
 RESPONSE_BURN_ALL_BLOCKS_OF_FLASH       = 269
 
-REQUEST_SET_ASYNC_DATALOG_TYPE          = 304
+REQUEST_ASYNC_DATALOG_STATUS            = 304
+RESPONSE_ASYNC_DATALOG_STATUS           = 305
 
 REQUEST_BASIC_DATALOG                   = 400
 RESPONSE_BASIC_DATALOG                  = 401
@@ -80,17 +81,18 @@ REQUEST_PACKET_TITLES = {
         REQUEST_HARD_SYSTEM_RESET:          "HardReset",
         REQUEST_ASYNC_ERROR_CODE:           "AsyncError",
         REQUEST_ASYNC_DEBUG_INFO:           "AsyncDebug",
-        REQUEST_SET_ASYNC_DATALOG_TYPE:     "SetAsyncDatalog",
+        REQUEST_ASYNC_DATALOG_STATUS:       "AsyncDatalogStatus",
 }
 
 RESPONSE_PACKET_TITLES = {
-        RESPONSE_INTERFACE_VERSION:  "InterfaceVersion",
-        RESPONSE_FIRMWARE_VERSION:   "FirmwareVersion",
-        RESPONSE_MAX_PACKET_SIZE:    "MaxPacketSize",
-        RESPONSE_ECHO_PACKET_RETURN: "EchoPacket",
-        RESPONSE_ASYNC_ERROR_CODE:   "AsyncError",
-        RESPONSE_ASYNC_DEBUG_INFO:   "AsyncDebug",
-        RESPONSE_BASIC_DATALOG:      "BasicDatalog"
+        RESPONSE_INTERFACE_VERSION:     "InterfaceVersion",
+        RESPONSE_FIRMWARE_VERSION:      "FirmwareVersion",
+        RESPONSE_MAX_PACKET_SIZE:       "MaxPacketSize",
+        RESPONSE_ECHO_PACKET_RETURN:    "EchoPacket",
+        RESPONSE_ASYNC_ERROR_CODE:      "AsyncError",
+        RESPONSE_ASYNC_DEBUG_INFO:      "AsyncDebug",
+        RESPONSE_ASYNC_DATALOG_STATUS:  "AsyncDatalogStatus",
+        RESPONSE_BASIC_DATALOG:         "BasicDatalog"
 }
         
 MEMORY_PACKET_TITLES = {
@@ -104,7 +106,8 @@ UTILITY_REQUEST_PACKETS = {
         'Interface Version':        'InterfaceVersion',
         'Firmware Version':         'FirmwareVersion',
         'Max Packet Size':          'MaxPacketSize',
-        'Echo Packet Return':       'EchoPacketReturn'
+        'Echo Packet Return':       'EchoPacketReturn',
+        'Async Datalog Status':     'AsyncDatalogStatus'
 }
 
 

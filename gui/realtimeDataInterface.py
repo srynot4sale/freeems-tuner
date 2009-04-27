@@ -152,7 +152,7 @@ class realtimeDataInterface(wx.BoxSizer):
             return
 
         protocol = comms.getConnection().getProtocol()
-        packet = protocol.getRequestPacket('SetAsyncDatalogType')
+        packet = protocol.getRequestPacket('AsyncDatalogStatus')
         packet.startBasic()
 
         data = {'packet': packet}

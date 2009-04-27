@@ -170,10 +170,27 @@ class responseEchoPacket(response):
 
     def createTestResponse(self, request):
         '''
-        Run code to make an acurate test response
+        Run code to make an accurate test response
         '''
         self.setPayloadId(protocol.RESPONSE_ECHO_PACKET_RETURN)
         self.setPayload(request.getBinary())
+
+
+class responseAsyncDatalogStatus(response):
+    '''
+    State of async datalogging
+    '''
+    def __init__(self):
+        response.__init__(self)
+
+
+    def createTestResponse(self, request):
+        '''
+        Run code to make an accurate test response
+        '''
+        self.setPayloadId(protocol.RESPONSE_ASYNC_DATALOG_STATUS)
+        self.setPayload(request.getPayload())
+
 
 
 class responseBasicDatalog(response):

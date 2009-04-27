@@ -66,6 +66,22 @@ class requestEchoPacketReturn(request):
         self.setPayload(string)
 
 
+# Async Logging Status
+class requestAsyncDatalogStatus(request):
+
+    def __init__(self):
+        request.__init__(self)
+        self.setPayloadId(protocol.REQUEST_ASYNC_DATALOG_STATUS)
+
+
+    def stop(self):
+        self.setPayload(protocols.SZEROS)
+
+
+    def startBasic(self):
+        self.setPayload(protocols.SBIT0)
+
+
 # Memory request parent class
 class _requestMemory(request):
 
@@ -116,19 +132,3 @@ class requestSoftSystemReset(request):
     def __init__(self):
         request.__init__(self)
         self.setPayloadId(protocol.REQUEST_SOFT_SYSTEM_RESET)
-
-
-# Set async datalog type
-class requestSetAsyncDatalogType(request):
-
-    def __init__(self):
-        request.__init__(self)
-        self.setPayloadId(protocol.REQUEST_SET_ASYNC_DATALOG_TYPE)
-
-
-    def stop(self):
-        self.setPayload(protocols.SZEROS)
-
-
-    def startBasic(self):
-        self.setPayload(protocols.SBIT0)
