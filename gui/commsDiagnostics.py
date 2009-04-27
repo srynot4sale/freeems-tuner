@@ -20,7 +20,7 @@
 
 import wx, wx.grid as grid
 
-import comms, gui, datetime, settings, action, comms.interface, comms.protocols as protocols
+import comms, gui, datetime, settings, action, comms.interface, comms.protocols as protocols, libs.config
 
 
 class commsDiagnostics(grid.Grid):
@@ -86,8 +86,9 @@ class commsDiagnostics(grid.Grid):
         '''
         protocol = self.conn.getProtocol()
 
-        # If generic response (unknown packet type), print to grid
-        if isinstance(event.packet, protocol.responses.responseGeneric):
+        # If config set or generic response (unknown packet type), print to grid
+        if libs.config.getBool('Logging', 'enable_gui_diagnostics') or \
+                 isinstance(event.packet, protocol.responses.responseGeneric):
             self.insertRow(event.packet)
 
 

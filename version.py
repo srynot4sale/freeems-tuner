@@ -19,6 +19,6 @@
 
 
 # FreeEMS-Tuner
-__revision__ = 'r20090427183029'
+__revision__ = 'r20090427184224'
 __name__ = 'FreeEMS-Tuner'
 __title__ = '%s %s' % (__name__, __revision__)
