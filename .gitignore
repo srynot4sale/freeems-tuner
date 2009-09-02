@@ -3,3 +3,4 @@ data/my_config.cached.ini
 data/test_input.bin
 data/app.log
 *.pyc
+*.swp
