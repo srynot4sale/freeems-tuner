@@ -30,6 +30,9 @@ class connection(comms.interface.interface):
     # Fake receive buffer
     _buffer = ''
 
+    # Log file path
+    _path = ''
+
 
     def __init__(self, name, controller):
         '''
@@ -39,6 +42,9 @@ class connection(comms.interface.interface):
 
         # Load protocol
         self.getProtocol()
+
+        # Get complete file path
+        self._path = libs.data.getPath() + config.get('Comms_File', 'path')
 
         self.start()
 
@@ -55,16 +61,13 @@ class connection(comms.interface.interface):
         self._connected = True
         self._debug('Test comms connection connected')
         
-        # Get complete file path
-        path = libs.data.getPath() + config.get('Comms_File', 'path')
-    
         # Check to see if file exists
-        if not os.path.exists(path) or not os.path.isfile(path):
-            self._error('Comms input file does not exist (%s)' % path)
+        if not os.path.exists(self._path) or not os.path.isfile(self._path):
+            self._error('Comms input file does not exist (%s)' % self._path)
             return
 
         # Load file into buffer
-        fd = open(path, 'r')
+        fd = open(self._path, 'r')
         self._buffer = ''.join(fd.readlines())
         fd.close()
 
@@ -133,3 +136,7 @@ class connection(comms.interface.interface):
             self._checkBlock()
 
         self._final()
+
+
+    def getTitle(self):
+        return 'File (%s)' % self._path

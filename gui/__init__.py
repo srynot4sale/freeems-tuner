@@ -59,20 +59,21 @@ class Frame(wx.Frame):
     menus = {}
     tabctrl = None
     windows = {}
+    statusbar = None
 
     # Iconized state (minimized)
     iconized = None
 
     def __init__(self, controller):
         """Create a Frame instance."""
-        wx.Frame.__init__(self, parent = None, id = -1, title = version.__title__, size = (800,600))
+        wx.Frame.__init__(self, parent = None, id = -1, size = (800,600))
 
         self._controller = controller
 
         self._debug('Gui frame initialised')
 
-        self.CreateStatusBar()
-        self.SetStatusText('Interface: %s' % comms.getConnection().getProtocol().getProtocolName())
+        self._updateStatus()
+
         self._createMenus()
 
         self.iconized = False
@@ -156,6 +157,31 @@ class Frame(wx.Frame):
 
         self._controller.shutdown()
         self.Destroy()
+
+
+    def _updateStatus(self):
+        '''
+        Updates window title and statusbar text
+        '''
+        # Generate title
+        title = version.__title__
+
+        # Set title
+        self.SetTitle(title)
+
+        # Set up statusbar
+        if not self.statusbar:
+            self.statusbar = wx.StatusBar(self, wx.ID_ANY)
+
+        comm = comms.getConnection()
+
+        fields = [
+            'Interface: %s' % comm.getProtocol().getProtocolName(),
+            'Connection: %s' % comm.getTitle()
+        ]
+        self.statusbar.SetFields(fields)
+
+        self.SetStatusBar(self.statusbar)
 
 
     def _createMenus(self):

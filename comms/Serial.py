@@ -184,3 +184,7 @@ class connection(comms.interface.interface):
             self._checkBlock()
 
         self._final()
+
+
+    def getTitle(self):
+        return 'Serial (%s)' % self._settings.port
