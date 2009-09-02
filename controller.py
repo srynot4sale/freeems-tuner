@@ -18,7 +18,7 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import threading, datetime, time, types
+import threading, datetime, time
 import libs.thread, comms, libs.config as config
 
 
@@ -262,7 +262,7 @@ class app(libs.thread.thread):
         '''
         Sends log message to appropriate handler
         '''
-        if isinstance(self.log_verboseness, types.NoneType):
+        if self.log_verboseness == None:
             # Config has not yet been loaded
             self.log_verboseness = self.log_levels[config.get('Logging', 'verboseness')]
             self.log_to_file = config.getBool('Logging', 'to_file')
