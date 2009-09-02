@@ -117,7 +117,7 @@ class connection(comms.interface.interface):
         '''
         self._disconnWanted = False
 
-        self.stopLogging()
+        self.stopRecording()
 
         if not self.isConnected():
             return
@@ -170,11 +170,11 @@ class connection(comms.interface.interface):
             # If stuff in receive buffer
             conn = self._getConnection()
             buffer_size = conn.inWaiting()
-            if buffer_size and not self.isLogging():
+            if buffer_size and not self.isRecording():
                 self._receive(conn.read(buffer_size))
             elif buffer_size:
                 buffer = conn.read(buffer_size)
-                self.logBuffer(buffer)
+                self.recordBuffer(buffer)
                 self._receive(buffer)
 
             # If stuff in send buffer

@@ -36,8 +36,8 @@ ID_TAB_POPOUT = wx.NewId()
 
 ID_COMMS_CONNECT = wx.NewId()
 ID_COMMS_DISCONNECT = wx.NewId()
-ID_COMMS_LOGGING_START = wx.NewId()
-ID_COMMS_LOGGING_STOP = wx.NewId()
+ID_COMMS_RECORDING_START = wx.NewId()
+ID_COMMS_RECORDING_STOP = wx.NewId()
 ID_COMMS_TESTS = wx.NewId()
 ID_COMMS_DATA_UPDATE = wx.NewId()
 
@@ -205,8 +205,8 @@ class Frame(wx.Frame):
         m = self.menus['comms'] = wx.Menu()
         m.Append(ID_COMMS_CONNECT, '&Connect', 'Connect To Comms Port')
         m.Append(ID_COMMS_DISCONNECT, '&Disconnect', 'Disconnect From Comms Port')
-        m.Append(ID_COMMS_LOGGING_START, 'Start &Logging', 'Start logging comms data')
-        m.Append(ID_COMMS_LOGGING_STOP, '&Stop Logging', 'Stop logging comms data')
+        m.Append(ID_COMMS_RECORDING_START, '&Start Recording', 'Start recording comms data')
+        m.Append(ID_COMMS_RECORDING_STOP, 'S&top Recording', 'Stop recording comms data')
         m.AppendSeparator()
         #m.Append(ID_COMMS_DATA_UPDATE, '&Update Comms Data Settings...', 'Update Comms Data Settings')
         m.Append(ID_COMMS_TESTS, 'Interface Protocol &Test...', 'Run interface tests on firmware')
@@ -235,8 +235,8 @@ class Frame(wx.Frame):
 
         self.Bind(wx.EVT_MENU, self.CommsConnect, id=ID_COMMS_CONNECT)
         self.Bind(wx.EVT_MENU, self.CommsDisconnect, id=ID_COMMS_DISCONNECT)
-        self.Bind(wx.EVT_MENU, self.CommsLoggingStart, id=ID_COMMS_LOGGING_START)
-        self.Bind(wx.EVT_MENU, self.CommsLoggingStop, id=ID_COMMS_LOGGING_STOP)
+        self.Bind(wx.EVT_MENU, self.CommsRecordingStart, id=ID_COMMS_RECORDING_START)
+        self.Bind(wx.EVT_MENU, self.CommsRecordingStop, id=ID_COMMS_RECORDING_STOP)
         #self.Bind(wx.EVT_MENU, self.CommsUpdateData, id=ID_COMMS_DATA_UPDATE)
         self.Bind(wx.EVT_MENU, self.CommsTests, id=ID_COMMS_TESTS)
 
@@ -248,8 +248,8 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_REDO)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_CONNECT)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_DISCONNECT)
-        self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_LOGGING_START)
-        self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_LOGGING_STOP)
+        self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_RECORDING_START)
+        self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_RECORDING_STOP)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateMenu, id=ID_COMMS_TESTS)
         
 
@@ -362,9 +362,9 @@ class Frame(wx.Frame):
         return comms.getConnection().isConnected()
 
 
-    def CommsLoggingStart(self, event):
+    def CommsRecordingStart(self, event):
         '''
-        Start logging comms
+        Start recording comms
         '''
         timestamp = datetime.datetime.today().strftime('%Y%m%d%H%M%S')
 
@@ -377,28 +377,28 @@ class Frame(wx.Frame):
 
         dialog.ShowModal()
 
-        comms.getConnection().startLogging(dialog.GetPath())
+        comms.getConnection().startRecording(dialog.GetPath())
 
 
-    def CommsLoggingStop(self, event):
+    def CommsRecordingStop(self, event):
         '''
-        Stop logging comms
+        Stop recording comms
         '''
-        comms.getConnection().stopLogging()
+        comms.getConnection().stopRecording()
 
 
-    def CommsCanStartLogging(self):
+    def CommsCanStartRecording(self):
         '''
-        Can the user start logging
+        Can the user start recording
         '''
-        return self.CommsIsConnected() and not self.CommsIsLogging()
+        return self.CommsIsConnected() and not self.CommsIsRecording()
 
 
-    def CommsIsLogging(self):
+    def CommsIsRecording(self):
         '''
-        Check if comms is logging
+        Check if comms is recording
         '''
-        return comms.getConnection().isLogging()
+        return comms.getConnection().isRecording()
 
 
     def OnUpdateMenu(self, event):
@@ -417,10 +417,10 @@ class Frame(wx.Frame):
                 event.Enable(self.CommsIsConnected())
             elif id == ID_COMMS_TESTS:
                 event.Enable(self.CommsIsConnected())
-            elif id == ID_COMMS_LOGGING_START:
-                event.Enable(self.CommsCanStartLogging())
-            elif id == ID_COMMS_LOGGING_STOP:
-                event.Enable(self.CommsIsLogging())
+            elif id == ID_COMMS_RECORDING_START:
+                event.Enable(self.CommsCanStartRecording())
+            elif id == ID_COMMS_RECORDING_STOP:
+                event.Enable(self.CommsIsRecording())
             else:
                 event.Enable(False)
         except AttributeError:

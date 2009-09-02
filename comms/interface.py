@@ -220,38 +220,38 @@ class interface(libs.thread.thread):
             wx.PostEvent(watcher, receive_event)
 
 
-    def isLogging(self):
+    def isRecording(self):
         '''
-        Check if logging data to file
+        Check if recording data to file
         '''
         return isinstance(self._logfile, file)
 
 
-    def stopLogging(self):
+    def stopRecording(self):
         '''
-        Stop logging data to file
+        Stop recording data to file
         '''
-        if not self.isLogging():
+        if not self.isRecording():
             return
 
-        self._debug('Stop logging comms to file')
+        self._debug('Stop recording comms to file')
         self._logfile.close()
         self._logfile = None
 
 
-    def startLogging(self, path):
+    def startRecording(self, path):
         '''
-        Start logging data to file
+        Start recording data to file
         '''
-        self._debug('Start logging comms to file (%s)' % path)
+        self._debug('Start recording comms to file (%s)' % path)
         self._logfile = open(path, 'wb')  
 
 
-    def logBuffer(self, buffer):
+    def recordBuffer(self, buffer):
         '''
-        Log receive buffer to log file
+        Record receive buffer to log file
         '''
-        if not self.isLogging():
+        if not self.isRecording():
             return
 
         self._logfile.write(buffer)
