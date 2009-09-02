@@ -81,9 +81,6 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_ICONIZE, self.OnIconize)
 
-        # Handle incoming comms and settings when the UI is idle
-        self.Bind(wx.EVT_IDLE, self.OnIdle)
-
         self.BuildWindow()
 
         # Load saved location/size settings
@@ -128,13 +125,6 @@ class Frame(wx.Frame):
         tabctrl.AddPage(window_main, 'Main')
         tabctrl.AddPage(window_memory_utils, 'Memory Utils')
         tabctrl.AddPage(window_realtime_data, 'Real-Time Data')
-
-
-    def OnIdle(self, event = None):
-        '''Idle UI handler'''
-        # Save window settings
-        #settings.saveSettings(self._controller)
-        pass
 
 
     def OnMove(self, event):
