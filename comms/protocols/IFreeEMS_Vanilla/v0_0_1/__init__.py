@@ -66,8 +66,8 @@ RESPONSE_BURN_BLOCK_FROM_RAM_TO_FLASH   = 265
 RESPONSE_ERASE_ALL_BLOCKS_FROM_FLASH    = 267
 RESPONSE_BURN_ALL_BLOCKS_OF_FLASH       = 269
 
-REQUEST_ASYNC_DATALOG_STATUS            = 304
-RESPONSE_ASYNC_DATALOG_STATUS           = 305
+#REQUEST_ASYNC_DATALOG_STATUS            = 304
+#RESPONSE_ASYNC_DATALOG_STATUS           = 305
 
 REQUEST_BASIC_DATALOG                   = 400
 RESPONSE_BASIC_DATALOG                  = 401
@@ -81,7 +81,7 @@ REQUEST_PACKET_TITLES = {
         REQUEST_HARD_SYSTEM_RESET:          "HardReset",
         REQUEST_ASYNC_ERROR_CODE:           "AsyncError",
         REQUEST_ASYNC_DEBUG_INFO:           "AsyncDebug",
-        REQUEST_ASYNC_DATALOG_STATUS:       "AsyncDatalogStatus",
+#        REQUEST_ASYNC_DATALOG_STATUS:       "AsyncDatalogStatus",
 }
 
 RESPONSE_PACKET_TITLES = {
@@ -91,7 +91,7 @@ RESPONSE_PACKET_TITLES = {
         RESPONSE_ECHO_PACKET_RETURN:    "EchoPacket",
         RESPONSE_ASYNC_ERROR_CODE:      "AsyncError",
         RESPONSE_ASYNC_DEBUG_INFO:      "AsyncDebug",
-        RESPONSE_ASYNC_DATALOG_STATUS:  "AsyncDatalogStatus",
+#        RESPONSE_ASYNC_DATALOG_STATUS:  "AsyncDatalogStatus",
         RESPONSE_BASIC_DATALOG:         "BasicDatalog"
 }
         
@@ -107,7 +107,7 @@ UTILITY_REQUEST_PACKETS = {
         'Firmware Version':         'FirmwareVersion',
         'Max Packet Size':          'MaxPacketSize',
         'Echo Packet Return':       'EchoPacketReturn',
-        'Async Datalog Status':     'AsyncDatalogStatus'
+#        'Async Datalog Status':     'AsyncDatalogStatus'
 }
 
 
