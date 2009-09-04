@@ -18,6 +18,7 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 import comms.protocols as protocols, packet, __init__ as protocol
+import random
 
 
 def getPacket(id):
@@ -201,3 +202,18 @@ class responseBasicDatalog(response):
         response.__init__(self)
         rules = self._validation_rules
         rules['requires_length'] = True
+
+
+    def createTestResponse(self, request):
+        '''
+        Create an accurate example response for testing
+        '''
+        self.setPayloadId(protocol.RESPONSE_BASIC_DATALOG)
+
+        # Generate 2 random shorts for each of the 27 variables
+        binary = ''
+        while len(binary) < (27 * 4):
+            binary += protocols.shortTo8bit(random.randint(0,65535))
+            binary += protocols.shortTo8bit(random.randint(0,65535))
+
+        self.setPayload(binary)

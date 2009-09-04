@@ -20,7 +20,7 @@
 
 import wx
 
-import gui.realtimeDataInterface
+import comms, gui.realtimeDataInterface
 
 
 # Helper value for inserting spacing into sizers
@@ -31,6 +31,9 @@ class tab(wx.Panel):
     '''
     Real-time data stream display tab
     '''
+
+    # Protocol object cache
+    _protocol = None
 
     def __init__(self, parent):
         '''
@@ -43,4 +46,31 @@ class tab(wx.Panel):
 
         self.SetSizer(self.interface)
         self.Layout()
+
+        self._setupComms()
+
+
+    def _setupComms(self):
+        '''
+        Bind watcher method to comms
+        '''
+        # Bind to connection
+        self.conn = comms.getConnection()
+        self.conn.bindReceiveWatcher(self)
+
+        # Bind to events
+        self.Bind(comms.interface.EVT_RECEIVE, self.monitorPackets)
+
+
+    def monitorPackets(self, event):
+        '''
+        Check for received datalogs
+        '''
+        if not self._protocol:
+            self._protocol = self.conn.getProtocol()
+
+        # Check
+        if isinstance(event.packet, self._protocol.responses.responseBasicDatalog):
+            self.interface.updateData(event.packet)
+
 

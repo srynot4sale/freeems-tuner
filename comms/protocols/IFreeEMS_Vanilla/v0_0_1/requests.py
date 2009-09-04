@@ -66,12 +66,16 @@ class requestEchoPacketReturn(request):
         self.setPayload(string)
 
 
-# Async Logging Status
-class requestAsyncDatalogStatus(request):
+class requestBasicDatalog(request):
+    '''
+    Basic datalog toggle packet
+
+    Toggles datalogging depending on payload
+    '''
 
     def __init__(self):
         request.__init__(self)
-        self.setPayloadId(protocol.REQUEST_ASYNC_DATALOG_STATUS)
+        self.setPayloadId(protocol.REQUEST_BASIC_DATALOG)
 
 
     def stop(self):

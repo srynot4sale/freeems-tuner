@@ -81,6 +81,7 @@ REQUEST_PACKET_TITLES = {
         REQUEST_HARD_SYSTEM_RESET:          "HardReset",
         REQUEST_ASYNC_ERROR_CODE:           "AsyncError",
         REQUEST_ASYNC_DEBUG_INFO:           "AsyncDebug",
+        REQUEST_BASIC_DATALOG:              "BasicDatalog",
 #        REQUEST_ASYNC_DATALOG_STATUS:       "AsyncDatalogStatus",
 }
 
