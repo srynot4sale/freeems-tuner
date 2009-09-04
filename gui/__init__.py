@@ -22,7 +22,7 @@ import wx, os, datetime
 import version, comms, settings
 import libs.config as config, libs.data as data
 
-import debugFrame, commsTestFrame, tab.main, tab.realtimeData, tab.memoryUtils
+import debugFrame, commsTestFrame, tab.main, tab.realtimeData, tab.memoryUtils, tab.table
 
 
 # Create event id's
@@ -123,9 +123,11 @@ class Frame(wx.Frame):
         self.windows['main'] = window_main = tab.main.tab(self.tabctrl)
         self.windows['memory_utils'] = window_memory_utils = tab.memoryUtils.tab(self.tabctrl)
         self.windows['realtime_data'] = window_realtime_data = tab.realtimeData.tab(self.tabctrl)
+        self.windows['table'] = window_table = tab.table.tab(self.tabctrl)
         tabctrl.AddPage(window_main, 'Main')
         tabctrl.AddPage(window_memory_utils, 'Memory Utils')
         tabctrl.AddPage(window_realtime_data, 'Real-Time Data')
+        tabctrl.AddPage(window_table, 'Tuning Table')
 
 
     def OnMove(self, event):

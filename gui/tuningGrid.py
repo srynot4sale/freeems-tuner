@@ -1,4 +1,4 @@
-#   Copyright 2008, 2009 Aaron Barnes
+#   Copyright 2009 Aaron Barnes
 #
 #   This file is part of the FreeEMS project.
 #
@@ -18,7 +18,33 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-# FreeEMS-Tuner
-__revision__ = 'r20090904230053'
-__name__ = 'FreeEMS-Tuner'
-__title__ = '%s %s' % (__name__, __revision__)
+import wx, wx.grid as grid
+
+
+class tuningGrid(grid.Grid):
+
+    conn = None
+    row = 0
+
+    def __init__(self, parent):
+        '''
+        Setup gui
+        '''
+        grid.Grid.__init__(self, parent)
+
+        # Generate an empty, unlabeled grid
+        self.CreateGrid(16, 16)
+        self.SetRowLabelSize(50)
+
+        r = 0
+        while r < 16:
+            self.SetRowLabelValue(r, str(r + 1))
+            r += 1
+
+        c = 0
+        while c < 16:
+            self.SetColLabelValue(c, str(c + 1))
+            self.SetColSize(c, 50)
+            c += 1
+
+        self.SetDefaultCellFont(wx.Font(9, wx.MODERN, wx.NORMAL, wx.NORMAL))
