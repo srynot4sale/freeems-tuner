@@ -73,15 +73,18 @@ REQUEST_BASIC_DATALOG                   = 400
 RESPONSE_BASIC_DATALOG                  = 401
 
 REQUEST_PACKET_TITLES = {
-        REQUEST_INTERFACE_VERSION:          "InterfaceVersion",
-        REQUEST_FIRMWARE_VERSION:           "FirmwareVersion",
-        REQUEST_MAX_PACKET_SIZE:            "MaxPacketSize",
-        REQUEST_ECHO_PACKET_RETURN:         "EchoPacket",
-        REQUEST_SOFT_SYSTEM_RESET:          "SoftReset",
-        REQUEST_HARD_SYSTEM_RESET:          "HardReset",
-        REQUEST_ASYNC_ERROR_CODE:           "AsyncError",
-        REQUEST_ASYNC_DEBUG_INFO:           "AsyncDebug",
-        REQUEST_BASIC_DATALOG:              "BasicDatalog",
+        REQUEST_INTERFACE_VERSION:              "InterfaceVersion",
+        REQUEST_FIRMWARE_VERSION:               "FirmwareVersion",
+        REQUEST_MAX_PACKET_SIZE:                "MaxPacketSize",
+        REQUEST_ECHO_PACKET_RETURN:             "EchoPacket",
+        REQUEST_SOFT_SYSTEM_RESET:              "SoftReset",
+        REQUEST_HARD_SYSTEM_RESET:              "HardReset",
+        REQUEST_ASYNC_ERROR_CODE:               "AsyncError",
+        REQUEST_ASYNC_DEBUG_INFO:               "AsyncDebug",
+        REQUEST_RETRIEVE_BLOCK_FROM_RAM:        "RetrRamBlock",
+        REQUEST_RETRIEVE_BLOCK_FROM_FLASH:      "RetrFlashBlock",
+        REQUEST_BURN_BLOCK_FROM_RAM_TO_FLASH:   "BurnBlockFlash",
+        REQUEST_BASIC_DATALOG:                  "BasicDatalog",
 #        REQUEST_ASYNC_DATALOG_STATUS:       "AsyncDatalogStatus",
 }
 
