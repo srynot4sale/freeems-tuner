@@ -416,7 +416,7 @@ class Serial(SerialBase):
         """Set terminal status line: Request To Send"""
         if self.fd is None: raise portNotOpenError
         if level:
-            fcntl.ioctl(self.fd, TIOCMBIS, TIOCM_RTS_str)
+            fcntl.ioctl(self.fd, TIOCMBIS, int(TIOCM_RTS_str))
         else:
             fcntl.ioctl(self.fd, TIOCMBIC, TIOCM_RTS_str)
 
@@ -424,7 +424,7 @@ class Serial(SerialBase):
         """Set terminal status line: Data Terminal Ready"""
         if self.fd is None: raise portNotOpenError
         if level:
-            fcntl.ioctl(self.fd, TIOCMBIS, TIOCM_DTR_str)
+            fcntl.ioctl(self.fd, TIOCMBIS, int(TIOCM_DTR_str))
         else:
             fcntl.ioctl(self.fd, TIOCMBIC, TIOCM_DTR_str)
 
