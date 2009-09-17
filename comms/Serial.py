@@ -105,8 +105,8 @@ class connection(comms.interface.interface):
         self._connected = True
         self._debug('Serial comms connection established to %s' % self._settings.port)
 
-        conn.setRTS(1)
-        conn.setDTR(1)
+       # conn.setRTS(1)
+       # conn.setDTR(1)
         conn.flushInput()
         conn.flushOutput()
 
