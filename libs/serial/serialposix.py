@@ -416,9 +416,9 @@ class Serial(SerialBase):
         """Set terminal status line: Request To Send"""
         if self.fd is None: raise portNotOpenError
         print repr(TIOCMBIS)
-        print repr(TIOCM_RTS_str)
+        print repr(int(TIOCM_RTS_str))
         if level:
-            fcntl.ioctl(self.fd, TIOCMBIS, TIOCM_RTS_str)
+            fcntl.ioctl(self.fd, TIOCMBIS, int(TIOCM_RTS_str))
         else:
             fcntl.ioctl(self.fd, TIOCMBIC, TIOCM_RTS_str)
 
