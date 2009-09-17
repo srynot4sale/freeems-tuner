@@ -191,8 +191,13 @@ class realtimeDataInterface(wx.BoxSizer):
         i = 0
         while i < 27:
             # Get to the right part of the string
-            start = i * 4
+            if i > 0:
+                start = i * 4
+            else:
+                start = 0
 
+            print i
+            print payload[start:start+2]
             # Get the 2 values (converted to ints) and average them
             a = protocols.shortFrom8bit(payload[start:start+2])
             b = protocols.shortFrom8bit(payload[start+2:start+4])
