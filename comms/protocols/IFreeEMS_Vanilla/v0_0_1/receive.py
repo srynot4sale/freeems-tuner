@@ -141,6 +141,8 @@ class thread(libs.thread.thread):
             if self._cache[0] != protocol.START_BYTE:
                 index = self._cache.find(protocol.START_BYTE, 1)
                 if index >= 0:
+                    if self._cache[:index] == protocol.END_BYTE:
+                        return
                     raise ParsingException, 'Bad/incomplete packet found in buffer before start byte %s' % protocols.toHex(self._cache[:index])
                 else:
                     raise ParsingException, 'Bad/incomplete packet found in buffer %s' % protocols.toHex(self._cache)
