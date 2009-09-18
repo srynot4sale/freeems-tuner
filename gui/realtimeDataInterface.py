@@ -30,55 +30,119 @@ class realtimeDataInterface(wx.BoxSizer):
 
     ID_LOGGING_TOGGLE = wx.NewId()
 
-    _vars = ['Inlet Air Temperature',
-             'Coolant/Head Temperature',
-             'Throttle Position',
-             'Exhaust Gas Oxygen 1',
-             'Manifold Absolute Pressure',
-             'Atmospheric Absolute Pressure',
-             'Battery Reference Voltage',
-             'Manifold Air Temperature',
-             'Exhaust Gas Oxygen 2',
-             'Intercooler Absolute Pressure',
-             'Mass Air Flow',
-             'Delta MAP',
-             'Delta TPS',
-             'Revolutions Per Minute',
-             'Delta RPM',
-             'Delta Delta RPM',
-             'Load Main',
-             'Volumetric Efficiency Main',
-             'Lamda',
-             'Air Flow',
-             'Density And Fuel',
-             'Base Pulse Width',
-             'Injector Dead Time',
-             'Engine Temperature Enrichment',
-             'Transient Fuel Correction Total',
-             'Final Pulse Width',
-             'Reference Pulse Width'
-             ]
-    
-    _vars_abrv = ['IAT', 'CHT', 'TPS',
-                 'EGO1', 'MAP', 'AAP',
-                 'BRV', 'MAT', 'EGO2',
-                 'IAP', 'MAF', 'DMAP',
-                 'DTPS', 'RPM', 'DRPM',
-                 'DDRPM', 'LoadMain', 'VEMain',
-                 'Lamda', 'AirFlow', 'Density&&Fuel',
-                 'BasePW', 'IDT', 'ETE',
-                 'TFCTotal', 'FinalPW','RefPW'
-                 ]
+    # Vars to display (and their order)
+    # Comment out lines here to hide them in the interface
+    display = [
+
+                'IAT',
+                'CHT',
+                'TPS',
+                'EGO',
+                'MAP',
+                'AAP',
+                'BRV',
+                'MAT',
+                'EGO2',
+                'IAP',
+                'MAF',
+                'DMAP',
+                'DTPS',
+                'RPM',
+                'DRPM',
+                'DDRPM',
+                'LoadMain',
+                'VEMain',
+                'Lambda',
+                'AirFlow',
+                'DensityFuel',
+                'BasePW',
+                'IDT',
+                'ETE',
+                'TFCTotal',
+                'FinalPW',
+                'RefPW',
+                'sp1',
+                'sp2',
+                'sp3',
+                'sp4',
+                'sp5',
+    ]
+
+    # List of human readable titles
+    titles = {
+                'IAT':          'Inlet Air Temperature',
+                'CHT':          'Coolant / Head Temperature',
+                'TPS':          'Throttle Position Sensor',
+                'EGO':          'Exhaust Gas Oxygen',
+                'MAP':          'Manifold Absolute Pressure',
+                'AAP':          'Atmospheric Absolute Pressure',
+                'BRV':          'Battery Reference Voltage',
+                'MAT':          'Manifold Air Temperature',
+                'EGO2':         'Exhaust Gas Oxygen',
+                'IAP':          'Intercooler Absolute Pressure',
+                'MAF':          'Mass Air Flow',
+                'DMAP':         'Delta MAP',
+                'DTPS':         'Delta TPS',
+                'RPM':          'RPM',
+                'DRPM':         'Delta RPM',
+                'DDRPM':        'Delta Delta RPM',
+                'LoadMain':     'Load Main',
+                'VEMain':       'VE Main',
+                'Lambda':       'Lambda',
+                'AirFlow':      'Air Flow',
+                'DensityFuel':  'Density and Fuel',
+                'BasePW':       'Base PW',
+                'IDT':          'IDT',
+                'ETE':          'ETE',
+                'TFCTotal':     'TFC Total',
+                'FinalPW':      'Final PW',
+                'RefPW':        'Ref PW',
+                'sp1':          'sp1',
+                'sp2':          'sp2',
+                'sp3':          'sp3',
+                'sp4':          'sp4',
+                'sp5':          'sp5',
+    }
 
     # Latest data from datalog
-    _vars_data = [0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0,
-                  0, 0, 0]
+    # Do not edit (as this also defines the data log structure)
+    data = {
+                'IAT':          0,
+                'CHT':          0,
+                'TPS':          0,
+                'EGO':          0,
+                'MAP':          0,
+                'AAP':          0,
+                'BRV':          0,
+                'MAT':          0,
+                'EGO2':         0,
+                'IAP':          0,
+                'MAF':          0,
+                'DMAP':         0,
+                'DTPS':         0,
+                'RPM':          0,
+                'DRPM':         0,
+                'DDRPM':        0,
+                'LoadMain':     0,
+                'VEMain':       0,
+                'Lambda':       0,
+                'AirFlow':      0,
+                'DensityFuel':  0,
+                'BasePW':       0,
+                'IDT':          0,
+                'ETE':          0,
+                'TFCTotal':     0,
+                'FinalPW':      0,
+                'RefPW':        0,
+                'sp1':          0,
+                'sp2':          0,
+                'sp3':          0,
+                'sp4':          0,
+                'sp5':          0,
+    }
 
     # TextCtrl objects for each variable data display
-    _vars_display = []
+    _display_controls = {}
 
 
     def __init__(self, parent):
@@ -90,10 +154,6 @@ class realtimeDataInterface(wx.BoxSizer):
         self._controller = parent.controller
 
         # Populate real-time data for display
-
-        # maybe a loop here
-        # maybe some more control flow here
-        # maybe a GOTO here ;)
 
         # Controls
         log_types = ['Basic']
@@ -112,39 +172,34 @@ class realtimeDataInterface(wx.BoxSizer):
         sizer5.Add(sizer6, 1)
         sizer5.Add(blank, 12)
 
+        # Var display
         sizer4 = wx.BoxSizer(wx.VERTICAL)
         sizer4.Add(blank, 1)
 
-        # Generate TextCtrls to display variable values
-        for data in self._vars_data:
-            text = wx.TextCtrl(parent, -1, str(data), style = wx.ALIGN_RIGHT | wx.NO_BORDER)
+        # Title display
+        sizer2 = wx.BoxSizer(wx.VERTICAL)
+        sizer2.Add(blank, 1)
+
+        # Generate display
+        data = self.data
+        for key in self.display:
+
+            text = wx.StaticText(parent, -1, self.titles[key], style = wx.ALIGN_LEFT)
+            sizer2.Add(text, 40, wx.EXPAND)
+            sizer2.Add(blank, 1)
+
+            text = wx.TextCtrl(parent, -1, str(data[key]), style = wx.ALIGN_RIGHT | wx.NO_BORDER)
             sizer4.Add(text, 40, wx.EXPAND)
             sizer4.Add(blank, 1)
 
             # Save references to controls in list
-            self._vars_display.append(text)
-            
-        sizer3 = wx.BoxSizer(wx.VERTICAL)
-        sizer3.Add(blank, 1)
-        for label in self._vars_abrv:
-            text = wx.StaticText(parent, -1, label, style = wx.ALIGN_RIGHT)
-            sizer3.Add(text, 40, wx.EXPAND)
-            sizer3.Add(blank, 1)
-
-        sizer2 = wx.BoxSizer(wx.VERTICAL)
-        sizer2.Add(blank, 1)
-        for label in self._vars:
-            text = wx.StaticText(parent, -1, label, style = wx.ALIGN_LEFT)
-            sizer2.Add(text, 40, wx.EXPAND)
-            sizer2.Add(blank, 1)
+            self._display_controls[key] = text
 
         sizer1 = wx.BoxSizer(wx.HORIZONTAL)
         sizer1.Add(blank, 1)
         sizer1.Add(sizer2, 15, wx.EXPAND)
         sizer1.Add(blank, 1)
-        sizer1.Add(sizer3, 8, wx.EXPAND)
-        sizer1.Add(blank, 1)
-        sizer1.Add(sizer4, 3, wx.EXPAND)
+        sizer1.Add(sizer4, 8, wx.EXPAND)
         sizer1.Add(blank, 19)
         sizer1.Add(sizer5, 20, wx.EXPAND)
         sizer1.Add(blank, 1)
@@ -180,7 +235,7 @@ class realtimeDataInterface(wx.BoxSizer):
         Packet parameter is the basicDatalog packet received.
         '''
         # Data store
-        data = self._vars_data
+        data = self.data
 
         # Basic datalog packet payloads consist of 4 bytes of data for each of the 27 variables logged
         # These 4 bytes contain two ints, and we shall average the two for display
@@ -189,20 +244,14 @@ class realtimeDataInterface(wx.BoxSizer):
         payload_length = len(payload)
 
         i = 0
-        while i < 27:
-            # Get to the right part of the string
-            start = i * 4
-
-            # Get the 2 values (converted to ints) and average them
-            a = protocols.shortFrom8bit(payload[start:start+2])
-            b = protocols.shortFrom8bit(payload[start+2:start+4])
-            value = (a + b) / 2
+        for key in data.iterkeys():
+            value = protocols.shortFrom8bit(payload[i:i+2])
 
             # Update display
-            data[i] = value
+            data[key] = value
 
             # Next var
-            i += 1
+            i += 2
 
         self.refreshDisplay()
 
@@ -216,9 +265,9 @@ class realtimeDataInterface(wx.BoxSizer):
 
         This currently does not support unsigned and signed ints, like it should
         '''
-        display = self._vars_display
+        display = self.display
+        data = self.data
+        controls = self._display_controls
 
-        i = 0
-        for value in self._vars_data:
-            display[i].SetValue(str(value))
-            i += 1
+        for key in display:
+            controls[key].SetValue(str(data[key]))
