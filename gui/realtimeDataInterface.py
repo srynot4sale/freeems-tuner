@@ -70,16 +70,16 @@ class realtimeDataInterface(wx.BoxSizer):
 
     # List of human readable titles
     titles = {
-                'IAT':          'Inlet Air Temperature',
-                'CHT':          'Coolant / Head Temperature',
-                'TPS':          'Throttle Position Sensor',
-                'EGO':          'Exhaust Gas Oxygen',
-                'MAP':          'Manifold Absolute Pressure',
-                'AAP':          'Atmospheric Absolute Pressure',
-                'BRV':          'Battery Reference Voltage',
-                'MAT':          'Manifold Air Temperature',
-                'EGO2':         'Exhaust Gas Oxygen',
-                'IAP':          'Intercooler Absolute Pressure',
+                'IAT':          'Inlet Air Temperature (celcius)',
+                'CHT':          'Coolant / Head Temperature (celcius)',
+                'TPS':          'Throttle Position Sensor (percent)',
+                'EGO':          'Exhaust Gas Oxygen (lambda)',
+                'MAP':          'Manifold Absolute Pressure (kPa)',
+                'AAP':          'Atmospheric Absolute Pressure (kPa)',
+                'BRV':          'Battery Reference Voltage (volts)',
+                'MAT':          'Manifold Air Temperature (celcius)',
+                'EGO2':         'Exhaust Gas Oxygen (lambda)',
+                'IAP':          'Intercooler Absolute Pressure (kpa)',
                 'MAF':          'Mass Air Flow',
                 'DMAP':         'Delta MAP',
                 'DTPS':         'Delta TPS',
@@ -87,7 +87,7 @@ class realtimeDataInterface(wx.BoxSizer):
                 'DRPM':         'Delta RPM',
                 'DDRPM':        'Delta Delta RPM',
                 'LoadMain':     'Load Main',
-                'VEMain':       'VE Main',
+                'VEMain':       'VE Main (percent)',
                 'Lambda':       'Lambda',
                 'AirFlow':      'Air Flow',
                 'DensityFuel':  'Density and Fuel',
@@ -102,6 +102,26 @@ class realtimeDataInterface(wx.BoxSizer):
                 'sp3':          'sp3',
                 'sp4':          'sp4',
                 'sp5':          'sp5',
+    }
+
+    # Unit conversion
+    units = {
+                'IAT':          'temp',
+                'CHT':          'temp',
+                'TPS':          'percent_tps',
+                'EGO':          'lambda',
+                'MAP':          'pressure',
+                'AAP':          'pressure',
+                'BRV':          'volts',
+                'MAT':          'temp',
+                'EGO2':         'lambda',
+                'IAP':          'pressure',
+                'RPM':          'rpm',
+                'DRPM':         'rpm',
+                'DDRPM':        'rpm',
+                'LoadMain':     'raw',
+                'VEMain':       'percent',
+                'Lambda':       'lambda',
     }
 
     # Data log packet payload order
@@ -203,11 +223,11 @@ class realtimeDataInterface(wx.BoxSizer):
 
         sizer1 = wx.BoxSizer(wx.HORIZONTAL)
         sizer1.Add(blank, 1)
-        sizer1.Add(sizer2, 15, wx.EXPAND)
+        sizer1.Add(sizer2, 20, wx.EXPAND)
         sizer1.Add(blank, 1)
         sizer1.Add(sizer4, 8, wx.EXPAND)
-        sizer1.Add(blank, 19)
-        sizer1.Add(sizer5, 20, wx.EXPAND)
+        sizer1.Add(blank, 5)
+        sizer1.Add(sizer5, 15, wx.EXPAND)
         sizer1.Add(blank, 1)
 
         self.Add(blank, 1)
@@ -243,6 +263,9 @@ class realtimeDataInterface(wx.BoxSizer):
         # Data store
         data = self.data
 
+        # Units
+        units = self.units
+
         # Basic datalog packet payloads consist of 4 bytes of data for each of the 27 variables logged
         # These 4 bytes contain two ints, and we shall average the two for display
         # Loop through playload 4 bytes at a time
@@ -252,6 +275,23 @@ class realtimeDataInterface(wx.BoxSizer):
         i = 0
         for key in self._structure:
             value = protocols.shortFrom8bit(payload[i:i+2])
+
+            # Process display
+            if key in units:
+                if units[key] == 'temp':
+                    value = (value / 100) - 273.15
+                elif units[key] == 'percent_tps':
+                    value = value / 640
+                elif units[key] == 'percent':
+                    value = value / 512
+                elif units[key] == 'lambda':
+                    value = value / 32768
+                elif units[key] == 'pressure':
+                    value = value / 100
+                elif units[key] == 'volts':
+                    value = value / 1000
+                elif units[key] == 'rpm':
+                    value = value / 2
 
             # Update display
             data[key] = value
