@@ -104,8 +104,14 @@ class realtimeDataInterface(wx.BoxSizer):
                 'sp5':          'sp5',
     }
 
+    # Data log packet payload order
+    _structure = [ 'IAT', 'CHT', 'TPS', 'EGO', 'MAP', 'AAP', 'BRV', 'MAT',
+        'EGO2', 'IAP', 'MAF', 'DMAP', 'DTPS', 'RPM', 'DRPM', 'DDRPM',
+        'LoadMain', 'VEMain', 'Lambda', 'AirFlow', 'DensityFuel', 'BasePW',
+        'IDT', 'ETE', 'TFCTotal', 'FinalPW', 'RefPW', 'sp1', 'sp2', 'sp3',
+        'sp4', 'sp5' ]
+
     # Latest data from datalog
-    # Do not edit (as this also defines the data log structure)
     data = {
                 'IAT':          0,
                 'CHT':          0,
@@ -244,7 +250,7 @@ class realtimeDataInterface(wx.BoxSizer):
         payload_length = len(payload)
 
         i = 0
-        for key in data.iterkeys():
+        for key in self._structure:
             value = protocols.shortFrom8bit(payload[i:i+2])
 
             # Update display
