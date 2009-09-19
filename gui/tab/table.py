@@ -21,6 +21,10 @@
 import wx
 
 from gui.tuningGrid import tuningGrid
+import gui
+import gui.commsConnectWarning as commsConnectWarning
+import comms
+import comms.protocols as protocols
 
 
 # Helper value for inserting spacing into sizers
@@ -34,11 +38,24 @@ class tab(wx.Panel):
     Contains a basic grid for tuning, and buttons for syncing
     '''
 
+    ID_LOAD_TABLE = wx.NewId()
+    ID_SAVE_TABLE = wx.NewId()
+
     # Controller
     controller = None
 
+    # Connection
+    _conn = None
+
+    # Protocol
+    _protocol = None
+
     # Main grid
     grid = None
+
+    # Expecting table data from ecu
+    _expecting = False
+
 
     def __init__(self, parent):
         '''
@@ -50,7 +67,20 @@ class tab(wx.Panel):
 
         self.grid = tuningGrid(self)
 
+        # Create buttons and bind to methods
+        self.loadButton = wx.Button(self, self.ID_LOAD_TABLE, 'Load Table')
+        self.saveButton = wx.Button(self, self.ID_SAVE_TABLE, 'Save Table')
+
+        self.loadButton.Bind(wx.EVT_BUTTON, self.loadTable, id=self.ID_LOAD_TABLE)
+
+        sizer3 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer3.Add(self.loadButton, 4)
+        sizer3.Add(blank, 4)
+        sizer3.Add(self.saveButton, 4)
+
         sizer2 = wx.BoxSizer(wx.VERTICAL)
+        sizer2.Add(blank, 1)
+        sizer2.Add(sizer3, 4, wx.EXPAND)
         sizer2.Add(blank, 1)
         sizer2.Add(self.grid, 58, wx.EXPAND)
         sizer2.Add(blank, 1)
@@ -62,3 +92,54 @@ class tab(wx.Panel):
 
         self.SetSizer(sizer1)
         self.Layout()
+
+        self._setupComms()
+
+
+    def loadTable(self, event):
+        '''
+        Send packet to toggle logging
+        '''
+        # Check connected
+        if not commsConnectWarning.confirmConnected(gui.frame):
+            return
+
+        # Set expecting flag
+        self._expecting = True
+
+        data = {
+            'type': 'RetrieveBlockFromRAM',
+            'block_id': 0
+        }
+
+        self.controller.action('comms.sendMemoryRequest', data)
+
+
+    def _setupComms(self):
+        '''
+        Bind watcher method to comms
+        '''
+        # Bind to connection
+        self._conn = comms.getConnection()
+        self._conn.bindReceiveWatcher(self)
+
+        # Bind to events
+        self.Bind(comms.interface.EVT_RECEIVE, self.monitorPackets)
+
+
+    def monitorPackets(self, event):
+        '''
+        Check for received table dumps
+        '''
+        # If not expecting a table dump, ignore packets
+        if not self._expecting:
+            return
+
+        if not self._protocol:
+            self._protocol = self._conn.getProtocol()
+
+        # Check
+#        if isinstance(event.packet, self._protocol.responses.responseDataRequest):
+            # No longer expecting
+#            self._expecting = False
+#            self.grid.updateData(event.packet)
