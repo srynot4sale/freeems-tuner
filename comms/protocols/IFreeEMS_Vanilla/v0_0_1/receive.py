@@ -166,12 +166,13 @@ class thread(libs.thread.thread):
             # If no end byte before second byte, incomplete packet
             if e == -1:
                 # Remove from buffer
+                # Nasty try/raise/except/raise construct here so we can wipe the cache
                 try:
-                    raise ParsingException, 'Bad/incomplete packet found in buffer missing end byte %s' % protocols.toHex(self._cache[:s])
+                    raise ParsingException, 'Bad/incomplete packet found in buffer missing end byte %s' % protocols.toHex(self._cache[:e])
 
                 except ParsingException:
                     # Tidy up buffer
-                    self._cache = self._cache[s:]
+                    self._cache = self._cache[e:]
 
                     raise
 
