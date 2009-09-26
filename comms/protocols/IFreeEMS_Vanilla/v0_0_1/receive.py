@@ -93,7 +93,6 @@ class thread(libs.thread.thread):
 
         # Check for any complete packets
         while self._buffer or self._cache:
-            
             if len(self._buffer):
                 self._cache += self._buffer.pop(0)
             elif not packet:
@@ -104,6 +103,9 @@ class thread(libs.thread.thread):
 
             try:
                 packet = self._processBuffer()
+            except IgnorableParsingException, msg:
+                # Report nothing
+                continue
             except ParsingException, msg:
                 self._error('processReceiveBuffer could not parse buffer. %s' % msg)
                 continue
@@ -142,8 +144,9 @@ class thread(libs.thread.thread):
                 index = self._cache.find(protocol.START_BYTE, 1)
                 if index >= 0:
                     if self._cache[:index] == protocol.END_BYTE:
-                        return
-                    raise ParsingException, 'Bad/incomplete packet found in buffer before start byte %s' % protocols.toHex(self._cache[:index])
+                        raise IgnorableParsingException, 'Ignorable packet found in buffer before start byte %s' % protocols.toHex(self._cache[:index])
+                    else:
+                        raise ParsingException, 'Bad/incomplete packet found in buffer before start byte %s' % protocols.toHex(self._cache[:index])
                 else:
                     raise ParsingException, 'Bad/incomplete packet found in buffer %s' % protocols.toHex(self._cache)
 
@@ -240,4 +243,7 @@ class thread(libs.thread.thread):
 
 
 class ParsingException(Exception):
+    pass
+
+class IgnorableParsingException(ParsingException):
     pass
