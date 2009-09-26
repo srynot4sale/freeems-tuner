@@ -274,24 +274,27 @@ class realtimeDataInterface(wx.BoxSizer):
 
         i = 0
         for key in self._structure:
-            value = protocols.shortFrom8bit(payload[i:i+2])
+            # Decode binary and cast to float
+            value = float(protocols.shortFrom8bit(payload[i:i+2]))
 
             # Process display
             if key in units:
                 if units[key] == 'temp':
-                    value = (value / 100) - 273.15
+                    value = '%.2f' % ((value / 100) - 273.15)
                 elif units[key] == 'percent_tps':
-                    value = value / 640
+                    value = '%.3f' % (value / 640)
                 elif units[key] == 'percent':
-                    value = value / 512
+                    value = '%.3f' % (value / 512)
                 elif units[key] == 'lambda':
-                    value = value / 32768
+                    value = '%d' % (value / 32768)
                 elif units[key] == 'pressure':
-                    value = value / 100
+                    value = '%.2f' % (value / 100)
                 elif units[key] == 'volts':
-                    value = value / 1000
+                    value = '%.3f' % (value / 1000)
                 elif units[key] == 'rpm':
-                    value = value / 2
+                    value = '%.1f' % (value / 2)
+            else:
+                value = '%d' % value
 
             # Update display
             data[key] = value
