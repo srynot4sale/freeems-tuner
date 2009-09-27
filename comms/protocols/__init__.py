@@ -120,6 +120,11 @@ def toHex(bytes):
     Convert a string to a human readable hex string
     '''
     hexlist = []
+
+    # Sanity check the length of the string to convert
+    # A huge string will lock up the thread
+    if len(bytes) > 200:
+        bytes = bytes[0:200]
     
     for byte in bytes:
         byte = hex(ord(byte)).upper().replace('X','x')
