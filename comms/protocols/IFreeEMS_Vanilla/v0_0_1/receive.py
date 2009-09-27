@@ -171,11 +171,14 @@ class thread(libs.thread.thread):
                 # Remove from buffer
                 # Nasty try/raise/except/raise construct here so we can wipe the cache
                 try:
-                    raise ParsingException, 'Bad/incomplete packet found in buffer missing end byte %s' % protocols.toHex(self._cache[:e])
+                    if self._cache[:s] == protocol.START_BYTE:
+                        raise IgnorableParsingException, 'Ignorable packet found in buffer missing end byte %s' % protocols.toHex(self._cache[:s])
+                    else:
+                        raise ParsingException, 'Bad/incomplete packet found in buffer missing end byte %s' % protocols.toHex(self._cache[:s])
 
                 except ParsingException:
                     # Tidy up buffer
-                    self._cache = self._cache[e:]
+                    self._cache = self._cache[s:]
 
                     raise
 
