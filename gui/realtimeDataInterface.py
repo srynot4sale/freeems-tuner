@@ -310,7 +310,6 @@ class realtimeDataInterface(wx.BoxSizer):
 
         Packet parameter is the basicDatalog packet received.
         '''
-        print 'here'
         # Data store
         data = self.data
 
@@ -365,7 +364,6 @@ class realtimeDataInterface(wx.BoxSizer):
 
         This currently does not support unsigned and signed ints, like it should
         '''
-        print 'display'
         display = self.display
         data = self.data
         controls = self._display_controls
