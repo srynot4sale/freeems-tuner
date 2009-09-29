@@ -273,9 +273,9 @@ class realtimeDataInterface(wx.BoxSizer):
 
         sizer1 = wx.BoxSizer(wx.HORIZONTAL)
         sizer1.Add(blank, 1)
-        sizer1.Add(sizer2, 20, wx.EXPAND)
+        sizer1.Add(sizer4, 10, wx.EXPAND)
         sizer1.Add(blank, 1)
-        sizer1.Add(sizer4, 8, wx.EXPAND)
+        sizer1.Add(sizer2, 20, wx.EXPAND)
         sizer1.Add(blank, 5)
         sizer1.Add(sizer5, 15, wx.EXPAND)
         sizer1.Add(blank, 1)
@@ -310,6 +310,7 @@ class realtimeDataInterface(wx.BoxSizer):
 
         Packet parameter is the basicDatalog packet received.
         '''
+        print 'here'
         # Data store
         data = self.data
 
@@ -364,6 +365,7 @@ class realtimeDataInterface(wx.BoxSizer):
 
         This currently does not support unsigned and signed ints, like it should
         '''
+        print 'display'
         display = self.display
         data = self.data
         controls = self._display_controls
