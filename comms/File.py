@@ -68,8 +68,13 @@ class connection(comms.interface.interface):
 
         # Load file into buffer
         fd = open(self._path, 'r')
-        self._buffer = ''.join(fd.readlines())
+        buffer = ''.join(fd.readlines())
         fd.close()
+
+        # Split up the file to simulate a Serial connection
+        while len(buffer):
+            self._receive(buffer[0:50])
+            buffer = buffer[50:]
 
 
     def _disconnect(self):
