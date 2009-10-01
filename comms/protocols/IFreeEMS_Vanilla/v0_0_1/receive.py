@@ -17,7 +17,7 @@
 #
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
-import copy, types
+import copy, types, threading
 
 import libs.thread, comms.protocols as protocols, __init__ as protocol, packet as packetlib, responses
 
@@ -30,6 +30,9 @@ class thread(libs.thread.thread):
 
     # Comms plugin that created this thread
     comms = None
+
+    # Thread safe lock for protecting the buffer
+    _buffer_lock = None
 
     # Buffer of raw data to process into packet classes
     _buffer = []
@@ -50,6 +53,9 @@ class thread(libs.thread.thread):
         self._setup(name, controller)
         self.comms = comms
 
+        # Set up buffer lock
+        self._buffer_lock = threading.Lock()
+
         self._debug('Receive thread created')
         self.start()
 
@@ -58,9 +64,35 @@ class thread(libs.thread.thread):
         '''
         Add to buffer and wake thread
         '''
-        self._buffer.append(buffer)
+        self._bufferAppend(buffer)
         #self._debug('Received %d bytes of buffer' % len(buffer))
         self.wake()
+
+
+    def _bufferAppend(self, binary):
+        '''
+        Append binary to buffer safely
+        '''
+        self._buffer_lock.acquire()
+        self._buffer.append(binary)
+        self._buffer_lock.release()
+
+
+    def _bufferPop(self):
+        '''
+        Pop oldest binary string off buffer safely,
+        or return false if buffer empty
+        '''
+        self._buffer_lock.acquire()
+
+        if len(self._buffer):
+            oldest = self._buffer.pop(0)
+        else:
+            oldest = False
+
+        self._buffer_lock.release()
+
+        return oldest
 
 
     def run(self):
@@ -88,18 +120,16 @@ class thread(libs.thread.thread):
         the cache and only adding to it from the same thread, we can be sure
         it is not going to be added to mid-processing.
         '''
-        self._cache = ''
         packet = True
 
-        # Check for any complete packets
-        while self._buffer or self._cache:
-            if len(self._buffer):
-                self._cache += self._buffer.pop(0)
-            elif not packet:
-                # Hopefully fix a race condition where a
-                # unfinished packet at the end of the
-                # buffer will cause an endless loop
+        while True:
+            # Check for any complete packets
+            cache = self._bufferPop()
+
+            if cache == False:
                 break
+
+            self._cache += cache
 
             try:
                 packet = self._processBuffer()
@@ -147,8 +177,6 @@ class thread(libs.thread.thread):
                         raise IgnorableParsingException, 'Ignorable packet found in buffer before start byte %s' % protocols.toHex(self._cache[:index])
                     else:
                         raise ParsingException, 'Bad/incomplete packet found in buffer before start byte %s' % protocols.toHex(self._cache[:index])
-                else:
-                    raise ParsingException, 'Bad/incomplete packet found in buffer %s' % protocols.toHex(self._cache)
 
         except ParsingException:
             # Catch parsing eceptions and tidy up the buffer
