@@ -126,8 +126,16 @@ class thread(libs.thread.thread):
             # Check for any complete packets
             cache = self._bufferPop()
 
+            # If no more buffer
             if cache == False:
-                break
+                # If we have also processed all the cache
+                if len(self._cache) == 0:
+                    break
+                # If last scan did not find a packet
+                elif not packet:
+                    break
+                else:
+                    cache = ''
 
             self._cache += cache
 
