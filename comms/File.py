@@ -18,7 +18,7 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import os
+import os, time
 import libs.config as config, comms.interface, libs.data
 
 
@@ -75,6 +75,9 @@ class connection(comms.interface.interface):
         while len(buffer):
             self._receive(buffer[0:50])
             buffer = buffer[50:]
+
+            # Sleep so we don't saturate the CPU
+            time.sleep(0.05)
 
 
     def _disconnect(self):
