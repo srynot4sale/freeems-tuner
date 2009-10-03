@@ -58,6 +58,14 @@ class connection(comms.interface.interface):
         s.xonxoff   = config.getBool(section, 'xonxoff')
         s.rtscts    = config.getBool(section, 'rtscts')
 
+        # Process data
+        # Cast a numeric port identifier to an int
+        try:
+            s.port = int(s.port)
+        except ValueError:
+            # Wasn't numerical, pass
+            pass
+
         s.parity    = s.parity[0:1]
 
         # Load protocol
