@@ -255,6 +255,9 @@ class thread(libs.thread.thread):
             else:
                 raise ParsingException, 'Wrongly escaped byte found in packet (%s): %s' % (hex(ord(unescaped)), protocols.toHex(packet))
 
+        if not len(packet):
+            raise IgnorableParsingException, 'Packet is empty'
+
         if len(packet) < 4:
             raise ParsingException, 'Packet does not contain required information. Packet content: %s' % protocols.toHex(packet)
 
