@@ -20,7 +20,7 @@
 
 import wx
 
-import comms, gui.realtimeDataInterface
+import comms, gui.realtimeDataInterface, libs.config
 
 
 # Helper value for inserting spacing into sizers
@@ -35,6 +35,13 @@ class tab(wx.Panel):
     # Protocol object cache
     _protocol = None
 
+    # GUI update timer
+    _timer = None
+
+    # Interface
+    interface = None
+
+
     def __init__(self, parent):
         '''
         Setup interface elements
@@ -47,6 +54,7 @@ class tab(wx.Panel):
         self.SetSizer(self.interface)
         self.Layout()
 
+        self._setupTimer()
         self._setupComms()
 
 
@@ -62,6 +70,18 @@ class tab(wx.Panel):
         self.Bind(comms.interface.EVT_RECEIVE, self.monitorPackets)
 
 
+    def _setupTimer(self):
+        '''
+        Setup timer to update the GUI display
+        '''
+        self._timer = wx.Timer(self, wx.ID_ANY)
+        self.Bind(wx.EVT_TIMER, self.interface.updateGui, self._timer)
+
+        # Load configured update frequency
+        frequency = libs.config.get('Gui', 'realtime_update_frequency')
+        self._timer.Start(int(frequency))
+
+
     def monitorPackets(self, event):
         '''
         Check for received datalogs
@@ -72,5 +92,3 @@ class tab(wx.Panel):
         # Check
         if isinstance(event.packet, self._protocol.responses.responseBasicDatalog):
             self.interface.updateData(event.packet)
-
-

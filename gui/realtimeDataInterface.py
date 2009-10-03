@@ -221,6 +221,10 @@ class realtimeDataInterface(wx.BoxSizer):
     _display_controls = {}
 
 
+    # Flag to say data has been updated since last gui refresh
+    _data_updated = False
+
+
     def __init__(self, parent):
         '''
         Setup UI elements
@@ -352,7 +356,17 @@ class realtimeDataInterface(wx.BoxSizer):
             # Next var
             i += 2
 
-        self.refreshDisplay()
+        self._data_updated = True
+
+
+    def updateGui(self, event):
+        '''
+        Called by timer to decide whether to
+        update the display
+        '''
+        if self._data_updated:
+            self._data_updated = False
+            self.refreshDisplay()
 
 
     def refreshDisplay(self):
