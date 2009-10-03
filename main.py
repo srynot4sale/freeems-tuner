@@ -17,6 +17,11 @@
 #
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
+# Attempt to load bootstrap file
+try:
+    import bootstrap
+except ImportError:
+    pass
 
 # Load libraries
 import libs.data, controller, gui
