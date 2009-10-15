@@ -25,9 +25,9 @@ import comms.protocols as protocols
 
 
 # Some hardcoded values from firmware
-MAINTABLE_MAX_RPM_LENGTH = 27	    # How many cells on the X axis max
-MAINTABLE_MAX_LOAD_LENGTH = 21	    # How many cells on the Y axis max
-MAINTABLE_MAX_MAIN_LENGTH  = 462	# 924B 462 shorts maximum main table length
+MAINTAINABLE_MAX_RPM_LENGTH = 27	    # How many cells on the X axis max
+MAINTAINABLE_MAX_LOAD_LENGTH = 21	    # How many cells on the Y axis max
+MAINTAINABLE_MAX_MAIN_LENGTH = 462	    # 924B 462 shorts maximum main table length
 
 
 class tuningGrid(grid.Grid):
