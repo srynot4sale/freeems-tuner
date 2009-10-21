@@ -96,7 +96,8 @@ RESPONSE_PACKET_TITLES = {
         RESPONSE_ASYNC_ERROR_CODE:      "AsyncError",
         RESPONSE_ASYNC_DEBUG_INFO:      "AsyncDebug",
 #        RESPONSE_ASYNC_DATALOG_STATUS:  "AsyncDatalogStatus",
-        RESPONSE_BASIC_DATALOG:         "BasicDatalog"
+        RESPONSE_BASIC_DATALOG:         "BasicDatalog",
+        RESPONSE_RETRIEVE_BLOCK_FROM_RAM: "DataRequest",
 }
         
 MEMORY_PACKET_TITLES = {

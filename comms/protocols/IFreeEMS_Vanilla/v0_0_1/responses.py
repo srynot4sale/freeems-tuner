@@ -217,3 +217,11 @@ class responseBasicDatalog(response):
             binary += protocols.shortTo8bit(random.randint(0,65535))
 
         self.setPayload(binary)
+
+
+class responseDataRequest(response):
+    '''
+    EMS data request response
+    '''
+    def __init__(self):
+        response.__init__(self)
