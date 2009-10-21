@@ -24,12 +24,6 @@ import wx.grid as grid
 import comms.protocols as protocols
 
 
-# Some hardcoded values from firmware
-MAINTAINABLE_MAX_RPM_LENGTH = 27	    # How many cells on the X axis max
-MAINTAINABLE_MAX_LOAD_LENGTH = 21	    # How many cells on the Y axis max
-MAINTAINABLE_MAX_MAIN_LENGTH = 462	    # 924B 462 shorts maximum main table length
-
-
 class tuningGrid(grid.Grid):
 
     conn = None
@@ -47,26 +41,36 @@ class tuningGrid(grid.Grid):
         self.CreateGrid(1, 1)
         self.SetRowLabelSize(50)
 
-        #self.SetRowLabelValue(r, str(r + 1))
-
         self.SetDefaultCellFont(wx.Font(9, wx.MODERN, wx.NORMAL, wx.NORMAL))
 
 
     def updateData(self, packet):
-
+        '''
+        Updating tuning table to reflect
+        loaded table data
+        '''
         payload = packet.getPayload()
 
+        # Get rpm axis max length
+        max_length_rpm = protocols.shortFrom8bit(payload[2:4])
+
+        # Get load axis max length
+        max_length_load = protocols.shortFrom8bit(payload[4:6])
+
+        # Get table max length
+        max_length_table = protocols.shortFrom8bit(payload[6:8])
+
         # Get rpm axis length
-        length_rpm = protocols.shortFrom8bit(payload[0:2])
+        length_rpm = protocols.shortFrom8bit(payload[8:10])
 
         # Get load axis length
-        length_load = protocols.shortFrom8bit(payload[2:4])
+        length_load = protocols.shortFrom8bit(payload[10:12])
 
         # Get rpm axis
         rpm_axis = []
-        offset = 4
+        offset = 12
         i = 0
-        while i < MAINTAINABLE_MAX_RPM_LENGTH:
+        while i < max_length_rpm:
             if i < length_rpm:
                 value = protocols.shortFrom8bit(payload[offset:offset+2])
                 rpm_axis.append(value)
@@ -77,16 +81,46 @@ class tuningGrid(grid.Grid):
         # Get load axis
         load_axis = []
         i = 0
-        while i < MAINTAINABLE_MAX_LOAD_LENGTH:
-            while i < length_load:
+        while i < max_length_load:
+            if i < length_load:
                 value = protocols.shortFrom8bit(payload[offset:offset+2])
                 load_axis.append(value)
 
             offset += 2
             i += 1
 
-        # Get values
-#        while i < MAINTAINABLE_MAX_MAIN_LENGTH:
-        
-        # Upgrade grid
+        # Setup
+        # Get current size of grid
+        rpm_axis_current = self.GetNumberCols()
+        load_axis_current = self.GetNumberRows()
 
+        # Update table to reflect new size
+        if rpm_axis_current < length_rpm:
+            self.AppendCols(length_rpm - rpm_axis_current)
+
+        if load_axis_current < length_load:
+            self.AppendRows(length_load - load_axis_current)
+
+        # Set axis labels
+        i = 0
+        while i < length_rpm:
+            self.SetColLabelValue(i, str(rpm_axis[i]))
+            self.SetColSize(i, 50)
+            i += 1
+        
+        i = 0
+        while i < length_load:
+            self.SetRowLabelValue(i, str(load_axis[i]))
+            i += 1
+
+        # Update cell values
+        load = 0
+        while load < length_load:
+            rpm = 0
+            while rpm < length_rpm:
+                value = protocols.shortFrom8bit(payload[offset:offset+2])
+                self.SetCellValue(load, rpm, str(value))
+                offset += 2
+                rpm += 1
+
+            load += 1

@@ -139,7 +139,7 @@ class tab(wx.Panel):
             self._protocol = self._conn.getProtocol()
 
         # Check
-#        if isinstance(event.packet, self._protocol.responses.responseDataRequest):
+        if isinstance(event.packet, self._protocol.responses.responseDataRequest):
             # No longer expecting
-#            self._expecting = False
-#            self.grid.updateData(event.packet)
+            self._expecting = False
+            self.grid.updateData(event.packet)
