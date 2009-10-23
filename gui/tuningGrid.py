@@ -26,8 +26,26 @@ import comms.protocols as protocols
 
 class tuningGrid(grid.Grid):
 
-    conn = None
-    row = 0
+    # Table memory location
+    table_id = None
+
+    # Max axis lengths
+    max_length_rpm = 0
+    max_length_load = 0
+
+    # Max table lengths
+    max_length_table = 0
+
+    # Axis lengths
+    length_rpm = 0
+    length_load = 0
+
+    # Axis values
+    axis_rpm = []
+    axis_load = []
+
+    # Cell values
+    cells = []
 
     def __init__(self, parent):
         '''
@@ -46,81 +64,101 @@ class tuningGrid(grid.Grid):
 
     def updateData(self, packet):
         '''
-        Updating tuning table to reflect
+        Updating tuning table data to reflect
         loaded table data
         '''
         payload = packet.getPayload()
 
+        # Get table memory location
+        self.table_id = protocols.shortFrom8bit(payload[0:2])
+
         # Get rpm axis max length
-        max_length_rpm = protocols.shortFrom8bit(payload[2:4])
+        self.max_length_rpm = protocols.shortFrom8bit(payload[2:4])
 
         # Get load axis max length
-        max_length_load = protocols.shortFrom8bit(payload[4:6])
+        self.max_length_load = protocols.shortFrom8bit(payload[4:6])
 
         # Get table max length
-        max_length_table = protocols.shortFrom8bit(payload[6:8])
+        self.max_length_table = protocols.shortFrom8bit(payload[6:8])
 
         # Get rpm axis length
-        length_rpm = protocols.shortFrom8bit(payload[8:10])
+        self.length_rpm = protocols.shortFrom8bit(payload[8:10])
 
         # Get load axis length
-        length_load = protocols.shortFrom8bit(payload[10:12])
+        self.length_load = protocols.shortFrom8bit(payload[10:12])
 
         # Get rpm axis
-        rpm_axis = []
+        self.axis_rpm = []
         offset = 12
         i = 0
-        while i < max_length_rpm:
-            if i < length_rpm:
+        while i < self.max_length_rpm:
+            if i < self.length_rpm:
                 value = protocols.shortFrom8bit(payload[offset:offset+2])
-                rpm_axis.append(value)
+                self.axis_rpm.append(value)
 
             offset += 2
             i += 1
 
         # Get load axis
-        load_axis = []
+        self.axis_load = []
         i = 0
-        while i < max_length_load:
-            if i < length_load:
-                value = protocols.shortFrom8bit(payload[offset:offset+2])
-                load_axis.append(value)
+        while i < self.max_length_load:
+            if i < self.length_load:
+                value = float(protocols.shortFrom8bit(payload[offset:offset+2])) / 100
+                self.axis_load.append(value)
 
             offset += 2
             i += 1
 
-        # Setup
+        # Update cell values
+        load = 0
+        while load < self.length_load:
+            rpm = 0
+            self.cells.insert(load, [])
+            while rpm < self.length_rpm:
+                value = float(protocols.shortFrom8bit(payload[offset:offset+2])) / 512
+                self.cells[load].append(value)
+                offset += 2
+                rpm += 1
+
+            load += 1
+
+        self.updateDisplay()
+
+
+    def updateDisplay(self):
+        '''
+        Update tuning table grid
+        '''
         # Get current size of grid
-        rpm_axis_current = self.GetNumberCols()
-        load_axis_current = self.GetNumberRows()
+        rpm_axis_size = self.GetNumberCols()
+        load_axis_size = self.GetNumberRows()
 
         # Update table to reflect new size
-        if rpm_axis_current < length_rpm:
-            self.AppendCols(length_rpm - rpm_axis_current)
+        if rpm_axis_size < self.length_rpm:
+            self.AppendCols(self.length_rpm - rpm_axis_size)
 
-        if load_axis_current < length_load:
-            self.AppendRows(length_load - load_axis_current)
+        if load_axis_size < self.length_load:
+            self.AppendRows(self.length_load - load_axis_size)
 
         # Set axis labels
         i = 0
-        while i < length_rpm:
-            self.SetColLabelValue(i, str(rpm_axis[i]))
+        while i < self.length_rpm:
+            self.SetColLabelValue(i, str(self.axis_rpm[i]))
             self.SetColSize(i, 50)
             i += 1
         
         i = 0
-        while i < length_load:
-            self.SetRowLabelValue(i, str(load_axis[i]))
+        while i < self.length_load:
+            self.SetRowLabelValue(i, '%.2f' % self.axis_load[i])
             i += 1
 
-        # Update cell values
         load = 0
-        while load < length_load:
+        while load < self.length_load:
             rpm = 0
-            while rpm < length_rpm:
-                value = '%.2f' % (float(protocols.shortFrom8bit(payload[offset:offset+2])) / 512)
+            while rpm < self.length_rpm:
+                value = '%.3f' % self.cells[load][rpm]
                 self.SetCellValue(load, rpm, value)
-                offset += 2
                 rpm += 1
 
             load += 1
