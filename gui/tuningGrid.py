@@ -118,8 +118,8 @@ class tuningGrid(grid.Grid):
         while load < length_load:
             rpm = 0
             while rpm < length_rpm:
-                value = protocols.shortFrom8bit(payload[offset:offset+2])
-                self.SetCellValue(load, rpm, str(value))
+                value = '%.2f' % (float(protocols.shortFrom8bit(payload[offset:offset+2])) / 512)
+                self.SetCellValue(load, rpm, value)
                 offset += 2
                 rpm += 1
 
