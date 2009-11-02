@@ -192,6 +192,7 @@ class tuningGrid(grid.Grid):
 
         # Update cell values
         load = 0
+        self.cells = []
         while load < self.length_load:
             rpm = 0
             self.cells.insert(load, [])
