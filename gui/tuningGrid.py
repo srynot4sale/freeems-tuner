@@ -21,6 +21,8 @@
 import wx
 import wx.grid as grid
 
+import gui
+import gui.commsConnectWarning as commsConnectWarning
 import comms.protocols as protocols
 
 
@@ -47,6 +49,11 @@ class tuningGrid(grid.Grid):
     # Cell values
     cells = []
 
+    # Current cursor location
+    selected_rpm = None
+    selected_load = None
+
+
     def __init__(self, parent):
         '''
         Setup gui
@@ -59,7 +66,80 @@ class tuningGrid(grid.Grid):
         self.CreateGrid(1, 1)
         self.SetRowLabelSize(50)
 
+        # Set defaults
         self.SetDefaultCellFont(wx.Font(9, wx.MODERN, wx.NORMAL, wx.NORMAL))
+        self.SetDefaultEditor(grid.GridCellFloatEditor())
+
+        # Bind events for selecting cells and handling key presses
+        self.Bind(grid.EVT_GRID_SELECT_CELL, self.onCellChange)
+        self.Bind(wx.EVT_KEY_DOWN, self.onKeyPress)
+
+
+    def onCellChange(self, event):
+        '''
+        Record currently selected cell location
+        '''
+        self.selected_rpm = event.Col
+        self.selected_load = event.Row
+        event.Skip()
+
+
+    def onKeyPress(self, event):
+        '''
+        Bind key presses 'j' and 'k' to update cell value up/down
+        '''
+        keycode = event.GetKeyCode()
+
+        # Check if this is a key we are handling
+        if keycode not in [74, 75]:
+            event.Skip()
+            return
+
+        # Get selected cell
+        rpm = self.selected_rpm
+        load = self.selected_load
+
+        # If no cell has been selected yet, do nothing
+        if rpm == None or load == None:
+            return
+
+        value = self.cells[load][rpm]
+
+        # Update cell values
+        if keycode == 74:
+            value += 0xFF
+        else:
+            value -= 0xFF
+
+        if value > 0xFFFF:
+            value = 0xFFFF
+        elif value < 0:
+            value = 0
+
+        self.cells[load][rpm] = value
+        self.SetCellValue(load, rpm, '%.1f' % (float(value) / float(512)))
+
+        # Send update to ecu
+        self.onCellUpdate(load, rpm, value)
+
+
+    def onCellUpdate(self, load, rpm, value):
+        '''
+        Send update request to ecu with new value
+        '''
+        # Check connected
+        if not commsConnectWarning.confirmConnected(gui.frame):
+            return
+
+        data = {
+            'type': 'UpdateMainTableCell',
+            'block_id': self.table_id,
+            'load': load,
+            'rpm': rpm,
+            'value': value,
+        }
+
+        self.GetParent().controller.action('comms.updateMainTableCell', data)
 
 
     def updateData(self, packet):
@@ -116,7 +196,7 @@ class tuningGrid(grid.Grid):
             rpm = 0
             self.cells.insert(load, [])
             while rpm < self.length_rpm:
-                value = float(protocols.shortFrom8bit(payload[offset:offset+2])) / 512
+                value = protocols.shortFrom8bit(payload[offset:offset+2])
                 self.cells[load].append(value)
                 offset += 2
                 rpm += 1
@@ -157,8 +237,9 @@ class tuningGrid(grid.Grid):
         while load < self.length_load:
             rpm = 0
             while rpm < self.length_rpm:
-                value = '%.3f' % self.cells[load][rpm]
+                value = '%.1f' % (float(self.cells[load][rpm]) / float(512))
                 self.SetCellValue(load, rpm, value)
+                self.SetReadOnly(load, rpm)
                 rpm += 1
 
             load += 1

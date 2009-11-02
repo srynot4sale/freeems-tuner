@@ -102,6 +102,23 @@ class actions:
 
             comms.send(packet)
 
+
+    class updateMainTableCell(_action):
+
+        def run(self):
+            '''
+            Create packet and send to correct thread
+            '''
+            comms = self._getConnection()
+            packet = comms.getProtocol().getRequestPacket(self._data['type'])
+
+            packet.setTableId(self._data['block_id'])
+            packet.setRpmAxis(self._data['rpm'])
+            packet.setLoadAxis(self._data['load'])
+            packet.setValue(self._data['value'])
+
+            comms.send(packet)
+
     
     class handleReceivedPackets(action.action):
 

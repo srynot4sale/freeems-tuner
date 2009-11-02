@@ -136,3 +136,31 @@ class requestSoftSystemReset(request):
     def __init__(self):
         request.__init__(self)
         self.setPayloadId(protocol.REQUEST_SOFT_SYSTEM_RESET)
+
+
+# Update main table cell value
+class requestUpdateMainTableCell(request):
+
+    def __init__(self):
+        request.__init__(self)
+        self.setPayloadId(protocol.REQUEST_ADJUST_MAIN_TABLE_CELL)
+
+
+    def setTableId(self, id):
+        id = protocols.shortTo8bit(id)
+        self.setPayload(self.getPayload() + id)
+
+
+    def setRpmAxis(self, rpm):
+        rpm = protocols.shortTo8bit(rpm)
+        self.setPayload(self.getPayload() + rpm)
+
+
+    def setLoadAxis(self, load):
+        load = protocols.shortTo8bit(load)
+        self.setPayload(self.getPayload() + load)
+
+
+    def setValue(self, value):
+        value = protocols.shortTo8bit(value)
+        self.setPayload(self.getPayload() + value)
