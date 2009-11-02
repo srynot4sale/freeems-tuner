@@ -35,7 +35,7 @@ class packet:
     _payload_length = 0
 
     # Payload
-    _payload = []
+    _payload = ''
 
     # Processed packet
     _processed = []
