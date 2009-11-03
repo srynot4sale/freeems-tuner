@@ -18,9 +18,9 @@
 #   We ask that if you make any changes to this file you send them upstream to us at admin@diyefi.org
 
 
-import comms, comms.protocols as protocols, gui, commsConnectWarning
-
 import wx
+
+import comms, comms.protocols as protocols, gui, commsConnectWarning
 
 
 blank = (0,0)

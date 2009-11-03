@@ -25,6 +25,7 @@ import gui
 import gui.commsConnectWarning as commsConnectWarning
 import comms
 import comms.protocols as protocols
+import libs.config
 
 
 # Helper value for inserting spacing into sizers
@@ -55,6 +56,9 @@ class tab(wx.Panel):
 
     # Expecting table data from ecu
     _expecting = False
+
+    # Highlight cell timer
+    _timer = None
 
 
     def __init__(self, parent):
@@ -94,6 +98,18 @@ class tab(wx.Panel):
         self.Layout()
 
         self._setupComms()
+
+
+    def _setupTimer(self):
+        '''
+        Setup timer to update the GUI display
+        '''
+        self._timer = wx.Timer(self, wx.ID_ANY)
+        self.Bind(wx.EVT_TIMER, self.grid.highlightCell, self._timer)
+
+        # Use realtime update frequency
+        frequency = libs.config.get('Gui', 'realtime_update_frequency')
+        self._timer.Start(int(frequency))
 
 
     def loadTable(self, event):
@@ -143,3 +159,6 @@ class tab(wx.Panel):
             # No longer expecting
             self._expecting = False
             self.grid.updateData(event.packet)
+
+            # Turn on timer
+            self._setupTimer()

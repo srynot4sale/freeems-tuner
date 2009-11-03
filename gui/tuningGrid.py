@@ -117,7 +117,7 @@ class tuningGrid(grid.Grid):
             value = 0
 
         self.cells[rpm][load] = value
-        self.SetCellValue(load, rpm, '%.1f' % (float(value) / float(512)))
+        self._updateCell(load, rpm)
 
         # Send update to ecu
         self.onCellUpdate(load, rpm, value)
@@ -238,9 +238,63 @@ class tuningGrid(grid.Grid):
         while rpm < self.length_rpm:
             load = 0
             while load < self.length_load:
-                value = '%.1f' % (float(self.cells[rpm][load]) / float(512))
-                self.SetCellValue(load, rpm, value)
+                self._updateCell(load, rpm)
                 self.SetReadOnly(load, rpm)
                 load += 1
 
             rpm += 1
+
+
+    def highlightCell(self, event):
+        '''
+        Highlight cell engine is currently using
+        '''
+        # Get realtime data
+        data = gui.frame.windows['realtime_data'].interface.data
+
+        # Get current rpm
+        rpm_current = float(data['RPM']) / 2
+
+        # Get current load
+        load_current = float(data['LoadMain']) / float(512)
+
+        # Find current rpm col
+        rpm = 0
+        for axis in self.axis_rpm:
+            if axis >= rpm_current:
+                break
+            rpm += 1
+
+        rpm = min(rpm, self.length_rpm-1)
+
+        # Find current load row
+        load = 0
+        for axis in self.axis_load:
+            if axis >= load_current:
+                break
+            load += 1
+
+        load = min(load, self.length_load-1)
+
+        # Highlight cell
+        self.SetCellTextColour(load, rpm, wx.Colour(255,255,255))
+
+        # Reset cell value to trigger a cell refresh that doesn't
+        # saturate the cpu
+        self._updateCell(load, rpm)
+
+
+    def _updateCell(self, load, rpm):
+        '''
+        Update a cell's value
+        '''
+        # Create value string
+        raw = float(self.cells[rpm][load])
+        value = '%.1f' % (raw / float(512))
+        self.SetCellValue(load, rpm, value)
+
+        # Set background color
+        red = max(min(int(raw / 255), 255), 0)
+        green = max(min(int(255 - (raw / 255)), 255), 0)
+        color = wx.Color(int(red), int(green), 0)
+        self.SetCellBackgroundColour(load, rpm, color)
