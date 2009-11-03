@@ -179,8 +179,8 @@ class Frame(wx.Frame):
 
         fields = [
             'Interface: %s' % comm.getProtocol().getProtocolName(),
-            'Base PW:',
-            'Ref PW:',
+            '',
+            '',
             'Connection: %s' % comm.getTitle()
         ]
         self.statusbar.SetFields(fields)

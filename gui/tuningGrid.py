@@ -285,10 +285,10 @@ class tuningGrid(grid.Grid):
 
         # Also update statusbar
         # Bit of a dirty hack for now
-        basepw = data['BasePW']
+        sp1 = data['sp1']
         refpw = data['RefPW']
 
-        gui.frame.statusbar.SetStatusText('Base PW: %s' % basepw, 1)
+        gui.frame.statusbar.SetStatusText('SP1: %s' % sp1, 1)
         gui.frame.statusbar.SetStatusText('Ref PW: %s' % refpw, 2)
 
 
