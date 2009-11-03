@@ -103,7 +103,7 @@ class tuningGrid(grid.Grid):
         if rpm == None or load == None:
             return
 
-        value = self.cells[load][rpm]
+        value = self.cells[rpm][load]
 
         # Update cell values
         if keycode == 74:
@@ -116,7 +116,7 @@ class tuningGrid(grid.Grid):
         elif value < 0:
             value = 0
 
-        self.cells[load][rpm] = value
+        self.cells[rpm][load] = value
         self.SetCellValue(load, rpm, '%.1f' % (float(value) / float(512)))
 
         # Send update to ecu
@@ -191,18 +191,18 @@ class tuningGrid(grid.Grid):
             i += 1
 
         # Update cell values
-        load = 0
+        rpm = 0
         self.cells = []
-        while load < self.length_load:
-            rpm = 0
-            self.cells.insert(load, [])
-            while rpm < self.length_rpm:
+        while rpm < self.length_rpm:
+            load = 0
+            self.cells.insert(rpm, [])
+            while load < self.length_load:
                 value = protocols.shortFrom8bit(payload[offset:offset+2])
-                self.cells[load].append(value)
+                self.cells[rpm].append(value)
                 offset += 2
-                rpm += 1
+                load += 1
 
-            load += 1
+            rpm += 1
 
         self.updateDisplay()
 
@@ -234,13 +234,13 @@ class tuningGrid(grid.Grid):
             self.SetRowLabelValue(i, '%.2f' % self.axis_load[i])
             i += 1
 
-        load = 0
-        while load < self.length_load:
-            rpm = 0
-            while rpm < self.length_rpm:
-                value = '%.1f' % (float(self.cells[load][rpm]) / float(512))
+        rpm = 0
+        while rpm < self.length_rpm:
+            load = 0
+            while load < self.length_load:
+                value = '%.1f' % (float(self.cells[rpm][load]) / float(512))
                 self.SetCellValue(load, rpm, value)
                 self.SetReadOnly(load, rpm)
-                rpm += 1
+                load += 1
 
-            load += 1
+            rpm += 1
