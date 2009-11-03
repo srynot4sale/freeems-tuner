@@ -53,6 +53,9 @@ class tuningGrid(grid.Grid):
     selected_rpm = None
     selected_load = None
 
+    # Currently highlighted cell coords
+    _highlighted = None
+
 
     def __init__(self, parent):
         '''
@@ -276,12 +279,18 @@ class tuningGrid(grid.Grid):
 
         load = min(load, self.length_load-1)
 
-        # Highlight cell
-        self.SetCellTextColour(load, rpm, wx.Colour(255,255,255))
+        # If highlighted cell has changed
+        if self._highlighted != [load, rpm]:
 
-        # Reset cell value to trigger a cell refresh that doesn't
-        # saturate the cpu
-        self._updateCell(load, rpm)
+            # Highlight cell
+            self._updateCell(load, rpm, True)
+
+            # Reset old highlighted cell
+            if self._highlighted != None:
+                self._updateCell(self._highlighted[0], self._highlighted[1])
+
+            # Update var
+            self._highlighted = [load, rpm]
 
         # Also update statusbar
         # Bit of a dirty hack for now
@@ -292,7 +301,7 @@ class tuningGrid(grid.Grid):
         gui.frame.statusbar.SetStatusText('Ref PW: %s' % refpw, 2)
 
 
-    def _updateCell(self, load, rpm):
+    def _updateCell(self, load, rpm, highlight = False):
         '''
         Update a cell's value
         '''
@@ -302,7 +311,13 @@ class tuningGrid(grid.Grid):
         self.SetCellValue(load, rpm, value)
 
         # Set background color
-        red = max(min(int(raw / 255), 255), 0)
-        green = max(min(int(255 - (raw / 255)), 255), 0)
-        color = wx.Color(int(red), int(green), 0)
+        # If highlighting
+        if highlight:
+            color = wx.Color(255, 255, 255)
+        else:
+            # Otherwise, make gradient
+            red = max(min(int(raw / 255), 255), 0)
+            green = max(min(int(255 - (raw / 255)), 255), 0)
+            color = wx.Color(int(red), int(green), 0)
+
         self.SetCellBackgroundColour(load, rpm, color)
