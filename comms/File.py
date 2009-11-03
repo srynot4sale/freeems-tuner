@@ -77,7 +77,7 @@ class connection(comms.interface.interface):
             buffer = buffer[50:]
 
             # Sleep so we don't saturate the CPU
-            time.sleep(0.05)
+            time.sleep(0.01)
 
 
     def _disconnect(self):
