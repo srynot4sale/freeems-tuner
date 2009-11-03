@@ -283,6 +283,14 @@ class tuningGrid(grid.Grid):
         # saturate the cpu
         self._updateCell(load, rpm)
 
+        # Also update statusbar
+        # Bit of a dirty hack for now
+        basepw = data['BasePW']
+        refpw = data['RefPW']
+
+        gui.frame.statusbar.SetStatusText('Base PW: %s' % basepw, 1)
+        gui.frame.statusbar.SetStatusText('Ref PW: %s' % refpw, 2)
+
 
     def _updateCell(self, load, rpm):
         '''
