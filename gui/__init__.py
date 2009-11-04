@@ -182,6 +182,7 @@ class Frame(wx.Frame):
             '',
             '',
             '',
+            '',
             'Connection: %s' % comm.getTitle()
         ]
         self.statusbar.SetFields(fields)

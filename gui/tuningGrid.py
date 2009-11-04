@@ -337,10 +337,12 @@ class tuningGrid(grid.Grid):
         sp1 = data['sp1']
         refpw = data['RefPW']
         diff = str(int(sp1) - int(refpw))
+        sve =  '%.0f' % (((float(self.cells[rpm][load]) / float(512)) * ((float(refpw) - 1200) / (float(sp1) - 1200))) * float(100))
 
         gui.frame.statusbar.SetStatusText('SP1: %s' % sp1, 1)
         gui.frame.statusbar.SetStatusText('Ref PW: %s' % refpw, 2)
         gui.frame.statusbar.SetStatusText('Diff: %s' % diff, 3)
+        gui.frame.statusbar.SetStatusText('SVE: %s%%' % sve, 4)
 
 
     def _updateCell(self, load, rpm, highlight = False):
