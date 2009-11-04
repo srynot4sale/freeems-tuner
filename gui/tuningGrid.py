@@ -228,7 +228,7 @@ class tuningGrid(grid.Grid):
         # Set axis labels
         i = 0
         while i < self.length_rpm:
-            self.SetColLabelValue(i, str(self.axis_rpm[i]))
+            self.SetColLabelValue(i, str(self.axis_rpm[i] / 2))
             self.SetColSize(i, 50)
             i += 1
         
