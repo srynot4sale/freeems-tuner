@@ -102,7 +102,7 @@ class realtimeDataInterface(wx.BoxSizer):
                 'RPM':          'RPM',
                 'DRPM':         'Delta RPM (rpm/second)',
                 'DDRPM':        'Delta Delta RPM (rpm/second)',
-                'LoadMain':     'Load Main',
+                'LoadMain':     'Load Main (kPa)',
                 'VEMain':       'VE Main (percent)',
                 'Lambda':       'Lambda',
                 'AirFlow':      'Air Flow',
@@ -151,7 +151,7 @@ class realtimeDataInterface(wx.BoxSizer):
                 'RPM':          'rpm',
                 'DRPM':         'rpm',
                 'DDRPM':        'rpm',
-                'LoadMain':     'raw',
+                'LoadMain':     'pressure',
                 'VEMain':       'percent',
                 'Lambda':       'lambda',
     }

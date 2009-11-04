@@ -259,7 +259,7 @@ class tuningGrid(grid.Grid):
         rpm_current = float(data['RPM'])
 
         # Get current load
-        load_current = float(data['LoadMain']) / float(512)
+        load_current = float(data['LoadMain'])
 
         # Find current rpm col
         rpm = 0
