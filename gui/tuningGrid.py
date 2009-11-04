@@ -312,12 +312,12 @@ class tuningGrid(grid.Grid):
         # If highlighted cell has changed
         if self._highlighted != [load, rpm]:
 
-            # Highlight cell
-            self._updateCell(load, rpm, True)
-
             # Reset old highlighted cell
             if self._highlighted != None:
                 self._updateCell(self._highlighted[0], self._highlighted[1])
+
+            # Highlight cell
+            self._updateCell(load, rpm, True)
 
             # Update var
             self._highlighted = [load, rpm]
