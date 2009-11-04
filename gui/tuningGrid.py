@@ -256,7 +256,7 @@ class tuningGrid(grid.Grid):
         data = gui.frame.windows['realtime_data'].interface.data
 
         # Get current rpm
-        rpm_current = float(data['RPM']) / 2
+        rpm_current = float(data['RPM'])
 
         # Get current load
         load_current = float(data['LoadMain']) / float(512)
@@ -264,50 +264,58 @@ class tuningGrid(grid.Grid):
         # Find current rpm col
         rpm = 0
         for axis in self.axis_rpm:
-            # If axis is equal to current or first col
-            if axis == rpm_current or rpm == 0:
+            # If axis is equal to current
+            if axis == rpm_current:
                 break
 
             # If axis is larger than current
             if axis > rpm_current:
+                # If axis 0
+                if rpm == 0:
+                    break
+
                 # Find distance to this axis
                 dist_up = axis - rpm_current
 
                 # Find distance from last axis
                 dist_down = rpm_current - self.axis_rpm[rpm-1]
 
-                # If lower axis is closer, use that one
-                if dist_up > dist_down:
-                    rpm -= 1
+                # If lower axis isn;t closer, use this one
+                if dist_up < dist_down:
+                    rpm += 1
 
                 break
             rpm += 1
 
-        rpm = min(rpm, self.length_rpm-1)
+        rpm = max(min(rpm, self.length_rpm-1), 0)
 
         # Find current load row
         load = 0
         for axis in self.axis_load:
-            # If axis is equal to current or first row
-            if axis == load_current or load == 0:
+            # If axis is equal to current
+            if axis == load_current:
                 break
 
             # If axis is larger than current
             if axis > load_current:
+                # If axis 0
+                if load == 0:
+                    break
+
                 # Find distance to this axis
                 dist_up = axis - load_current
 
                 # Find distance from last axis
                 dist_down = load_current - self.axis_load[load-1]
 
-                # If lower axis is closer, use that one
-                if dist_up > dist_down:
-                    load -= 1
+                # If lower axis isn't closer, use this one
+                if dist_up < dist_down:
+                    load += 1
 
                 break
             load += 1
 
-        load = min(load, self.length_load-1)
+        load = max(min(load, self.length_load-1), 0)
 
         # If highlighted cell has changed
         if self._highlighted != [load, rpm]:
@@ -316,11 +324,13 @@ class tuningGrid(grid.Grid):
             if self._highlighted != None:
                 self._updateCell(self._highlighted[0], self._highlighted[1])
 
-            # Highlight cell
-            self._updateCell(load, rpm, True)
-
             # Update var
             self._highlighted = [load, rpm]
+
+        # Highlight cell, even if not changed
+        # because the highlight will disappear if the user
+        # has modified the value
+        self._updateCell(load, rpm, True)
 
         # Also update statusbar
         # Bit of a dirty hack for now
