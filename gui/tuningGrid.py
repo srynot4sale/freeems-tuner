@@ -309,8 +309,8 @@ class tuningGrid(grid.Grid):
                 dist_down = load_current - self.axis_load[load-1]
 
                 # If lower axis isn't closer, use this one
-                if dist_up < dist_down:
-                    load += 1
+                if dist_up > dist_down:
+                    load -= 1
 
                 break
             load += 1
