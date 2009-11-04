@@ -234,7 +234,7 @@ class tuningGrid(grid.Grid):
         
         i = 0
         while i < self.length_load:
-            self.SetRowLabelValue(i, '%.2f' % self.axis_load[i])
+            self.SetRowLabelValue(i, '%.0f' % self.axis_load[i])
             i += 1
 
         rpm = 0
