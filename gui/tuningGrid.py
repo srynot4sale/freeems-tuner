@@ -326,9 +326,11 @@ class tuningGrid(grid.Grid):
         # Bit of a dirty hack for now
         sp1 = data['sp1']
         refpw = data['RefPW']
+        diff = str(int(sp1) - int(refpw))
 
         gui.frame.statusbar.SetStatusText('SP1: %s' % sp1, 1)
         gui.frame.statusbar.SetStatusText('Ref PW: %s' % refpw, 2)
+        gui.frame.statusbar.SetStatusText('Diff: %s' % diff, 3)
 
 
     def _updateCell(self, load, rpm, highlight = False):
