@@ -176,7 +176,7 @@ class tuningGrid(grid.Grid):
         i = 0
         while i < self.max_length_rpm:
             if i < self.length_rpm:
-                value = protocols.shortFrom8bit(payload[offset:offset+2])
+                value = float(protocols.shortFrom8bit(payload[offset:offset+2])) / 2
                 self.axis_rpm.append(value)
 
             offset += 2
@@ -228,7 +228,7 @@ class tuningGrid(grid.Grid):
         # Set axis labels
         i = 0
         while i < self.length_rpm:
-            self.SetColLabelValue(i, str(self.axis_rpm[i] / 2))
+            self.SetColLabelValue(i, str(self.axis_rpm[i]))
             self.SetColSize(i, 50)
             i += 1
         
@@ -281,8 +281,8 @@ class tuningGrid(grid.Grid):
                 dist_down = rpm_current - self.axis_rpm[rpm-1]
 
                 # If lower axis isn;t closer, use this one
-                if dist_up < dist_down:
-                    rpm += 1
+                if dist_up > dist_down:
+                    rpm -= 1
 
                 break
             rpm += 1
