@@ -89,7 +89,7 @@ class tuningGrid(grid.Grid):
 
     def onKeyPress(self, event):
         '''
-        Bind key presses 'j' and 'k' to update cell value up/down
+        Bind key presses 'i' and 'k' to update cell value up/down
         '''
         keycode = event.GetKeyCode()
 
