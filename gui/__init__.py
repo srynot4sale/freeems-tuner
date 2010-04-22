@@ -377,7 +377,7 @@ class Frame(wx.Frame):
         dialog = wx.FileDialog(
                 parent = self,
                 message = 'Comms Log File',
-                defaultDir = 'data/',
+                defaultDir = 'data/logs/',
                 defaultFile = 'comms' + timestamp + '.bin',
                 style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
 
