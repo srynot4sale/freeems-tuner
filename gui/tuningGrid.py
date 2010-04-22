@@ -94,7 +94,7 @@ class tuningGrid(grid.Grid):
         keycode = event.GetKeyCode()
 
         # Check if this is a key we are handling
-        if keycode not in [74, 75]:
+        if keycode not in [73, 75]:
             event.Skip()
             return
 
@@ -109,7 +109,7 @@ class tuningGrid(grid.Grid):
         value = self.cells[rpm][load]
 
         # Update cell values
-        if keycode == 74:
+        if keycode == 73:
             value += 0xFF
         else:
             value -= 0xFF
