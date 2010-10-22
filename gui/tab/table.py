@@ -39,8 +39,10 @@ class tab(wx.Panel):
     Contains a basic grid for tuning, and buttons for syncing
     '''
 
-    ID_LOAD_TABLE = wx.NewId()
-    ID_SAVE_TABLE = wx.NewId()
+    ID_LOAD_FROM_FILE_TABLE = wx.NewId()
+    ID_LOAD_FROM_DEVICE_TABLE = wx.NewId()
+    ID_SAVE_TO_FILE_TABLE = wx.NewId()
+    ID_SAVE_TO_DEVICE_TABLE = wx.NewId()
 
     # Controller
     controller = None
@@ -72,15 +74,18 @@ class tab(wx.Panel):
         self.grid = tuningGrid(self)
 
         # Create buttons and bind to methods
-        self.loadButton = wx.Button(self, self.ID_LOAD_TABLE, 'Load Table')
-        self.saveButton = wx.Button(self, self.ID_SAVE_TABLE, 'Save Table')
+        self.loadFromFileButton = wx.Button(self, self.ID_LOAD_FROM_FILE_TABLE, 'Load From File')
+        self.loadFromDeviceButton = wx.Button(self, self.ID_LOAD_FROM_DEVICE_TABLE, 'Load From Device')
+        self.saveToFileButton = wx.Button(self, self.ID_SAVE_TO_FILE_TABLE, 'Save To File')
+        self.saveToDeviceButton = wx.Button(self, self.ID_SAVE_TO_DEVICE_TABLE, 'Save To Device')
 
-        self.loadButton.Bind(wx.EVT_BUTTON, self.loadTable, id=self.ID_LOAD_TABLE)
+        self.loadFromDeviceButton.Bind(wx.EVT_BUTTON, self.loadFromDevice, id=self.ID_LOAD_FROM_DEVICE_TABLE)
 
         sizer3 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer3.Add(self.loadButton, 4)
-        sizer3.Add(blank, 4)
-        sizer3.Add(self.saveButton, 4)
+        sizer3.Add(self.loadFromDeviceButton, 3)
+        sizer3.Add(self.loadFromFileButton, 3)
+        sizer3.Add(self.saveToFileButton, 3)
+        sizer3.Add(self.saveToDeviceButton, 3)
 
         sizer2 = wx.BoxSizer(wx.VERTICAL)
         sizer2.Add(blank, 1)
@@ -112,7 +117,7 @@ class tab(wx.Panel):
         self._timer.Start(int(frequency))
 
 
-    def loadTable(self, event):
+    def loadFromDevice(self, event):
         '''
         Send packet to toggle logging
         '''
