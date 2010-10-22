@@ -26,6 +26,8 @@ import gui.commsConnectWarning as commsConnectWarning
 import comms
 import comms.protocols as protocols
 import libs.config
+import xml.dom.minidom
+from xml.dom.minidom import Node
 
 
 # Helper value for inserting spacing into sizers
@@ -81,6 +83,7 @@ class tab(wx.Panel):
 
         self.loadFromDeviceButton.Bind(wx.EVT_BUTTON, self.loadFromDevice, id=self.ID_LOAD_FROM_DEVICE_TABLE)
         self.saveToFileButton.Bind(wx.EVT_BUTTON, self.saveToFile, id=self.ID_SAVE_TO_FILE_TABLE)
+        self.loadFromFileButton.Bind(wx.EVT_BUTTON, self.loadFromFile, id=self.ID_LOAD_FROM_FILE_TABLE)
 
         sizer3 = wx.BoxSizer(wx.HORIZONTAL)
         sizer3.Add(self.loadFromDeviceButton, 3)
@@ -134,6 +137,21 @@ class tab(wx.Panel):
         tune.write("\t</Table>\n")
         tune.write("</FreeEMS>\n")
         tune.close()
+
+
+    def loadFromFile(self, event):
+        doc = xml.dom.minidom.parse("data/tunes/tune.xml")
+        tune = doc.getElementsByTagName("Table")
+        table = tune.item(0)
+
+        self.grid.table_id = table.childNodes[1].attributes.item(0).value
+        self.grid.cells = table.childNodes[3].attributes.item(0).value
+        self.grid.axis_rpm = table.childNodes[5].attributes.item(0).value
+        self.grid.length_rpm = table.childNodes[7].attributes.item(0).value
+        self.grid.max_length_rpm = table.childNodes[9].attributes.item(0).value
+        self.grid.axis_load = table.childNodes[11].attributes.item(0).value
+        self.grid.length_load = table.childNodes[13].attributes.item(0).value
+        self.grid.max_length_load = table.childNodes[15].attributes.item(0).value
 
 
     def loadFromDevice(self, event):
