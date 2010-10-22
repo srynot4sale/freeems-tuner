@@ -80,6 +80,7 @@ class tab(wx.Panel):
         self.saveToDeviceButton = wx.Button(self, self.ID_SAVE_TO_DEVICE_TABLE, 'Save To Device')
 
         self.loadFromDeviceButton.Bind(wx.EVT_BUTTON, self.loadFromDevice, id=self.ID_LOAD_FROM_DEVICE_TABLE)
+        self.saveToFileButton.Bind(wx.EVT_BUTTON, self.saveToFile, id=self.ID_SAVE_TO_FILE_TABLE)
 
         sizer3 = wx.BoxSizer(wx.HORIZONTAL)
         sizer3.Add(self.loadFromDeviceButton, 3)
@@ -115,6 +116,24 @@ class tab(wx.Panel):
         # Use realtime update frequency
         frequency = libs.config.get('Gui', 'realtime_update_frequency')
         self._timer.Start(int(frequency))
+
+
+# path needs extracting from dialog.... TODO
+    def saveToFile(self, event):
+        tune = open("data/tunes/tune.xml", "w")
+        tune.write("<FreeEMS>\n")
+        tune.write("\t<Table>\n")
+        tune.write("\t\t<TableID value=\"" + str(self.grid.table_id) + "\" />\n")
+        tune.write("\t\t<Cells value=\"" + str(self.grid.cells) + "\" />\n")
+        tune.write("\t\t<RPMAxis value=\"" + str(self.grid.axis_rpm) + "\" />\n")
+        tune.write("\t\t<RPMAxisLength value=\"" + str(self.grid.length_rpm) + "\" />\n")
+        tune.write("\t\t<RPMAxisLengthMax value=\"" + str(self.grid.max_length_rpm) + "\" />\n")
+        tune.write("\t\t<LoadAxis value=\"" + str(self.grid.axis_load) + "\" />\n")
+        tune.write("\t\t<LoadAxisLength value=\"" + str(self.grid.length_load) + "\" />\n")
+        tune.write("\t\t<LoadAxisLengthMax value=\"" + str(self.grid.max_length_load) + "\" />\n")
+        tune.write("\t</Table>\n")
+        tune.write("</FreeEMS>\n")
+        tune.close()
 
 
     def loadFromDevice(self, event):
