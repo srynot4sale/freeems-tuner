@@ -144,14 +144,14 @@ class tab(wx.Panel):
         tune = doc.getElementsByTagName("Table")
         table = tune.item(0)
 
-        self.grid.table_id = table.childNodes[1].attributes.item(0).value
-        self.grid.cells = table.childNodes[3].attributes.item(0).value
-        self.grid.axis_rpm = table.childNodes[5].attributes.item(0).value
-        self.grid.length_rpm = table.childNodes[7].attributes.item(0).value
-        self.grid.max_length_rpm = table.childNodes[9].attributes.item(0).value
-        self.grid.axis_load = table.childNodes[11].attributes.item(0).value
-        self.grid.length_load = table.childNodes[13].attributes.item(0).value
-        self.grid.max_length_load = table.childNodes[15].attributes.item(0).value
+        self.grid.table_id = int(table.childNodes[1].attributes.item(0).value)
+        self.grid.cells = eval(table.childNodes[3].attributes.item(0).value)
+        self.grid.axis_rpm = eval(table.childNodes[5].attributes.item(0).value)
+        self.grid.length_rpm = int(table.childNodes[7].attributes.item(0).value)
+        self.grid.max_length_rpm = int(table.childNodes[9].attributes.item(0).value)
+        self.grid.axis_load = eval(table.childNodes[11].attributes.item(0).value)
+        self.grid.length_load = int(table.childNodes[13].attributes.item(0).value)
+        self.grid.max_length_load = int(table.childNodes[15].attributes.item(0).value)
 
 
     def loadFromDevice(self, event):
