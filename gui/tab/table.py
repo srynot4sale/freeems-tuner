@@ -153,6 +153,8 @@ class tab(wx.Panel):
         self.grid.length_load = int(table.childNodes[13].attributes.item(0).value)
         self.grid.max_length_load = int(table.childNodes[15].attributes.item(0).value)
 
+        self.grid.updateDisplay()
+
 
     def loadFromDevice(self, event):
         '''
