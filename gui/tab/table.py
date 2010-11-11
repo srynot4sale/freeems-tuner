@@ -42,9 +42,10 @@ class tab(wx.Panel):
     '''
 
     ID_LOAD_FROM_FILE_TABLE = wx.NewId()
-    ID_LOAD_FROM_DEVICE_TABLE = wx.NewId()
+    ID_LOAD_FROM_RAM_TABLE = wx.NewId()
     ID_SAVE_TO_FILE_TABLE = wx.NewId()
-    ID_SAVE_TO_DEVICE_TABLE = wx.NewId()
+    ID_SAVE_TO_FLASH_TABLE = wx.NewId()
+    ID_SEND_TO_RAM_TABLE = wx.NewId()
 
     # Controller
     controller = None
@@ -77,20 +78,23 @@ class tab(wx.Panel):
 
         # Create buttons and bind to methods
         self.loadFromFileButton = wx.Button(self, self.ID_LOAD_FROM_FILE_TABLE, 'Load From File')
-        self.loadFromDeviceButton = wx.Button(self, self.ID_LOAD_FROM_DEVICE_TABLE, 'Load From Live RAM')
+        self.loadFromRamButton = wx.Button(self, self.ID_LOAD_FROM_RAM_TABLE, 'Load From RAM')
         self.saveToFileButton = wx.Button(self, self.ID_SAVE_TO_FILE_TABLE, 'Save To File')
-        self.saveToDeviceButton = wx.Button(self, self.ID_SAVE_TO_DEVICE_TABLE, 'Save To Flash')
+        self.saveToFlashButton = wx.Button(self, self.ID_SAVE_TO_FLASH_TABLE, 'Save To Flash')
+        self.sendToRamButton = wx.Button(self, self.ID_SEND_TO_RAM_TABLE, 'Send To RAM')
 
-        self.loadFromDeviceButton.Bind(wx.EVT_BUTTON, self.loadFromDevice, id=self.ID_LOAD_FROM_DEVICE_TABLE)
+        self.loadFromRamButton.Bind(wx.EVT_BUTTON, self.loadFromRam, id=self.ID_LOAD_FROM_RAM_TABLE)
         self.saveToFileButton.Bind(wx.EVT_BUTTON, self.saveToFile, id=self.ID_SAVE_TO_FILE_TABLE)
         self.loadFromFileButton.Bind(wx.EVT_BUTTON, self.loadFromFile, id=self.ID_LOAD_FROM_FILE_TABLE)
-        self.saveToDeviceButton.Bind(wx.EVT_BUTTON, self.saveToDevice, id=self.ID_SAVE_TO_DEVICE_TABLE)
+        self.saveToFlashButton.Bind(wx.EVT_BUTTON, self.saveToFlash, id=self.ID_SAVE_TO_FLASH_TABLE)
+        self.sendToRamButton.Bind(wx.EVT_BUTTON, self.sendToRam, id=self.ID_SEND_TO_RAM_TABLE)
 
         sizer3 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer3.Add(self.loadFromDeviceButton, 3)
+        sizer3.Add(self.loadFromRamButton, 3)
         sizer3.Add(self.loadFromFileButton, 3)
+        sizer3.Add(self.sendToRamButton, 3)
         sizer3.Add(self.saveToFileButton, 3)
-        sizer3.Add(self.saveToDeviceButton, 3)
+        sizer3.Add(self.saveToFlashButton, 3)
 
         sizer2 = wx.BoxSizer(wx.VERTICAL)
         sizer2.Add(blank, 1)
@@ -157,7 +161,7 @@ class tab(wx.Panel):
         self.grid.updateDisplay()
 
 
-    def loadFromDevice(self, event):
+    def loadFromRam(self, event):
         '''
         Send packet to toggle logging
         '''
@@ -176,7 +180,7 @@ class tab(wx.Panel):
         self.controller.action('comms.sendMemoryRequest', data)
 
 
-    def saveToDevice(self, event):
+    def saveToFlash(self, event):
         # type should be obtained from the device spec data, not hard coded as a string like this...
         data = {
             'type': "BurnBlockFromRamToFlash",
@@ -184,6 +188,11 @@ class tab(wx.Panel):
         }
 
         self.controller.action('comms.sendMemoryRequest', data)
+
+
+    def sendToRam(self, event):
+        # Stub to be filled out...
+        print("Implement me!")
 
 
     def _setupComms(self):
