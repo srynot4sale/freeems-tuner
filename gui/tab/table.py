@@ -77,13 +77,14 @@ class tab(wx.Panel):
 
         # Create buttons and bind to methods
         self.loadFromFileButton = wx.Button(self, self.ID_LOAD_FROM_FILE_TABLE, 'Load From File')
-        self.loadFromDeviceButton = wx.Button(self, self.ID_LOAD_FROM_DEVICE_TABLE, 'Load From Device')
+        self.loadFromDeviceButton = wx.Button(self, self.ID_LOAD_FROM_DEVICE_TABLE, 'Load From Live RAM')
         self.saveToFileButton = wx.Button(self, self.ID_SAVE_TO_FILE_TABLE, 'Save To File')
-        self.saveToDeviceButton = wx.Button(self, self.ID_SAVE_TO_DEVICE_TABLE, 'Save To Device')
+        self.saveToDeviceButton = wx.Button(self, self.ID_SAVE_TO_DEVICE_TABLE, 'Save To Flash')
 
         self.loadFromDeviceButton.Bind(wx.EVT_BUTTON, self.loadFromDevice, id=self.ID_LOAD_FROM_DEVICE_TABLE)
         self.saveToFileButton.Bind(wx.EVT_BUTTON, self.saveToFile, id=self.ID_SAVE_TO_FILE_TABLE)
         self.loadFromFileButton.Bind(wx.EVT_BUTTON, self.loadFromFile, id=self.ID_LOAD_FROM_FILE_TABLE)
+        self.saveToDeviceButton.Bind(wx.EVT_BUTTON, self.saveToDevice, id=self.ID_SAVE_TO_DEVICE_TABLE)
 
         sizer3 = wx.BoxSizer(wx.HORIZONTAL)
         sizer3.Add(self.loadFromDeviceButton, 3)
@@ -170,6 +171,16 @@ class tab(wx.Panel):
         data = {
             'type': 'RetrieveBlockFromRAM',
             'block_id': 0
+        }
+
+        self.controller.action('comms.sendMemoryRequest', data)
+
+
+    def saveToDevice(self, event):
+        # type should be obtained from the device spec data, not hard coded as a string like this...
+        data = {
+            'type': "BurnBlockFromRamToFlash",
+            'block_id': self.grid.table_id
         }
 
         self.controller.action('comms.sendMemoryRequest', data)
