@@ -26,11 +26,9 @@ END_BYTE            = chr(0xCC)
 ESCAPE_BYTE         = chr(0xBB)
 SPECIAL_BYTES       = (ESCAPE_BYTE, START_BYTE, END_BYTE)
 
-HEADER_HAS_ACK      = protocols.BIT0
+HEADER_HAS_LENGTH   = protocols.BIT0
 HEADER_IS_NACK      = protocols.BIT1
-HEADER_HAS_FAIL     = protocols.BIT2
-HEADER_HAS_ADDRS    = protocols.BIT2
-HEADER_HAS_LENGTH   = protocols.BIT3
+HEADER_HAS_SEQUENCE = protocols.BIT2
 
 REQUEST_INTERFACE_VERSION       = 0
 REQUEST_FIRMWARE_VERSION        = 2

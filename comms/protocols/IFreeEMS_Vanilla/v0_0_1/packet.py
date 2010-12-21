@@ -55,23 +55,6 @@ class packet:
         self._headerFlags = ord(flags)
 
 
-    def setHeaderAckFlag(self, bool = True):
-        '''
-        Flag this packet as sending/requiring an ack
-        '''
-        if bool:
-            self._headerFlags |= protocol.HEADER_HAS_ACK
-        else:
-            self._headerFlags &= ~protocol.HEADER_HAS_ACK
-
-
-    def hasHeaderAckFlag(self):
-        '''
-        Return if this packet is sending/requires an ack
-        '''
-        return self._headerFlags & protocol.HEADER_HAS_ACK
-
-
     def setHeaderLengthFlag(self, bool = True):
         '''
         Flag this packet as having a payload length
